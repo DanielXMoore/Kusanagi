@@ -1,0 +1,5 @@
+.nyc_output/
+bin/
+coverage/
+dist/
+node_modules/

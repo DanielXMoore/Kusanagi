@@ -1,0 +1,301 @@
+## Currently adapting from Grammar.txt
+
+ObjSort
+  "object"
+  "actor"
+  "module"
+
+FuncSortOpt
+  "shared" "query"?
+  "query"
+  ""
+
+SharedPatOpt
+  "shared" "query"? PatPlain?
+  "query" PatPlain?
+  ""
+
+typ_obj
+  "{" typ_field (";" typ_field)* "}"
+  "{" _ "}"
+
+typ_variant
+  "{" "#" "}"
+  "{" typ_tag (";" typ_tag)* "}"
+  "{" _ "}"
+
+typ_nullary
+  "(" <list(TypItem, ",")> ")"
+  Id ("." Id)* TypArgs?
+  "[" "var"? Typ "]"
+  TypObj
+  TypVariant
+
+typ_un
+  TypNullary
+  "?" TypUn
+
+typ_pre
+  TypUn
+  "async" TypPre
+  ObjSort TypObj
+
+typ_nobin
+  TypPre
+  FuncSort_opt ("<" <list(TypBind, ",")> ">")? TypUn "->" TypNobin
+
+typ
+  TypNobin
+  Typ "and" Typ
+  Typ "or" Typ
+
+typ_item
+  Id ":" Typ
+  Typ
+
+typ_args
+  "<" <list(Typ, ",")> ">"
+
+typ_field
+  "var"? Id ":" Typ
+  Id ("<" <list(TypBind, ",")> ">")? TypNullary ":" Typ
+
+typ_tag
+  "#" Id (":" Typ)?
+
+typ_bind
+  Id "<:" Typ
+  Id
+
+lit
+  "null"
+  Bool
+  Nat
+  Float
+  Char
+  Text
+
+unop
+  "+"
+  "-"
+  "^"
+
+binop
+  "+"
+  "-"
+  "*"
+  "/"
+  "%"
+  "**"
+  "+%"
+  "-%"
+  "*%"
+  "**%"
+  "&"
+  "|"
+  "^"
+  "<<"
+  " >>"
+  "<<>"
+  "<>>"
+  "#"
+
+relop
+  "=="
+  "!="
+  " < "
+  "<="
+  " > "
+  ">="
+
+unassign
+  "+="
+  "-="
+  "^="
+
+binassign
+  "+="
+  "-="
+  "*="
+  "/="
+  "%="
+  "**-"
+  "+%="
+  "-%="
+  "*%="
+  "**%="
+  "&="
+  "|="
+  "^="
+  "<<="
+  ">>="
+  "<<>="
+  "<>>="
+  "@="
+
+exp_obj
+  "{" <list(ExpField, ";")> "}"
+
+exp_plain
+  Lit
+  "(" <list(Exp, ",")> ")"
+
+exp_nullary
+  ExpObj
+  ExpPlain
+  Id
+
+exp_post
+  ExpNullary
+  "[" "var"? <list(ExpNonvar, ",")> "]"
+  ExpPost "[" Exp "]"
+  ExpPost "."Nat
+  ExpPost "." Id
+  ExpPost ("<" <list(Typ, ",")> ">")? ExpNullary
+  ExpPost BANG
+
+exp_un
+  ExpPost
+  "#" Id
+  "#" Id ExpNullary
+  "?" ExpUn
+  Unop ExpUn
+  Unassign ExpUn
+  "actor" ExpPlain
+  "not" ExpUn
+  "debug_show" ExpUn
+  "to_candid" "(" <list(Exp, ",")> ")"
+  "from_candid" ExpUn
+
+exp_bin
+  ExpUn
+  ExpBin Binop ExpBin
+  ExpBin Relop ExpBin
+  ExpBin "and" ExpBin
+  ExpBin "or" ExpBin
+  ExpBin ":" TypNobin
+
+exp_nondec
+  ExpBin
+  ExpBin ":=" Exp
+  ExpBin Binassign Exp
+  "return" Exp?
+  "async" ExpNest
+  "await" ExpNest
+  "assert" ExpNest
+  "label" Id (":" Typ)? ExpNest
+  "break" Id ExpNullary?
+  "continue" Id
+  "debug" ExpNest
+  "if" ExpNullary ExpNest
+  "if" ExpNullary ExpNest "else" ExpNest
+  "try" ExpNest Catch
+  "throw" ExpNest
+  "switch" ExpNullary "{" <list(Case, ";")> "}"
+  "while" ExpNullary ExpNest
+  "loop" ExpNest
+  "loop" ExpNest "while" ExpNest
+  "for" "(" Pat "in" Exp ")" ExpNest
+  "ignore" ExpNest
+  "do" Block
+  "do" "?" Block
+
+exp_nonvar
+  ExpNondec
+  DecNonvar
+
+exp
+  ExpNonvar
+  DecVar
+
+exp_nest
+  Block
+  Exp
+
+block
+  "{" <list(Dec, ";")> "}"
+
+case
+  "case" PatNullary ExpNest
+
+catch
+  "catch" PatNullary ExpNest
+
+exp_field
+  "var"? Id (":" Typ)?
+  "var"? Id (":" Typ)? "=" Exp
+
+dec_field
+  Vis Stab Dec
+
+vis
+  Empty
+  "private"
+  "public"
+  "system"
+
+stab
+  Empty
+  "flexible"
+  "stable"
+
+PatPlain
+  "_"
+  Id
+  Lit
+  "(" <list(PatBin, ",")> ")"
+
+PatNullary
+  PatPlain
+  "{" <list(PatField, ";")> "}"
+
+PatUn
+  PatNullary
+  "#" Id
+  "#" Id PatNullary
+  "?" PatUn
+  Unop Lit
+
+pat_bin
+  PatUn
+  PatBin "or" PatBin
+  PatBin ":" Typ
+
+pat
+  PatBin
+
+pat_field
+  Id (":" Typ)?
+  Id (":" Typ)? "=" Pat
+
+dec_var
+  "var" Id (":" Typ)? "=" Exp
+
+dec_nonvar
+  "let" Pat "=" Exp
+  "type" Id ("<" <list(TypBind, ",")> ">")? "=" Typ
+  ObjSort Id? "="? ObjBody
+  SharedPat_opt "func" Id? ("<" <list(TypBind, ",")> ">")? PatPlain (":" Typ)? FuncBody
+  SharedPat_opt ObjSort? "class" Id? ("<" <list(TypBind, ",")> ">")? PatPlain (":" Typ)? ClassBody
+
+dec
+  DecVar
+  DecNonvar
+  ExpNondec
+
+func_body
+  "=" Exp
+  Block
+
+obj_body
+  "{" <list(DecField, ";")> "}"
+
+class_body
+  "=" Id? ObjBody
+  ObjBody
+
+imp
+  "import" PatNullary "="? Text
+
+prog
+  <list(Imp, ";")> <list(Dec, ";")>

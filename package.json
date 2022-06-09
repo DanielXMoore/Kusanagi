@@ -1,0 +1,33 @@
+{
+  "name": "coffeemot",
+  "version": "0.0.1",
+  "description": "CoffeeScript style syntax for Motoko language",
+  "main": "index.js",
+  "scripts": {
+    "test": "nyc mocha"
+  },
+  "author": "ORIGYN ENTERPRISE SA",
+  "license": "UNLICENSED",
+  "devDependencies": {
+    "@danielx/coffeecoverage": "^4.0.0-pre.3",
+    "@danielx/hera": "^0.7.3-pre.3",
+    "mocha": "^10.0.0",
+    "nyc": "^15.1.0"
+  },
+  "mocha": {
+    "extension": [
+      "coffee"
+    ],
+    "require": [
+      "coffeescript/register",
+      "@danielx/coffeecoverage/register-istanbul",
+      "@danielx/hera/register",
+      "./test/helper.coffee"
+    ],
+    "reporter": "spec",
+    "recursive": true,
+    "spec": [
+      "test"
+    ]
+  }
+}
