@@ -1,5 +1,9 @@
 ## Currently adapting from Grammar.txt
 
+Empty
+  # TODO: Whitespace
+  ""
+
 ObjSort
   "object"
   "actor"
@@ -8,66 +12,139 @@ ObjSort
 FuncSortOpt
   "shared" "query"?
   "query"
-  ""
+  Empty
 
 SharedPatOpt
   "shared" "query"? PatPlain?
   "query" PatPlain?
-  ""
+  Empty
 
-typ_obj
-  "{" typ_field (";" typ_field)* "}"
+TypObj
+  "{" TypField (";" TypField )* "}"
   "{" _ "}"
 
-typ_variant
+TypVariant
   "{" "#" "}"
-  "{" typ_tag (";" typ_tag)* "}"
-  "{" _ "}"
+  "{" TypTag (";" TypTag )* "}"
 
-typ_nullary
-  "(" <list(TypItem, ",")> ")"
+TypNullary
+  "(" TypItem ("," TypItem )* ")"
+  "(" Empty ")"
   Id ("." Id)* TypArgs?
   "[" "var"? Typ "]"
   TypObj
   TypVariant
 
-typ_un
+TypUn
   TypNullary
   "?" TypUn
 
-typ_pre
+TypPre
   TypUn
   "async" TypPre
   ObjSort TypObj
 
-typ_nobin
+TypNobin
   TypPre
-  FuncSort_opt ("<" <list(TypBind, ",")> ">")? TypUn "->" TypNobin
+  FuncSortOpt ("<" ( TypBind ("," TypBind )* )? ">")? TypUn "->" TypNobin
 
-typ
+Typ
   TypNobin
   Typ "and" Typ
   Typ "or" Typ
 
-typ_item
+TypItem
   Id ":" Typ
   Typ
 
-typ_args
-  "<" <list(Typ, ",")> ">"
+TypArgs
+  "<" Typ ("," Typ)* ">"
 
-typ_field
+TypField
   "var"? Id ":" Typ
-  Id ("<" <list(TypBind, ",")> ">")? TypNullary ":" Typ
+  Id ("<" ( TypBind ("," TypBind )* )? ">")? TypNullary ":" Typ
 
-typ_tag
+TypTag
   "#" Id (":" Typ)?
 
-typ_bind
+TypBind
   Id "<:" Typ
   Id
 
-lit
+Bool
+  "true"
+  "false"
+
+Ascii
+  [\x00-\x7f]
+
+AsciiNoNL
+  [\x00-\x09\x0b-\x7f]
+
+Utf8Cont
+  [\x80-\xbf]
+
+Utf8Enc
+  [\xc2-\xdf] Utf8Cont
+  [\xe0] [\xa0-\xbf] Utf8Cont
+  [\xed] [\x80-\x9f] Utf8Cont
+  [\xe1-\xec\xee-\xef] Utf8Cont Utf8Cont
+  [\xf0] [\x90-\xbf] Utf8Cont Utf8Cont
+  [\xf4] [\x80-\x8f] Utf8Cont Utf8Cont
+  [\xf1-\xf3] Utf8Cont Utf8Cont Utf8Cont
+
+Utf8
+  Ascii
+  Utf8Enc
+
+Utf8NoNL
+  AsciiNoNL
+  Utf8Enc
+
+Escape
+  [nrt\\'"]
+
+# https://github.com/dfinity/motoko/blob/master/doc/modules/language-guide/pages/language-manual.adoc#characters
+Char
+  [^"\\\x00-\x1f\x7f-\xff]
+  Utf8Enc
+  "\\" Escape
+  "\\" HexDigit HexDigit
+  "\\u{" HexNumber "}"
+
+# https://github.com/dfinity/motoko/blob/master/doc/modules/language-guide/pages/language-manual.adoc#text
+Text
+  "\"" Character* "\""
+
+# https://github.com/dfinity/motoko/blob/master/doc/modules/language-guide/pages/language-manual.adoc#identifiers
+Id
+  [a-zA-Z][a-zA-Z0-9_]*
+
+Digit
+  [0-9]
+
+HexDigit
+  [0-9a-fA-F]
+
+Number
+  Digit ( "_" Digit )*
+
+HexNumber
+  HexDigit ( "_" HexDigit )*
+
+# https://github.com/dfinity/motoko/blob/master/doc/modules/language-guide/pages/language-manual.adoc#integers
+Nat
+  Number
+  "0x" HexNumber
+
+# https://github.com/dfinity/motoko/blob/master/doc/modules/language-guide/pages/language-manual.adoc#floats
+Float
+  Number "." Number?
+  Number ( "." Number? )? [eE] [-+]? Number
+  "0x" HexNumber "." HexNumber?
+  "0x" HexNumber ( "." HexNumber? )? [pP] [-+]? Number
+
+Lit
   "null"
   Bool
   Nat
@@ -75,12 +152,12 @@ lit
   Char
   Text
 
-unop
+Unop
   "+"
   "-"
   "^"
 
-binop
+Binop
   "+"
   "-"
   "*"
@@ -100,7 +177,7 @@ binop
   "<>>"
   "#"
 
-relop
+Relop
   "=="
   "!="
   " < "
@@ -108,12 +185,12 @@ relop
   " > "
   ">="
 
-unassign
+Unassign
   "+="
   "-="
   "^="
 
-binassign
+Binassign
   "+="
   "-="
   "*="
@@ -133,28 +210,31 @@ binassign
   "<>>="
   "@="
 
-exp_obj
-  "{" <list(ExpField, ";")> "}"
+ExpObj
+  "{" ExpField ( ";" ExpField )* "}"
+  "{" Empty "}"
 
-exp_plain
+ExpPlain
   Lit
-  "(" <list(Exp, ",")> ")"
+  "(" Exp ( "," Exp )* ")"
+  "(" Empty ")"
 
-exp_nullary
+ExpNullary
   ExpObj
   ExpPlain
   Id
 
-exp_post
+# TODO: Eliminate left recursion
+ExpPost
   ExpNullary
-  "[" "var"? <list(ExpNonvar, ",")> "]"
+  "[" "var"? ( ExpNonvar ( "," ExpNonvar )* )? "]"
   ExpPost "[" Exp "]"
-  ExpPost "."Nat
+  ExpPost "." Nat
   ExpPost "." Id
-  ExpPost ("<" <list(Typ, ",")> ">")? ExpNullary
+  ExpPost ("<" ( Typ ("," Typ)* )? ">")? ExpNullary
   ExpPost BANG
 
-exp_un
+ExpUn
   ExpPost
   "#" Id
   "#" Id ExpNullary
@@ -164,10 +244,11 @@ exp_un
   "actor" ExpPlain
   "not" ExpUn
   "debug_show" ExpUn
-  "to_candid" "(" <list(Exp, ",")> ")"
+  "to_candid" "(" ( Exp ( "," Exp )* )? ")"
   "from_candid" ExpUn
 
-exp_bin
+# TODO: Eliminate left recursion
+ExpBin
   ExpUn
   ExpBin Binop ExpBin
   ExpBin Relop ExpBin
@@ -175,7 +256,7 @@ exp_bin
   ExpBin "or" ExpBin
   ExpBin ":" TypNobin
 
-exp_nondec
+ExpNondec
   ExpBin
   ExpBin ":=" Exp
   ExpBin Binassign Exp
@@ -191,7 +272,7 @@ exp_nondec
   "if" ExpNullary ExpNest "else" ExpNest
   "try" ExpNest Catch
   "throw" ExpNest
-  "switch" ExpNullary "{" <list(Case, ";")> "}"
+  "switch" ExpNullary "{" ( Case (";" Case )* )? "}"
   "while" ExpNullary ExpNest
   "loop" ExpNest
   "loop" ExpNest "while" ExpNest
@@ -200,54 +281,54 @@ exp_nondec
   "do" Block
   "do" "?" Block
 
-exp_nonvar
+ExpNonvar
   ExpNondec
   DecNonvar
 
-exp
+Exp
   ExpNonvar
   DecVar
 
-exp_nest
+ExpNest
   Block
   Exp
 
-block
-  "{" <list(Dec, ";")> "}"
+Block
+  "{" ( Dec (";" Dec )* )? "}"
 
-case
+Case
   "case" PatNullary ExpNest
 
-catch
+Catch
   "catch" PatNullary ExpNest
 
-exp_field
+ExpField
   "var"? Id (":" Typ)?
   "var"? Id (":" Typ)? "=" Exp
 
-dec_field
+DecField
   Vis Stab Dec
 
-vis
-  Empty
+Vis
   "private"
   "public"
   "system"
-
-stab
   Empty
+
+Stab
   "flexible"
   "stable"
+  Empty
 
 PatPlain
   "_"
   Id
   Lit
-  "(" <list(PatBin, ",")> ")"
+  "(" ( PatBin ("," PatBin )* )? ")"
 
 PatNullary
   PatPlain
-  "{" <list(PatField, ";")> "}"
+  "{" ( PatField (";" PatField )* )? "}"
 
 PatUn
   PatNullary
@@ -256,46 +337,47 @@ PatUn
   "?" PatUn
   Unop Lit
 
-pat_bin
+# TODO: Eliminate left recursion
+PatBin
   PatUn
   PatBin "or" PatBin
   PatBin ":" Typ
 
-pat
+Pat
   PatBin
 
-pat_field
+PatField
   Id (":" Typ)?
   Id (":" Typ)? "=" Pat
 
-dec_var
+DecVar
   "var" Id (":" Typ)? "=" Exp
 
-dec_nonvar
+DecNonvar
   "let" Pat "=" Exp
-  "type" Id ("<" <list(TypBind, ",")> ">")? "=" Typ
+  "type" Id ("<" ( TypBind ( "," TypBind )* )? ">")? "=" Typ
   ObjSort Id? "="? ObjBody
-  SharedPat_opt "func" Id? ("<" <list(TypBind, ",")> ">")? PatPlain (":" Typ)? FuncBody
-  SharedPat_opt ObjSort? "class" Id? ("<" <list(TypBind, ",")> ">")? PatPlain (":" Typ)? ClassBody
+  SharedPatOpt "func" Id? ("<" ( TypBind ("," TypBind )* )? ">")? PatPlain (":" Typ)? FuncBody
+  SharedPatOpt ObjSort? "class" Id? ("<" ( TypBind ("," TypBind )* )? ">")? PatPlain (":" Typ)? ClassBody
 
-dec
+Dec
   DecVar
   DecNonvar
   ExpNondec
 
-func_body
+FuncBody
   "=" Exp
   Block
 
-obj_body
-  "{" <list(DecField, ";")> "}"
+ObjBody
+  "{" ( DecField (";" DecField )* )? "}"
 
-class_body
+ClassBody
   "=" Id? ObjBody
   ObjBody
 
-imp
+Imp
   "import" PatNullary "="? Text
 
-prog
-  <list(Imp, ";")> <list(Dec, ";")>
+Prog
+  ( Imp ( ";" Imp )* )? ( Dec ( ";" Dec )* )?
