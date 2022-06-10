@@ -31,6 +31,7 @@ File
       if (indent < n) {
         text += " {"
       } else if (indent > n) {
+        text += ";"
         // close all open indents
         while (indent > n) {
           indent--
