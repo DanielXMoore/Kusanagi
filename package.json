@@ -1,5 +1,5 @@
 {
-  "name": "coffeemot",
+  "name": "kusanagi",
   "version": "0.0.1",
   "description": "CoffeeScript style syntax for Motoko language",
   "main": "index.js",
