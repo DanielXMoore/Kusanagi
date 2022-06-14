@@ -10,3 +10,7 @@
 
   2.0   | 9am  - 11am   | Language Grammar
   1.0   | 4:30 - 5:30pm | Nix setup, Motoko research, Environment Setup
+
+2022-06-14
+
+  2.0   | 3pm  - 5pm    | Learning Motoko, Indented Arrays parsing test

@@ -1,0 +1,59 @@
+# Test grammar with function application, arrays, and indentation
+
+File
+  Line*
+
+Line
+  Indent LineBody EOS -> $2
+
+Indent
+  ( "  " / "\t" )* ->
+    return $1.length
+
+Id
+  [a-z]+
+
+Expression
+  Id
+  Bracket
+
+LineBody
+  Expression
+
+Indented
+  #TODO: one further than current indent
+  "" ->
+    throw new Error("TODO")
+
+Bracket
+  "[" _* "]" ->
+    return []
+  "[" _* Expression _* "]" ->
+    return [ $3 ]
+  "[" _* Expression _* ListPart* "]" ->
+    return [ $3 ].concat($5)
+  # Single indent at first postion
+  "[" EOS IndentedPart* _* "]" -> $3
+
+ListPart
+  "," _* Expression _* -> $3
+
+IndentedPart
+  Indent Expression EOS ->
+    return $2
+
+# Non-newline whitespace
+_
+  /[ \t]+/
+
+EOS
+  (_? EOL)
+  EOF
+
+EOL
+  "\r\n"
+  "\n"
+  "\r"
+
+EOF
+  !/[\s\S]/
