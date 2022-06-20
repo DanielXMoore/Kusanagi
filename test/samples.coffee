@@ -13,10 +13,10 @@ describe 'Compiling samples', ->
         var count = 0
 
         public shared func ring() : async ()
-          Debug.print "Ring!"
+          Debug.print("Ring!")
 
         system func heartbeat() : async ()
-          if count % n == 0
+          if (count % n == 0)
             await ring()
 
           count += 1
@@ -37,13 +37,12 @@ describe 'Compiling samples', ->
           if (count % n == 0) {
             await ring();
           };
+
           count += 1;
-        }
-      }
+        };
+      };
     """
 
     compiled = parser.parse(exampleSource)
-
-    writeFileSync("out.txt", compiled)
 
     assert.equal compiled, output
