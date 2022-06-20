@@ -53,3 +53,28 @@ describe 'Arrays', ->
     """
 
     assert.deepEqual result[0], ["a", ["b", [], ["d"]], "c"]
+
+describe "function application", ->
+  it "applies functions with spaces", ->
+    result = parser.parse """
+      a b
+    """
+
+    assert.deepEqual result[0],
+      type: "application"
+      fn: "a"
+      arguments: ["b"]
+
+  it "applies right associatively", ->
+    result = parser.parse """
+      a b c
+    """
+
+    assert.deepEqual result[0],
+      type: "application"
+      fn: "a"
+      arguments: [{
+        type: "application"
+        fn: "b"
+        arguments: ["c"]
+      }]

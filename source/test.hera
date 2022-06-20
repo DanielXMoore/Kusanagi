@@ -1,21 +1,64 @@
 # Test grammar with function application, arrays, and indentation
 
 File
-  Line*
+  Init Line* -> $2
+
+Init
+  "" ->
+    global.currentIndent = 0
+    global.indentLevels = []
+
+PushIndent
+  "" ->
+    global.indentLevels.push(global.currentIndent)
+
+PopIndent
+  "" ->
+    global.indentLevels.pop()
 
 Line
-  Indent LineBody EOS -> $2
+  Indent PushIndent LineBody PopIndent EOS -> $3
 
 Indent
   ( "  " / "\t" )* ->
-    return $1.length
+    return global.currentIndent = $1.length
 
 Id
   [a-z]+
 
+Application
+  Id _+ Expression _* ListPart* ->
+    return {
+      type: "application",
+      fn: $1,
+      arguments: [$3, ...$5],
+    }
+  Id "(" _* ")" ->
+    return {type: "application", fn: $1, arguments: []}
+  Id "(" _* Expression ")" ->
+    return {
+      type: "application",
+      fn: $1,
+      arguments: [$4],
+    }
+  Id "(" _* Expression _* ListPart* ")" ->
+    return {
+      type: "application",
+      fn: $1,
+      arguments: [$4, ...$6],
+    }
+  # TODO: Indented function application
+  # Id EOS IndentedPart+ ->
+  #   return {
+  #     type: "application",
+  #     fn: $1,
+  #     arguments: $3,
+  #   }
+
 Expression
-  Id
+  Application
   Bracket
+  Id
 
 LineBody
   Expression
