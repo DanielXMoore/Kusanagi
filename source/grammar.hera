@@ -1,7 +1,16 @@
 ## Currently adapting from Grammar.txt
 
+Prog
+  Imports Declarations
+
+Imports
+  ( Imp ( ";" Imp )* ";"? )? __
+
+Declarations
+  ( Dec ( ";" Dec )* )?
+
 Empty
-  # TODO: Whitespace
+  __
   ""
 
 ObjSort
@@ -10,18 +19,18 @@ ObjSort
   "module"
 
 FuncSortOpt
-  "shared" "query"?
+  "shared" __ "query"?
   "query"
   Empty
 
 SharedPatOpt
-  "shared" "query"? PatPlain?
-  "query" PatPlain?
+  "shared" __ "query"? __ PatPlain?
+  "query" __ PatPlain?
   Empty
 
 TypObj
   "{" TypField (";" TypField )* "}"
-  "{" _ "}"
+  "{" Empty "}"
 
 TypVariant
   "{" "#" "}"
@@ -41,12 +50,12 @@ TypUn
 
 TypPre
   TypUn
-  "async" TypPre
-  ObjSort TypObj
+  "async" __ TypPre
+  ObjSort __ TypObj
 
 TypNobin
   TypPre
-  FuncSortOpt ("<" ( TypBind ("," TypBind )* )? ">")? TypUn "->" TypNobin
+  FuncSortOpt __ ("<" __ ( TypBind ("," TypBind )* )? ">")? __ TypUn __ "->" TypNobin
 
 Typ
   TypNobin
@@ -105,7 +114,7 @@ Escape
   [nrt\\'"]
 
 # https://github.com/dfinity/motoko/blob/master/doc/modules/language-guide/pages/language-manual.adoc#characters
-Char
+Character
   [^"\\\x00-\x1f\x7f-\xff]
   Utf8Enc
   "\\" Escape
@@ -115,6 +124,9 @@ Char
 # https://github.com/dfinity/motoko/blob/master/doc/modules/language-guide/pages/language-manual.adoc#text
 Text
   "\"" Character* "\""
+
+Char
+  "'" Character "'"
 
 # https://github.com/dfinity/motoko/blob/master/doc/modules/language-guide/pages/language-manual.adoc#identifiers
 Id
@@ -232,7 +244,7 @@ ExpPost
   ExpPost "." Nat
   ExpPost "." Id
   ExpPost ("<" ( Typ ("," Typ)* )? ">")? ExpNullary
-  ExpPost BANG
+  ExpPost "!"
 
 ExpUn
   ExpPost
@@ -307,7 +319,7 @@ ExpField
   "var"? Id (":" Typ)? "=" Exp
 
 DecField
-  Vis Stab Dec
+  Vis __ Stab __ Dec
 
 Vis
   "private"
@@ -351,14 +363,14 @@ PatField
   Id (":" Typ)? "=" Pat
 
 DecVar
-  "var" Id (":" Typ)? "=" Exp
+  "var" __ Id __ (":" Typ)? __ "=" __ Exp
 
 DecNonvar
-  "let" Pat "=" Exp
-  "type" Id ("<" ( TypBind ( "," TypBind )* )? ">")? "=" Typ
-  ObjSort Id? "="? ObjBody
-  SharedPatOpt "func" Id? ("<" ( TypBind ("," TypBind )* )? ">")? PatPlain (":" Typ)? FuncBody
-  SharedPatOpt ObjSort? "class" Id? ("<" ( TypBind ("," TypBind )* )? ">")? PatPlain (":" Typ)? ClassBody
+  "let" __ Pat __ "=" __ Exp
+  "type" __ Id __ ("<" ( TypBind ( "," TypBind )* )? ">")? "=" Typ
+  ObjSort __ Id? __ "="? __ ObjBody
+  SharedPatOpt __ "func" __ Id? __ ("<" ( TypBind ("," TypBind )* )? ">")? __ PatPlain __ (":" Typ)? __ FuncBody
+  SharedPatOpt __ ObjSort? __ "class" __ Id? __ ("<" ( TypBind ("," TypBind )* )? ">")? __ PatPlain __ (":" Typ)? __ ClassBody
 
 Dec
   DecVar
@@ -370,14 +382,15 @@ FuncBody
   Block
 
 ObjBody
-  "{" ( DecField (";" DecField )* )? "}"
+  "{" __ ( DecField __ (";" __ DecField __ )* ";"? __ )? __ "}" __
 
 ClassBody
   "=" Id? ObjBody
   ObjBody
 
 Imp
-  "import" PatNullary "="? Text
+  "import" __ PatNullary __ "="? __ Text __
 
-Prog
-  ( Imp ( ";" Imp )* )? ( Dec ( ";" Dec )* )?
+# Any whitespace including newlines
+__
+  [\s]*
