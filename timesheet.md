@@ -14,3 +14,7 @@
 2022-06-14
 
   2.0   | 3pm  - 5pm    | Learning Motoko, Indented Arrays parsing test
+
+2022-06-20
+
+  2.25  | 10:45am - 1pm | Motoko Grammar, Function Application experiment, indentation tracking
