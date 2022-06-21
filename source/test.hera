@@ -3,63 +3,60 @@
 File
   Init Line* -> $2
 
-Init
-  "" ->
-    global.currentIndent = 0
-    global.indentLevels = []
-
-PushIndent
-  "" ->
-    // console.log("pushing indent", global.currentIndent)
-    global.indentLevels.push(global.currentIndent)
-
-PopIndent
-  "" ->
-    global.indentLevels.pop()
-
 Line
   Expression EOS -> $1
 
 Indent
   ( "  " / "\t" )* ->
+    if (global.verbose) {
+      console.log("setting global indent", $1.length)
+    }
     return global.currentIndent = $1.length
 
 Id
   [a-z]+
 
 Application
-  Id _+ Expression _* ListPart* ->
-    return {
-      type: "application",
-      fn: $1,
-      arguments: [$3, ...$5],
-    }
   Id "(" _* ")" ->
     return {type: "application", fn: $1, arguments: []}
+
   Id "(" _* Expression ")" ->
     return {
       type: "application",
       fn: $1,
       arguments: [$4],
     }
+
   Id "(" _* Expression _* ListPart* ")" ->
     return {
       type: "application",
       fn: $1,
       arguments: [$4, ...$6],
     }
-  # TODO: Indented function application
-  # Id EOS IndentedPart+ ->
-  #   return {
-  #     type: "application",
-  #     fn: $1,
-  #     arguments: $3,
-  #   }
+
+  Id _+ Expression _* ListPart* ->
+    return {
+      type: "application",
+      fn: $1,
+      arguments: [$3, ...$5],
+    }
+
+  Id EOS NestedExpressions ->
+    // Need to skip because we should backtrack to the Id and not consume EOS if there were
+    // no nested expressions
+    if($3.length === 0) return $skip
+
+    return {
+      type: "application",
+      fn: $1,
+      arguments: $3,
+    }
+
+  Id
 
 Expression
   Application
   Bracket
-  Id
 
 LineBody
   Expression
@@ -76,7 +73,7 @@ Bracket
     return [ $3 ]
   "[" _* Expression _* ListPart* "]" ->
     return [ $3 ].concat($5)
-  "[" NestedExpressions _* "]" -> $2
+  "[" EOS NestedExpressions _* "]" -> $3
 
 ListPart
   "," _* Expression _* -> $3
@@ -84,7 +81,14 @@ ListPart
 Nested
   Indent ->
     const prevIndent = global.indentLevels[global.indentLevels.length-1]
+    if (global.verbose) {
+      console.log("global indent", global.currentIndent)
+      console.log("Indented", $1, prevIndent)
+    }
     if ($1 !== prevIndent + 1) {
+      if (global.verbose) {
+        console.log("skipped nested")
+      }
       return $skip
     }
     return $1
@@ -94,21 +98,47 @@ IndentedPart
     return $2
 
 NestedExpressions
-  EOS PushIndent IndentedPart* PopIndent -> $3
+  PushIndent IndentedPart* PopIndent -> $2
 
 # Non-newline whitespace
 _
   /[ \t]+/
 
+# End of statemnt
 EOS
   (_? EOL)+ _ EOF
   (_? EOL)+
   EOF
 
+# End of line
 EOL
   "\r\n"
   "\n"
   "\r"
 
+# End of file
 EOF
   !/[\s\S]/
+
+
+# Indentation management
+
+Init
+  "" ->
+    global.currentIndent = 0
+    global.indentLevels = []
+    global.verbose = false
+
+PushIndent
+  "" ->
+    if (global.verbose) {
+      console.log("pushing indent", global.currentIndent)
+    }
+    global.indentLevels.push(global.currentIndent)
+
+PopIndent
+  "" ->
+    if (global.verbose) {
+      console.log("popping indent")
+    }
+    global.indentLevels.pop()

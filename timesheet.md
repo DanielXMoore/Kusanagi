@@ -18,3 +18,7 @@
 2022-06-20
 
   2.25  | 10:45am - 1pm | Motoko Grammar, Function Application experiment, indentation tracking
+
+2022-06-21
+
+  3.25  | 10am - 1:15pm | Indented arrays and function application, Meeting with Austin

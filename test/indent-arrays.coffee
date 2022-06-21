@@ -94,3 +94,36 @@ describe "function application", ->
         fn: "b"
         arguments: ["c"]
       }]
+
+  it "applies with nested indentation", ->
+    result = parser.parse """
+      a
+        b
+          c
+    """
+
+    assert.deepEqual result[0],
+      type: "application"
+      fn: "a"
+      arguments: [{
+        type: "application"
+        fn: "b"
+        arguments: ["c"]
+      }]
+
+  it "applies with nested indentation and arrays", ->
+    result = parser.parse """
+      a
+        b [
+          c
+        ]
+    """
+
+    assert.deepEqual result[0],
+      type: "application"
+      fn: "a"
+      arguments: [{
+        type: "application"
+        fn: "b"
+        arguments: [["c"]]
+      }]
