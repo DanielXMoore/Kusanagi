@@ -1,4 +1,4 @@
-parser = require "../source/test"
+parser = require "../source/experiments"
 
 {writeFileSync} = require "fs"
 

@@ -61,11 +61,6 @@ Expression
 LineBody
   Expression
 
-Indented
-  #TODO: one further than current indent
-  "" ->
-    throw new Error("TODO")
-
 Bracket
   "[" _* "]" ->
     return []
