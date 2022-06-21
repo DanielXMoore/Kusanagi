@@ -10,6 +10,7 @@ Init
 
 PushIndent
   "" ->
+    // console.log("pushing indent", global.currentIndent)
     global.indentLevels.push(global.currentIndent)
 
 PopIndent
@@ -17,7 +18,7 @@ PopIndent
     global.indentLevels.pop()
 
 Line
-  Indent PushIndent LineBody PopIndent EOS -> $3
+  Expression EOS -> $1
 
 Indent
   ( "  " / "\t" )* ->
@@ -75,22 +76,33 @@ Bracket
     return [ $3 ]
   "[" _* Expression _* ListPart* "]" ->
     return [ $3 ].concat($5)
-  # Single indent at first postion
-  "[" EOS IndentedPart* _* "]" -> $3
+  "[" NestedExpressions _* "]" -> $2
 
 ListPart
   "," _* Expression _* -> $3
 
+Nested
+  Indent ->
+    const prevIndent = global.indentLevels[global.indentLevels.length-1]
+    if ($1 !== prevIndent + 1) {
+      return $skip
+    }
+    return $1
+
 IndentedPart
-  Indent Expression EOS ->
+  Nested Expression EOS ->
     return $2
+
+NestedExpressions
+  EOS PushIndent IndentedPart* PopIndent -> $3
 
 # Non-newline whitespace
 _
   /[ \t]+/
 
 EOS
-  (_? EOL)
+  (_? EOL)+ _ EOF
+  (_? EOL)+
   EOF
 
 EOL

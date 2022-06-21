@@ -1,4 +1,4 @@
-#!/bin/env coffee
+#!./node_modules/.bin/coffee
 
 require "@danielx/hera/register"
 

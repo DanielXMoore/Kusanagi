@@ -36,12 +36,10 @@ describe 'Arrays', ->
     result = parser.parse """
       [
         a
-        b
-        c
       ]
     """
 
-    assert.deepEqual result, [["a", "b", "c"]]
+    assert.deepEqual result[0], ["a"]
 
   it "should handle indented expressions", ->
     result = parser.parse """
@@ -53,6 +51,24 @@ describe 'Arrays', ->
     """
 
     assert.deepEqual result[0], ["a", ["b", [], ["d"]], "c"]
+
+  it "should handle multiple indented nestings", ->
+    result = parser.parse """
+      [
+
+        [
+          [
+
+            a
+            b
+          ]
+
+
+        ]
+      ]
+    """
+
+    assert.deepEqual result[0], [[["a", "b"]]]
 
 describe "function application", ->
   it "applies functions with spaces", ->
