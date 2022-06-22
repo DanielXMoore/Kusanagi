@@ -2,6 +2,24 @@ parser = require "../source/grammar"
 
 {readFileSync} = require "fs"
 
-describe.skip "Motoko Grammar", ->
-  it "should parse .mo files", ->
+describe "Motoko Grammar", ->
+  it.skip "should parse .mo files", ->
     assert parser.parse readFileSync("./test/examples/Alarm.mo", "utf8")
+
+  it.only "should parse imports", ->
+    result = parser.parse """
+      import Debug "mo:base/Debug";
+
+      actor Alarm {
+        let n = 5;
+        var count = 0;
+
+        public shared func ring() : async () {
+          Debug.print("Ring!");
+        };
+      }
+    """
+
+    assert.deepEqual result.imports, [
+      ["mo:base/Debug", "Debug"]
+    ]

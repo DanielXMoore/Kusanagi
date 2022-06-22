@@ -1,13 +1,25 @@
 ## Currently adapting from Grammar.txt
 
 Prog
-  Imports Declarations
+  Imports __ Declarations ->
+    return {
+      imports: $1,
+      declarations: $3,
+    }
 
 Imports
-  ( Imp ( ";" Imp )* ";"? )? __
+  Imp ( ";" Imp )* ";"? ->
+    return [$1].concat($2.map(([_, imp]) => imp))
+  "" ->
+    return []
+
+Imp
+  "import" __ PatNullary __ "="? __ Text __ -> [$7, $3]
 
 Declarations
-  ( Dec ( ";" Dec )* )?
+  Dec ( ";" Dec )*
+  "" ->
+    return []
 
 Empty
   __
@@ -24,6 +36,7 @@ FuncSortOpt
   Empty
 
 SharedPatOpt
+  # TODO: I don't understand PatPlain here
   "shared" __ "query"? __ PatPlain?
   "query" __ PatPlain?
   Empty
@@ -49,9 +62,10 @@ TypUn
   "?" TypUn
 
 TypPre
-  TypUn
+  # TODO: async async isn't actually allowed, clean up this recursion
   "async" __ TypPre
   ObjSort __ TypObj
+  TypUn
 
 TypNobin
   TypPre
@@ -59,8 +73,9 @@ TypNobin
 
 Typ
   TypNobin
-  Typ "and" Typ
-  Typ "or" Typ
+  # TODO: Eliminate left recursion
+  # Typ "and" Typ
+  # Typ "or" Typ
 
 TypItem
   Id ":" Typ
@@ -71,7 +86,7 @@ TypArgs
 
 TypField
   "var"? Id ":" Typ
-  Id ("<" ( TypBind ("," TypBind )* )? ">")? TypNullary ":" Typ
+  Id Typing TypNullary ":" Typ
 
 TypTag
   "#" Id (":" Typ)?
@@ -123,14 +138,23 @@ Character
 
 # https://github.com/dfinity/motoko/blob/master/doc/modules/language-guide/pages/language-manual.adoc#text
 Text
-  "\"" Character* "\""
+  "\"" $(Character*) "\"" -> $2
 
 Char
-  "'" Character "'"
+  "'" Character "'" -> $2
 
 # https://github.com/dfinity/motoko/blob/master/doc/modules/language-guide/pages/language-manual.adoc#identifiers
 Id
-  [a-zA-Z][a-zA-Z0-9_]*
+  /[a-zA-Z][a-zA-Z0-9_]*/ ->
+    const id = $0
+    if (["actor", "and", "assert", "await", "break", "case", "catch", "class", "continue", "debug", "debug_show", "do", "else", "flexible", "false", "for", "func", "if", "ignore", "in", "import", "not", "null", "object", "or", "label", "let", "loop", "private", "public", "query", "return", "shared", "stable", "system", "switch", "true", "try", "type", "var", "while"].includes(id)) {
+      console.log("skipping reserved word", id)
+      return $skip
+    }
+
+    console.log("Id", id)
+
+    return id
 
 Digit
   [0-9]
@@ -146,8 +170,8 @@ HexNumber
 
 # https://github.com/dfinity/motoko/blob/master/doc/modules/language-guide/pages/language-manual.adoc#integers
 Nat
-  Number
   "0x" HexNumber
+  Number
 
 # https://github.com/dfinity/motoko/blob/master/doc/modules/language-guide/pages/language-manual.adoc#floats
 Float
@@ -236,15 +260,19 @@ ExpNullary
   ExpPlain
   Id
 
-# TODO: Eliminate left recursion
 ExpPost
+  # TODO: temporary for testing until left recursion is properly rewritten
+  ExpNullary "." Id ExpNullary
+  # ExpNullary ( "<" ( Typ ("," Typ)* )? ">" )? __ ExpNullary
   ExpNullary
   "[" "var"? ( ExpNonvar ( "," ExpNonvar )* )? "]"
-  ExpPost "[" Exp "]"
-  ExpPost "." Nat
-  ExpPost "." Id
-  ExpPost ("<" ( Typ ("," Typ)* )? ">")? ExpNullary
-  ExpPost "!"
+  # TODO: Eliminate left recursion
+  # ExpPost "[" Exp "]"
+  # ExpPost "." Nat
+  # ExpPost "." Id
+  # NOTE: This is the construct for function application
+  # ExpPost ( "<" ( Typ ("," Typ)* )? ">" )? ExpNullary
+  # ExpPost "!"
 
 ExpUn
   ExpPost
@@ -259,19 +287,16 @@ ExpUn
   "to_candid" "(" ( Exp ( "," Exp )* )? ")"
   "from_candid" ExpUn
 
-# TODO: Eliminate left recursion
 ExpBin
   ExpUn
-  ExpBin Binop ExpBin
-  ExpBin Relop ExpBin
-  ExpBin "and" ExpBin
-  ExpBin "or" ExpBin
-  ExpBin ":" TypNobin
+  # TODO: Eliminate left recursion
+  # ExpBin Binop ExpBin
+  # ExpBin Relop ExpBin
+  # ExpBin "and" ExpBin
+  # ExpBin "or" ExpBin
+  # ExpBin ":" TypNobin
 
 ExpNondec
-  ExpBin
-  ExpBin ":=" Exp
-  ExpBin Binassign Exp
   "return" Exp?
   "async" ExpNest
   "await" ExpNest
@@ -292,6 +317,9 @@ ExpNondec
   "ignore" ExpNest
   "do" Block
   "do" "?" Block
+  ExpBin ":=" Exp
+  ExpBin Binassign Exp
+  ExpBin
 
 ExpNonvar
   ExpNondec
@@ -306,7 +334,7 @@ ExpNest
   Exp
 
 Block
-  "{" ( Dec (";" Dec )* )? "}"
+  "{" __ ( Dec (";" __ Dec )* __ ";"? )? __ "}"
 
 Case
   "case" PatNullary ExpNest
@@ -333,10 +361,12 @@ Stab
   Empty
 
 PatPlain
+  "(" ( PatBin ("," PatBin )* )? ")" ->
+    console.log("PatPlain", $0)
+    return $0
   "_"
-  Id
   Lit
-  "(" ( PatBin ("," PatBin )* )? ")"
+  Id
 
 PatNullary
   PatPlain
@@ -349,11 +379,11 @@ PatUn
   "?" PatUn
   Unop Lit
 
-# TODO: Eliminate left recursion
 PatBin
   PatUn
-  PatBin "or" PatBin
-  PatBin ":" Typ
+  # TODO: Eliminate left recursion
+  # PatBin "or" PatBin
+  # PatBin ":" Typ
 
 Pat
   PatBin
@@ -367,10 +397,13 @@ DecVar
 
 DecNonvar
   "let" __ Pat __ "=" __ Exp
-  "type" __ Id __ ("<" ( TypBind ( "," TypBind )* )? ">")? "=" Typ
+  "type" __ Id __ ("<" ( TypBind ( "," TypBind )* )? ">")? __ "=" __ Typ
   ObjSort __ Id? __ "="? __ ObjBody
-  SharedPatOpt __ "func" __ Id? __ ("<" ( TypBind ("," TypBind )* )? ">")? __ PatPlain __ (":" Typ)? __ FuncBody
-  SharedPatOpt __ ObjSort? __ "class" __ Id? __ ("<" ( TypBind ("," TypBind )* )? ">")? __ PatPlain __ (":" Typ)? __ ClassBody
+  SharedPatOpt __ "func" __ Id? __ Typing? __ PatPlain __ (":" __ Typ)? __ FuncBody
+  SharedPatOpt __ ObjSort? __ "class" __ Id? __ Typing? __ PatPlain __ (":" __ Typ)? __ ClassBody
+
+Typing
+  "<" ( TypBind ("," __ TypBind )* )? ">"
 
 Dec
   DecVar
@@ -388,8 +421,7 @@ ClassBody
   "=" Id? ObjBody
   ObjBody
 
-Imp
-  "import" __ PatNullary __ "="? __ Text __
+# TODO: Comments
 
 # Any whitespace including newlines
 __
