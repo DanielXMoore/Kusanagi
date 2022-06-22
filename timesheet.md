@@ -22,3 +22,7 @@
 2022-06-21
 
   3.25  | 10am - 1:15pm | Indented arrays and function application, Meeting with Austin
+
+2022-06-22
+
+  2.5   | 10am - 12:30pm| Reserved words, import parsing, continuing declaration parsing
