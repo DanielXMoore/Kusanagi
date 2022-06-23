@@ -293,35 +293,33 @@ ExpBin
   ExpUn ExpBinRest*
 
 ExpBinRest
-  Binop ExpBin
-  Relop ExpBin
-  "and" ExpBin
-  "or" ExpBin
-  ":" TypNobin
+  __ Binop __ ExpBin
+  __ Relop __ ExpBin
+  __ "and" __ ExpBin
+  __ "or"  __ ExpBin
+  __ ":"   __ TypNobin
 
 ExpNondec
-  "return" Exp?
-  "async" ExpNest
-  "await" ExpNest
-  "assert" ExpNest
-  "label" Id (":" Typ)? ExpNest
-  "break" Id ExpNullary?
-  "continue" Id
-  "debug" ExpNest
-  "if" ExpNullary ExpNest
-  "if" ExpNullary ExpNest "else" ExpNest
-  "try" ExpNest Catch
-  "throw" ExpNest
-  "switch" ExpNullary "{" ( Case (";" Case )* )? "}"
+  "return" __ Exp?
+  "async" __ ExpNest
+  "await" __ ExpNest
+  "assert" __ ExpNest
+  "label" __ Id (":" __ Typ)? __ ExpNest
+  "break" __ Id ExpNullary?
+  "continue" __ Id
+  "debug" __ ExpNest
+  "if" __ ExpNullary __ ExpNest ( __ "else" __ ExpNest )?
+  "try" __ ExpNest __ Catch
+  "throw" __ ExpNest
+  "switch" __ ExpNullary "{" ( Case (";" Case )* )? "}"
   "while" ExpNullary ExpNest
-  "loop" ExpNest
-  "loop" ExpNest "while" ExpNest
-  "for" "(" Pat "in" Exp ")" ExpNest
-  "ignore" ExpNest
-  "do" Block
-  "do" "?" Block
-  ExpBin ":=" Exp
-  ExpBin Binassign Exp
+  "loop" __ ExpNest ( __ "while" __ ExpNest )?
+  "for" __ "(" __ Pat __ "in" __ Exp __ ")" __ ExpNest
+  "ignore" __ ExpNest
+  "do" __ Block
+  "do" __ "?" __ Block
+  ExpBin __ ":=" __ Exp
+  ExpBin __ Binassign __ Exp
   ExpBin
 
 ExpNonvar

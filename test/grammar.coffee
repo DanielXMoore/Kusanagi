@@ -3,10 +3,10 @@ parser = require "../source/grammar"
 {readFileSync} = require "fs"
 
 describe "Motoko Grammar", ->
-  it.skip "should parse .mo files", ->
+  it "should parse .mo files", ->
     assert parser.parse readFileSync("./test/examples/Alarm.mo", "utf8")
 
-  it.only "should parse imports", ->
+  it "should parse imports", ->
     result = parser.parse """
       import Debug "mo:base/Debug";
 
