@@ -26,3 +26,7 @@
 2022-06-22
 
   2.5   | 10am - 12:30pm| Reserved words, import parsing, continuing declaration parsing
+
+2022-06-23
+
+  2.0   | 11:30am - 1:30| Comment handling, whitespace handling, parsing more complex .mo files, converted left recursion to iteration

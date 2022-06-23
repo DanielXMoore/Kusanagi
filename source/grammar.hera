@@ -8,8 +8,8 @@ Prog
     }
 
 Imports
-  Imp ( ";" Imp )* ";"? ->
-    return [$1].concat($2.map(([_, imp]) => imp))
+  Imp ( ";" __ Imp )* ";"? ->
+    return [$1].concat($2.map(([_1, _2, imp]) => imp))
   "" ->
     return []
 
@@ -42,7 +42,7 @@ SharedPatOpt
   Empty
 
 TypObj
-  "{" TypField (";" TypField )* "}"
+  "{" __ TypField __ ( ";" __ TypField __ )* ";"? __ "}"
   "{" Empty "}"
 
 TypVariant
@@ -52,7 +52,8 @@ TypVariant
 TypNullary
   "(" TypItem ("," TypItem )* ")"
   "(" Empty ")"
-  Id ("." Id)* TypArgs?
+  Id ("." Id)* TypArgs? ->
+    console.log("TypNullary", $1)
   "[" "var"? Typ "]"
   TypObj
   TypVariant
@@ -72,12 +73,12 @@ TypNobin
   FuncSortOpt __ ("<" __ ( TypBind ("," TypBind )* )? ">")? __ TypUn __ "->" TypNobin
 
 Typ
-  TypNobin TypRest*
+  TypNobin __ TypRest*
   # NOTE: Eliminated left recursion
 
 TypRest
-  "and" Typ
-  "or" Typ
+  "and" __ Typ
+  "or" __ Typ
 
 TypItem
   Id ":" Typ
@@ -87,8 +88,12 @@ TypArgs
   "<" ( Typ ("," Typ)* )? ">"
 
 TypField
-  "var"? Id ":" Typ
-  Id Typing TypNullary ":" Typ
+  "var"? Debug __ Id __ ":" __ Typ
+  Id Typing TypNullary __ ":" __ Typ
+
+Debug
+  "" ->
+    console.log("debug")
 
 TypTag
   "#" Id (":" Typ)?
@@ -150,12 +155,10 @@ Id
   /[a-zA-Z][a-zA-Z0-9_]*/ ->
     const id = $0
     if (["actor", "and", "assert", "await", "break", "case", "catch", "class", "continue", "debug", "debug_show", "do", "else", "flexible", "false", "for", "func", "if", "ignore", "in", "import", "not", "null", "object", "or", "label", "let", "loop", "private", "public", "query", "return", "shared", "stable", "system", "switch", "true", "try", "type", "var", "while"].includes(id)) {
-      console.log("skipping reserved word", id)
+      // console.log("skipping reserved word", id)
       return $skip
     }
-
-    console.log("Id", id)
-
+    // console.log("Id", id)
     return id
 
 Digit
@@ -363,7 +366,7 @@ Stab
 
 PatPlain
   "(" ( PatBin ("," PatBin )* )? ")" ->
-    console.log("PatPlain", $0)
+    // console.log("PatPlain", $0)
     return $0
   "_"
   Lit
@@ -424,8 +427,14 @@ ClassBody
   "=" Id? ObjBody
   ObjBody
 
-# TODO: Comments
+Comment
+  # Multiline comment
+  # TODO: handle nested comments
+  "/*" $((!"*/" [^])*) "*/"
 
-# Any whitespace including newlines
+  # Single line comment
+  /\/\/[^\r\n]*/
+
+# Any or no whitespace including newlines and comments
 __
-  [\s]*
+  ([\s]+ / Comment)*
