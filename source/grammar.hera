@@ -72,17 +72,19 @@ TypNobin
   FuncSortOpt __ ("<" __ ( TypBind ("," TypBind )* )? ">")? __ TypUn __ "->" TypNobin
 
 Typ
-  TypNobin
-  # TODO: Eliminate left recursion
-  # Typ "and" Typ
-  # Typ "or" Typ
+  TypNobin TypRest*
+  # NOTE: Eliminated left recursion
+
+TypRest
+  "and" Typ
+  "or" Typ
 
 TypItem
   Id ":" Typ
   Typ
 
 TypArgs
-  "<" Typ ("," Typ)* ">"
+  "<" ( Typ ("," Typ)* )? ">"
 
 TypField
   "var"? Id ":" Typ
@@ -261,18 +263,17 @@ ExpNullary
   Id
 
 ExpPost
-  # TODO: temporary for testing until left recursion is properly rewritten
-  ExpNullary "." Id ExpNullary
-  # ExpNullary ( "<" ( Typ ("," Typ)* )? ">" )? __ ExpNullary
-  ExpNullary
+  ExpNullary ExpPostRest*
   "[" "var"? ( ExpNonvar ( "," ExpNonvar )* )? "]"
-  # TODO: Eliminate left recursion
-  # ExpPost "[" Exp "]"
-  # ExpPost "." Nat
-  # ExpPost "." Id
+  # NOTE: Eliminated left recursion
+
+ExpPostRest
+  "[" Exp "]"
+  "." Nat
+  "." Id
   # NOTE: This is the construct for function application
-  # ExpPost ( "<" ( Typ ("," Typ)* )? ">" )? ExpNullary
-  # ExpPost "!"
+  TypArgs? ExpNullary
+  "!"
 
 ExpUn
   ExpPost
@@ -288,13 +289,15 @@ ExpUn
   "from_candid" ExpUn
 
 ExpBin
-  ExpUn
-  # TODO: Eliminate left recursion
-  # ExpBin Binop ExpBin
-  # ExpBin Relop ExpBin
-  # ExpBin "and" ExpBin
-  # ExpBin "or" ExpBin
-  # ExpBin ":" TypNobin
+  # NOTE: Eliminated left recursion
+  ExpUn ExpBinRest*
+
+ExpBinRest
+  Binop ExpBin
+  Relop ExpBin
+  "and" ExpBin
+  "or" ExpBin
+  ":" TypNobin
 
 ExpNondec
   "return" Exp?
@@ -380,10 +383,12 @@ PatUn
   Unop Lit
 
 PatBin
-  PatUn
-  # TODO: Eliminate left recursion
-  # PatBin "or" PatBin
-  # PatBin ":" Typ
+  PatUn PatBinRest*
+  # NOTE: Eliminated left recursion
+
+PatBinRest
+  "or" PatBin
+  ":" Typ
 
 Pat
   PatBin
