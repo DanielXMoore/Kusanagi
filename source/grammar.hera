@@ -17,7 +17,7 @@ Imp
   "import" __ PatNullary __ "="? __ Text __ -> [$7, $3]
 
 Declarations
-  Dec ( ";" Dec )*
+  Dec ( ";" Dec )* __ ";"? __
   "" ->
     return []
 
@@ -52,8 +52,7 @@ TypVariant
 TypNullary
   "(" TypItem ("," TypItem )* ")"
   "(" Empty ")"
-  Id ("." Id)* TypArgs? ->
-    console.log("TypNullary", $1)
+  Id ("." Id)* TypArgs?
   "[" "var"? Typ "]"
   TypObj
   TypVariant
@@ -70,7 +69,7 @@ TypPre
 
 TypNobin
   TypPre
-  FuncSortOpt __ ("<" __ ( TypBind ("," TypBind )* )? ">")? __ TypUn __ "->" TypNobin
+  FuncSortOpt __ ("<" __ ( TypBind ("," TypBind )* )? ">")? __ TypUn __ "->" __ TypNobin
 
 Typ
   TypNobin __ TypRest*
@@ -81,19 +80,15 @@ TypRest
   "or" __ Typ
 
 TypItem
-  Id ":" Typ
+  Id __ ":" __ Typ
   Typ
 
 TypArgs
-  "<" ( Typ ("," Typ)* )? ">"
+  "<" ( Typ ("," __ Typ)* )? ">"
 
 TypField
-  "var"? Debug __ Id __ ":" __ Typ
+  "var"? __ Id __ ":" __ Typ
   Id Typing TypNullary __ ":" __ Typ
-
-Debug
-  "" ->
-    console.log("debug")
 
 TypTag
   "#" Id (":" Typ)?
@@ -252,12 +247,12 @@ Binassign
   "@="
 
 ExpObj
-  "{" ExpField ( ";" ExpField )* "}"
+  "{" __ ExpField ( __ ";" __ ExpField )* __ "}"
   "{" Empty "}"
 
 ExpPlain
   Lit
-  "(" Exp ( "," Exp )* ")"
+  "(" __ Exp ( __ "," __ Exp )* __ ","? __ ")"
   "(" Empty ")"
 
 ExpNullary
@@ -275,7 +270,7 @@ ExpPostRest
   "." Nat
   "." Id
   # NOTE: This is the construct for function application
-  TypArgs? ExpNullary
+  TypArgs? __ ExpNullary
   "!"
 
 ExpUn
@@ -347,8 +342,7 @@ Catch
   "catch" PatNullary ExpNest
 
 ExpField
-  "var"? Id (":" Typ)?
-  "var"? Id (":" Typ)? "=" Exp
+  "var"? __ Id (__ ":" __ Typ)? (__ "=" __ Exp)?
 
 DecField
   Vis __ Stab __ Dec
@@ -365,7 +359,7 @@ Stab
   Empty
 
 PatPlain
-  "(" ( PatBin ("," PatBin )* )? ")" ->
+  "(" __ ( PatBin ( __ "," __ PatBin )* __ ","? __ )? ")" ->
     // console.log("PatPlain", $0)
     return $0
   "_"
@@ -388,22 +382,22 @@ PatBin
   # NOTE: Eliminated left recursion
 
 PatBinRest
-  "or" PatBin
-  ":" Typ
+  __ "or" __ PatBin
+  __ ":" __ Typ
 
 Pat
   PatBin
 
 PatField
-  Id (":" Typ)?
-  Id (":" Typ)? "=" Pat
+  Id (__ ":" __ Typ)?
+  Id (__ ":" __ Typ)? __ "=" __  Pat
 
 DecVar
-  "var" __ Id __ (":" Typ)? __ "=" __ Exp
+  "var" __ Id (__ ":" __ Typ)? __ "=" __ Exp
 
 DecNonvar
   "let" __ Pat __ "=" __ Exp
-  "type" __ Id __ ("<" ( TypBind ( "," TypBind )* )? ">")? __ "=" __ Typ
+  "type" __ Id __ ("<" ( TypBind ( "," __ TypBind )* )? ">")? __ "=" __ Typ
   ObjSort __ Id? __ "="? __ ObjBody
   SharedPatOpt __ "func" __ Id? __ Typing? __ PatPlain __ (":" __ Typ)? __ FuncBody
   SharedPatOpt __ ObjSort? __ "class" __ Id? __ Typing? __ PatPlain __ (":" __ Typ)? __ ClassBody
@@ -417,14 +411,14 @@ Dec
   ExpNondec
 
 FuncBody
-  "=" Exp
+  "=" __ Exp
   Block
 
 ObjBody
   "{" __ ( DecField __ (";" __ DecField __ )* ";"? __ )? __ "}" __
 
 ClassBody
-  "=" Id? ObjBody
+  "=" __ Id? __ ObjBody
   ObjBody
 
 Comment
