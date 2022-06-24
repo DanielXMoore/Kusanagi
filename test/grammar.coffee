@@ -8,10 +8,10 @@ describe "Motoko Grammar", ->
       assert parser.parse readFileSync("./test/examples/Alarm.mo", "utf8")
 
     it "Pub.mo", ->
-      assert parser.parse readFileSync("./test/examples/pub.mo", "utf8")
+      assert parser.parse readFileSync("./test/examples/Pub.mo", "utf8")
 
     it "Sub.mo", ->
-      assert parser.parse readFileSync("./test/examples/sub.mo", "utf8")
+      assert parser.parse readFileSync("./test/examples/Sub.mo", "utf8")
 
     it "Heros.mo", ->
       assert parser.parse readFileSync("./test/examples/heros.mo", "utf8")
