@@ -8,13 +8,13 @@ Prog
     }
 
 Imports
-  Imp ( ";" __ Imp )* ";"? ->
+  Imp ( ";" __ Imp )* __ ";"? ->
     return [$1].concat($2.map(([_1, _2, imp]) => imp))
   "" ->
     return []
 
 Imp
-  "import" __ PatNullary __ "="? __ Text __ -> [$7, $3]
+  "import" __ PatNullary:pat __ "="? __ Text:source __ -> [source, pat]
 
 Declarations
   Dec ( ";" Dec )* __ ";"? __
@@ -23,7 +23,6 @@ Declarations
 
 Empty
   __
-  ""
 
 ObjSort
   "object"
@@ -46,14 +45,14 @@ TypObj
   "{" Empty "}"
 
 TypVariant
-  "{" "#" "}"
-  "{" TypTag (";" TypTag )* "}"
+  "{" __ "#" __ "}"
+  "{" __ TypTag ( __ ";" __ TypTag )* __ ";"? __ "}"
 
 TypNullary
-  "(" TypItem ("," TypItem )* ")"
+  "(" __ TypItem ( __ "," __ TypItem )* __ ")"
   "(" Empty ")"
   Id ("." Id)* TypArgs?
-  "[" "var"? Typ "]"
+  "[" __ "var"? __ Typ __ "]"
   TypObj
   TypVariant
 
@@ -68,8 +67,8 @@ TypPre
   TypUn
 
 TypNobin
-  TypPre
   FuncSortOpt __ ("<" __ ( TypBind ("," TypBind )* )? ">")? __ TypUn __ "->" __ TypNobin
+  TypPre
 
 Typ
   TypNobin __ TypRest*
@@ -91,10 +90,10 @@ TypField
   Id Typing TypNullary __ ":" __ Typ
 
 TypTag
-  "#" Id (":" Typ)?
+  "#" Id __ (":" __ Typ)?
 
 TypBind
-  Id "<:" Typ
+  Id __ "<:" __ Typ
   Id
 
 Bool
@@ -208,17 +207,21 @@ Binop
   "|"
   "^"
   "<<"
-  " >>"
+  ">>" # NOTE: removed leading whitespace
   "<<>"
   "<>>"
   "#"
 
+# https://github.com/dfinity/motoko/blob/master/doc/modules/language-guide/pages/language-manual.adoc#relational-operators
+# NOTE: removed surrounding whitespace from angle brackets since PEG doesn't have a separate tokenization phase and has more
+# context for the operator. May need to add it back later to be strictly match the spec. Can likely use a RegExp lookahead
+# assertion for the whitespace matching in ExpBinRest if necessary.
 Relop
   "=="
   "!="
-  " < "
+  "<" # NOTE: removed surrounding whitespace
   "<="
-  " > "
+  ">" # NOTE: removed surrounding whitespace
   ">="
 
 Unassign
@@ -226,6 +229,7 @@ Unassign
   "-="
   "^="
 
+# https://github.com/dfinity/motoko/blob/master/doc/modules/language-guide/pages/language-manual.adoc#assignment-operators
 Binassign
   "+="
   "-="
@@ -245,9 +249,10 @@ Binassign
   "<<>="
   "<>>="
   "@="
+  "#=" # NOTE: Added
 
 ExpObj
-  "{" __ ExpField ( __ ";" __ ExpField )* __ "}"
+  "{" __ ExpField ( __ ";" __ ExpField )* __ ";"? __ "}"
   "{" Empty "}"
 
 ExpPlain
@@ -275,8 +280,8 @@ ExpPostRest
 
 ExpUn
   ExpPost
-  "#" Id
-  "#" Id ExpNullary
+  # NOTE: Combined and added `?` to prevent shadowing
+  "#" Id __ ExpNullary?
   "?" ExpUn
   Unop ExpUn
   Unassign ExpUn
@@ -389,8 +394,8 @@ Pat
   PatBin
 
 PatField
-  Id (__ ":" __ Typ)?
   Id (__ ":" __ Typ)? __ "=" __  Pat
+  Id (__ ":" __ Typ)?
 
 DecVar
   "var" __ Id (__ ":" __ Typ)? __ "=" __ Exp

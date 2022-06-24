@@ -30,3 +30,7 @@
 2022-06-23
 
   2.0   | 11:30am - 1:30| Comment handling, whitespace handling, parsing more complex .mo files, converted left recursion to iteration
+
+2022-06-24
+
+  2.0   | 11am - 1:00   | Parsing more example .mo files

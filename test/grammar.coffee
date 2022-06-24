@@ -3,14 +3,27 @@ parser = require "../source/grammar"
 {readFileSync} = require "fs"
 
 describe "Motoko Grammar", ->
-  it "should parse simple .mo files", ->
-    assert parser.parse readFileSync("./test/examples/Alarm.mo", "utf8")
+  describe "examples", ->
+    it "Alarm.mo", ->
+      assert parser.parse readFileSync("./test/examples/Alarm.mo", "utf8")
 
-  it "should parse Pub.mo example", ->
-    assert parser.parse readFileSync("./test/examples/pub.mo", "utf8")
+    it "Pub.mo", ->
+      assert parser.parse readFileSync("./test/examples/pub.mo", "utf8")
 
-  it "should parse more complex .mo files", ->
-    assert parser.parse readFileSync("./test/examples/heros.mo", "utf8")
+    it "Sub.mo", ->
+      assert parser.parse readFileSync("./test/examples/sub.mo", "utf8")
+
+    it "Heros.mo", ->
+      assert parser.parse readFileSync("./test/examples/heros.mo", "utf8")
+
+    it "life/Grid.mo", ->
+      assert parser.parse readFileSync("./test/examples/life/Grid.mo", "utf8")
+
+    it "life/Random.mo", ->
+      assert parser.parse readFileSync("./test/examples/life/Random.mo", "utf8")
+
+    it "life/State.mo", ->
+      assert parser.parse readFileSync("./test/examples/life/State.mo", "utf8")
 
   it "should parse imports", ->
     result = parser.parse """
