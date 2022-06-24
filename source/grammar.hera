@@ -1,10 +1,10 @@
 ## Currently adapting from Grammar.txt
 
 Prog
-  Imports __ Declarations ->
+  __ Imports:imps __ Declarations:decs ->
     return {
-      imports: $1,
-      declarations: $3,
+      imports: imps,
+      declarations: decs,
     }
 
 Imports

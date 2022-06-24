@@ -6,6 +6,9 @@ describe "Motoko Grammar", ->
   it "should parse simple .mo files", ->
     assert parser.parse readFileSync("./test/examples/Alarm.mo", "utf8")
 
+  it "should parse Pub.mo example", ->
+    assert parser.parse readFileSync("./test/examples/pub.mo", "utf8")
+
   it "should parse more complex .mo files", ->
     assert parser.parse readFileSync("./test/examples/heros.mo", "utf8")
 
