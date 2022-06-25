@@ -34,3 +34,7 @@
 2022-06-24
 
   2.0   | 11am - 1:00   | Parsing more example .mo files
+
+2022-06-25
+
+  2.0   | 10am - 12pm   | Gathering parsed tokens, refactoring iterations
