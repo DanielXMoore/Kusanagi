@@ -17,7 +17,8 @@ Imp
   "import" __ PatNullary:pat __ "="? __ Text:source __ -> [source, pat]
 
 Declarations
-  Dec ( ";" Dec )* __ ";"? __
+  Dec ( ";" Dec )* __ ";"? __ ->
+    return [$1].concat($2.map(([_1, _2, dec]) => dec))
   "" ->
     return []
 
@@ -61,10 +62,14 @@ TypUn
   "?" TypUn
 
 TypPre
-  # TODO: async async isn't actually allowed, clean up this recursion
-  "async" __ TypPre
-  ObjSort __ TypObj
-  TypUn
+  # NOTE: converted recursive "async" to optional
+  "async"? __ ObjSort:type __ TypObj:body ->
+    return {
+      async: !!$1,
+      type,
+      body,
+    }
+  "async"? __ TypUn
 
 TypNobin
   FuncSortOpt __ ("<" __ ( TypBind ("," TypBind )* )? ">")? __ TypUn __ "->" __ TypNobin
@@ -179,6 +184,7 @@ Float
   "0x" HexNumber "." HexNumber?
   "0x" HexNumber ( "." HexNumber? )? [pP] [-+]? Number
 
+# https://github.com/dfinity/motoko/blob/master/doc/modules/language-guide/pages/language-manual.adoc#literals
 Lit
   "null"
   Bool
@@ -187,11 +193,14 @@ Lit
   Char
   Text
 
+# https://github.com/dfinity/motoko/blob/master/doc/modules/language-guide/pages/language-manual.adoc#unary-operators
 Unop
   "+"
   "-"
   "^"
 
+# https://github.com/dfinity/motoko/blob/master/doc/modules/language-guide/pages/language-manual.adoc#numeric-binary-operators
+# https://github.com/dfinity/motoko/blob/master/doc/modules/language-guide/pages/language-manual.adoc#bitwise-and-wrapping-binary-operators
 Binop
   "+"
   "-"
@@ -210,6 +219,7 @@ Binop
   ">>" # NOTE: removed leading whitespace
   "<<>"
   "<>>"
+  # https://github.com/dfinity/motoko/blob/master/doc/modules/language-guide/pages/language-manual.adoc#text-operators
   "#"
 
 # https://github.com/dfinity/motoko/blob/master/doc/modules/language-guide/pages/language-manual.adoc#relational-operators
@@ -224,6 +234,7 @@ Relop
   ">" # NOTE: removed surrounding whitespace
   ">="
 
+# https://github.com/dfinity/motoko/blob/master/doc/modules/language-guide/pages/language-manual.adoc#assignment-operators
 Unassign
   "+="
   "-="
@@ -271,16 +282,24 @@ ExpPost
   # NOTE: Eliminated left recursion
 
 ExpPostRest
+  # Array Indexing
+  # https://github.com/dfinity/motoko/blob/master/doc/modules/language-guide/pages/language-manual.adoc#array-indexing
   "[" Exp "]"
+  # Tuple Projection
+  # https://github.com/dfinity/motoko/blob/master/doc/modules/language-guide/pages/language-manual.adoc#tuples
   "." Nat
+  # Object Projection (member access)
+  # https://github.com/dfinity/motoko/blob/master/doc/modules/language-guide/pages/language-manual.adoc#object-projection-member-access
   "." Id
-  # NOTE: This is the construct for function application
+  # Function application
   TypArgs? __ ExpNullary
   "!"
 
 ExpUn
   ExpPost
+  # Variant Pattern
   # NOTE: Combined and added `?` to prevent shadowing
+  # https://github.com/dfinity/motoko/blob/master/doc/modules/language-guide/pages/language-manual.adoc#variant-pattern
   "#" Id __ ExpNullary?
   "?" ExpUn
   Unop ExpUn
@@ -321,7 +340,7 @@ ExpNondec
   "ignore" __ ExpNest
   "do" __ Block
   "do" __ "?" __ Block
-  ExpBin __ ":=" __ Exp
+  ExpBin __ ":=" __ Exp # ?: This is separated from Binassign, should it be?
   ExpBin __ Binassign __ Exp
   ExpBin
 
@@ -330,15 +349,20 @@ ExpNonvar
   DecNonvar
 
 Exp
-  ExpNonvar
-  DecVar
+  # TODO: Just returning strings of the expressions for now
+  $(ExpNonvar)
+  $(DecVar)
 
 ExpNest
   Block
   Exp
 
 Block
-  "{" __ ( Dec (";" __ Dec )* __ ";"? )? __ "}"
+  "{" __ BlockDeclaration*:decs "}" -> decs
+
+# NOTE: Extracted block declaration with optional trailing semi-colon when object closes to make field iteration easier in Block
+BlockDeclaration
+  Dec:dec __ ( ";" / (__ &"}") ) __ -> dec
 
 Case
   "case" PatNullary ExpNest
@@ -350,7 +374,8 @@ ExpField
   "var"? __ Id (__ ":" __ Typ)? (__ "=" __ Exp)?
 
 DecField
-  Vis __ Stab __ Dec
+  Vis:vis __ Stab:stab __ Dec:dec ->
+    return { vis, stab, dec }
 
 Vis
   "private"
@@ -398,12 +423,19 @@ PatField
   Id (__ ":" __ Typ)?
 
 DecVar
-  "var" __ Id (__ ":" __ Typ)? __ "=" __ Exp
+  "var" __ Id:id (__ ":" __ Typ)? __ "=" __ Exp:exp ->
+    return { type: "var", id, exp, }
 
 DecNonvar
-  "let" __ Pat __ "=" __ Exp
+  "let" __ Pat:pat __ "=" __ Exp:exp ->
+    return { type: "let", pat, exp}
   "type" __ Id __ ("<" ( TypBind ( "," __ TypBind )* )? ">")? __ "=" __ Typ
-  ObjSort __ Id? __ "="? __ ObjBody
+  ObjSort:type __ Id?:id __ "="? __ ObjBody:body ->
+    return {
+      id,
+      type,
+      body,
+    }
   SharedPatOpt __ "func" __ Id? __ Typing? __ PatPlain __ (":" __ Typ)? __ FuncBody
   SharedPatOpt __ ObjSort? __ "class" __ Id? __ Typing? __ PatPlain __ (":" __ Typ)? __ ClassBody
 
@@ -420,7 +452,11 @@ FuncBody
   Block
 
 ObjBody
-  "{" __ ( DecField __ (";" __ DecField __ )* ";"? __ )? __ "}" __
+  "{" __ ObjBodyField*:fields "}" __ -> fields
+
+# NOTE: Extracted dec-field with optional trailing semi-colon when object closes to make field iteration easier in ObjBody
+ObjBodyField
+  DecField:field __ ( ";" / (__ &"}") ) __ -> field
 
 ClassBody
   "=" __ Id? __ ObjBody
