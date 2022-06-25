@@ -23,7 +23,8 @@ Declarations
     return []
 
 Empty
-  __
+  __ ->
+    return ""
 
 ObjSort
   "object"
@@ -36,7 +37,6 @@ FuncSortOpt
   Empty
 
 SharedPatOpt
-  # TODO: I don't understand PatPlain here
   "shared" __ "query"? __ PatPlain?
   "query" __ PatPlain?
   Empty
@@ -322,7 +322,8 @@ ExpBinRest
   __ ":"   __ TypNobin
 
 ExpNondec
-  "return" __ Exp?
+  "return" __ Exp?:exp ->
+    return {type: "return", exp}
   "async" __ ExpNest
   "await" __ ExpNest
   "assert" __ ExpNest
@@ -389,15 +390,18 @@ Stab
   Empty
 
 PatPlain
-  "(" __ ( PatBin ( __ "," __ PatBin )* __ ","? __ )? ")" ->
-    // console.log("PatPlain", $0)
-    return $0
+  "(" __ PatPlainPart*:parts ")" -> parts
   "_"
   Lit
   Id
 
+# NOTE: Extracted PatPlainPart with optional trailing comma before close parenthesis
+PatPlainPart
+  PatBin:pat __ ( "," / (__ &")") ) __ -> pat
+
 PatNullary
-  PatPlain
+  # TODO: String value of parsed pattern for now
+  $(PatPlain)
   "{" ( PatField (";" PatField )* )? "}"
 
 PatUn
@@ -408,7 +412,13 @@ PatUn
   Unop Lit
 
 PatBin
-  PatUn PatBinRest*
+  PatUn:first PatBinRest*:rest ->
+    if (!rest.length) {
+      return first
+    } else {
+      // TODO: Think more about binary operation chains, this may be fine?
+      return rest.unshift(first)
+    }
   # NOTE: Eliminated left recursion
 
 PatBinRest
@@ -431,13 +441,13 @@ DecNonvar
     return { type: "let", pat, exp}
   "type" __ Id __ ("<" ( TypBind ( "," __ TypBind )* )? ">")? __ "=" __ Typ
   ObjSort:type __ Id?:id __ "="? __ ObjBody:body ->
-    return {
-      id,
-      type,
-      body,
-    }
-  SharedPatOpt __ "func" __ Id? __ Typing? __ PatPlain __ (":" __ Typ)? __ FuncBody
-  SharedPatOpt __ ObjSort? __ "class" __ Id? __ Typing? __ PatPlain __ (":" __ Typ)? __ ClassBody
+    return { id, type, body }
+  SharedPatOpt:shared __ "func" __ Id?:id __ Typing? __ PatPlain:pat __ (":" __ Typ)? __ FuncBody:body ->
+    // TODO: Typing, Typ
+    return { type: "func", shared, id, pat, body}
+  SharedPatOpt:shared __ ObjSort?:sort __ "class" __ Id?:id __ Typing? __ PatPlain:pat __ (":" __ Typ)? __ ClassBody:body ->
+    // TODO: Typing, Typ
+    return { type: "class", sort, shared, id, pat, body}
 
 Typing
   "<" ( TypBind ("," __ TypBind )* )? ">"
@@ -445,10 +455,11 @@ Typing
 Dec
   DecVar
   DecNonvar
-  ExpNondec
+  # TODO: Temporarily returning string value of entire parsed expression
+  $(ExpNondec)
 
 FuncBody
-  "=" __ Exp
+  "=" __ Exp:exp -> exp
   Block
 
 ObjBody

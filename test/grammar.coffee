@@ -28,9 +28,9 @@ describe "Motoko Grammar", ->
     it "life/main.mo", ->
       result = parser.parse readFileSync("./test/examples/life/main.mo", "utf8")
 
-      assert result
-
-      assert.deepEqual result.declarations[0].type, "actor"
+      assert.equal result.declarations[0].type, "actor"
+      assert.equal result.declarations[0].id, "Life"
+      assert.equal result.declarations[0].body.length, 5
 
   it "should parse imports", ->
     result = parser.parse """
