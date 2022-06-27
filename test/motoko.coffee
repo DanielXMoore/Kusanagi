@@ -1,4 +1,4 @@
-parser = require "../source/grammar"
+parser = require "../source/motoko"
 
 {readFileSync} = require "fs"
 
