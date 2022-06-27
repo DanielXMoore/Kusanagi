@@ -38,3 +38,7 @@
 2022-06-25
 
   2.0   | 10am - 12pm   | Gathering parsed tokens, refactoring iterations
+
+2022-06-27
+
+  1.5   | 2pm - 3:30pm  | Parsing more tokens, starting code generation

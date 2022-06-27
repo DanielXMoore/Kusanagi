@@ -167,10 +167,12 @@ HexDigit
   [0-9a-fA-F]
 
 Number
-  Digit ( "_" Digit )*
+  # NOTE: Keeping numbers as a text string exactly as written
+  $(Digit ( "_" Digit )*)
 
 HexNumber
-  HexDigit ( "_" HexDigit )*
+  # NOTE: Keeping numbers as a text string exactly as written
+  $(HexDigit ( "_" HexDigit )*)
 
 # https://github.com/dfinity/motoko/blob/master/doc/modules/language-guide/pages/language-manual.adoc#integers
 Nat
@@ -261,15 +263,22 @@ Binassign
   "<>>="
   "@="
   "#=" # NOTE: Added
+  ":=" # NOTE: Moved here from ExpNondec
 
 ExpObj
-  "{" __ ExpField ( __ ";" __ ExpField )* __ ";"? __ "}"
-  "{" Empty "}"
+  "{" __ ExpObjField*:fields "}" -> fields
+
+ExpObjField
+  # NOTE: Extracted field rule for easier iteration
+  ExpField:field __ ( ";" / (__ &"}") ) __ -> field
 
 ExpPlain
   Lit
-  "(" __ Exp ( __ "," __ Exp )* __ ","? __ ")"
-  "(" Empty ")"
+  # NOTE: Extracted expression part for easier iteration
+  "(" __ ExpPlainPart*:exps ")" -> { type: "parens", exps: exps }
+
+ExpPlainPart
+  Exp:exp __ ( "," / (__ &")") ) __ -> exp
 
 ExpNullary
   ExpObj
@@ -277,22 +286,49 @@ ExpNullary
   Id
 
 ExpPost
-  ExpNullary ExpPostRest*
+  ExpNullary:exp ExpPostRest*:rest ->
+    if (rest.length) {
+      return {
+        // TODO better naming
+        type: "exppost",
+        base: exp,
+        rest: rest,
+      }
+    } else {
+      return exp
+    }
   "[" "var"? ( ExpNonvar ( "," ExpNonvar )* )? "]"
   # NOTE: Eliminated left recursion
 
 ExpPostRest
   # Array Indexing
   # https://github.com/dfinity/motoko/blob/master/doc/modules/language-guide/pages/language-manual.adoc#array-indexing
-  "[" Exp "]"
+  "[" Exp:exp "]" ->
+    return {
+      type: "index",
+      exp,
+    }
   # Tuple Projection
   # https://github.com/dfinity/motoko/blob/master/doc/modules/language-guide/pages/language-manual.adoc#tuples
-  "." Nat
+  "." Nat:nat ->
+    return {
+      type: "projection",
+      id: nat
+    }
   # Object Projection (member access)
   # https://github.com/dfinity/motoko/blob/master/doc/modules/language-guide/pages/language-manual.adoc#object-projection-member-access
-  "." Id
+  "." Id:id ->
+    return {
+      type: "projection",
+      id,
+    }
   # Function application
-  TypArgs? __ ExpNullary
+  TypArgs?:typArgs __ ExpNullary:fnArgs ->
+    return {
+      type: "application",
+      typArgs,
+      fnArgs
+    }
   "!"
 
 ExpUn
@@ -312,37 +348,46 @@ ExpUn
 
 ExpBin
   # NOTE: Eliminated left recursion
-  ExpUn ExpBinRest*
+  ExpUn:exp ExpBinRest*:rest ->
+    if (rest.length) {
+      return {
+        type: "expbin",
+        exps: [exp].concat(...rest),
+      }
+    } else {
+      return exp
+    }
 
 ExpBinRest
-  __ Binop __ ExpBin
-  __ Relop __ ExpBin
-  __ "and" __ ExpBin
-  __ "or"  __ ExpBin
-  __ ":"   __ TypNobin
+  __ Binop __ ExpBin    -> [$2, $4]
+  __ Relop __ ExpBin    -> [$2, $4]
+  __ "and" __ ExpBin    -> [$2, $4]
+  __ "or"  __ ExpBin    -> [$2, $4]
+  __ ":"   __ TypNobin  -> [$2, $4]
 
 ExpNondec
   "return" __ Exp?:exp ->
     return {type: "return", exp}
-  "async" __ ExpNest
-  "await" __ ExpNest
-  "assert" __ ExpNest
-  "label" __ Id (":" __ Typ)? __ ExpNest
-  "break" __ Id ExpNullary?
-  "continue" __ Id
-  "debug" __ ExpNest
-  "if" __ ExpNullary __ ExpNest ( __ "else" __ ExpNest )?
-  "try" __ ExpNest __ Catch
-  "throw" __ ExpNest
-  "switch" __ ExpNullary "{" ( Case (";" Case )* )? "}"
-  "while" ExpNullary ExpNest
-  "loop" __ ExpNest ( __ "while" __ ExpNest )?
-  "for" __ "(" __ Pat __ "in" __ Exp __ ")" __ ExpNest
-  "ignore" __ ExpNest
-  "do" __ Block
-  "do" __ "?" __ Block
-  ExpBin __ ":=" __ Exp # ?: This is separated from Binassign, should it be?
-  ExpBin __ Binassign __ Exp
+  "async"    __ ExpNest:exp -> { type: "async",  exp: exp }
+  "await"    __ ExpNest:exp -> { type: "await",  exp: exp }
+  "assert"   __ ExpNest:exp -> { type: "assert", exp: exp }
+  # TODO: Typ for label
+  "label"    __ Id:id (":" __ Typ)? __ ExpNest:exp -> { type: "label", id: id, exp: exp }
+  "break"    __ Id:id ExpNullary?:exp -> { type: "break", id: id, exp: exp }
+  "continue" __ Id:id ->       { type: "continue", id: id }
+  "debug"    __ ExpNest:exp -> { type: "debug", exp: exp }
+  "if"       __ ExpNullary:condition __ ExpNest:exp ( __ "else" __ ExpNest )? -> { type: "if", condition: condition, exp: exp, else: "TODO" }
+  "try"      __ ExpNest:exp __ Catch:c -> { type: "try", exp: exp, catch: c }
+  "throw"    __ ExpNest:exp -> { type: "throw", exp: exp }
+  "switch"   __ ExpNullary:condition "{" ( Case (";" Case )* )? "}" -> { type: "switch", cases: "TODO" }
+  "while"    __ ExpNullary:condition ExpNest:exp -> { type: "while", condition: condition, exp: exp }
+  "loop"     __ ExpNest:exp ( __ "while" __ ExpNest )? -> { type: "loop", exp: exp, condition: "TODO" }
+  "for"      __ "(" __ Pat:pat __ "in" __ Exp:source __ ")" __ ExpNest:exp -> { type: "for", pat: pat, source: source, exp: exp }
+  "ignore"   __ ExpNest:exp -> { type: "ignore", exp: exp }
+  "do"       __ Block:block -> { type: "do", block: block }
+  "do" __ "?" __ Block ->      { type: "do", block: block, option: true }
+  # NOTE: Moved ":=" into Binassign
+  ExpBin:base __ Binassign:op __ Exp:exp -> { type: "binassign", base: base, op: op, exp: exp}
   ExpBin
 
 ExpNonvar
@@ -350,16 +395,15 @@ ExpNonvar
   DecNonvar
 
 Exp
-  # TODO: Just returning strings of the expressions for now
-  $(ExpNonvar)
-  $(DecVar)
+  ExpNonvar
+  DecVar
 
 ExpNest
   Block
   Exp
 
 Block
-  "{" __ BlockDeclaration*:decs "}" -> decs
+  "{" __ BlockDeclaration*:decs "}" -> { type: "block", decs: decs }
 
 # NOTE: Extracted block declaration with optional trailing semi-colon when object closes to make field iteration easier in Block
 BlockDeclaration
@@ -416,14 +460,13 @@ PatBin
     if (!rest.length) {
       return first
     } else {
-      // TODO: Think more about binary operation chains, this may be fine?
-      return rest.unshift(first)
+      return [first].concat(...rest)
     }
   # NOTE: Eliminated left recursion
 
 PatBinRest
-  __ "or" __ PatBin
-  __ ":" __ Typ
+  __ "or" __ PatBin -> [$2, $4]
+  __ ":"  __ Typ    -> [$2, $4]
 
 Pat
   PatBin
@@ -455,8 +498,7 @@ Typing
 Dec
   DecVar
   DecNonvar
-  # TODO: Temporarily returning string value of entire parsed expression
-  $(ExpNondec)
+  ExpNondec
 
 FuncBody
   "=" __ Exp:exp -> exp
