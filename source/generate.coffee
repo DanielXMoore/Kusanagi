@@ -74,9 +74,9 @@ generate = (node, indent="") ->
       "let #{generate(pat)} = #{generate(exp)}"
 
     when "var"
-      {id, exp} = node
+      {id, exp, typeSuffix} = node
 
-      "var #{id} = #{generate(exp)}"
+      "var #{id}#{typeSuffix} = #{generate(exp)}"
 
     when "exppost"
       {base, rest} = node
@@ -87,10 +87,15 @@ generate = (node, indent="") ->
       ".#{node.id}"
 
     when "application"
-      generate(node.fnArgs)
+      # TODO: TypArgs
+      {fnArgs} = node
+      if fnArgs.type is "parens"
+        generate(fnArgs)
+      else
+        " #{generate(fnArgs)}"
 
-    when "await"
-      "await #{generate(node.exp)}"
+    when "await", "return"
+      "#{node.type} #{generate(node.exp)}"
 
     when "expbin"
       {exps} = node
@@ -111,7 +116,12 @@ generate = (node, indent="") ->
     when "func"
       {id, pat, body, shared, typeSuffix} = node
 
-      ["#{shared}func", id, gen(pat), typeSuffix, gen(body)]
+      if pat.type is "parens"
+        pat = gen(pat)
+      else
+        pat = " #{gen(pat)}"
+
+      ["#{shared}func", id, pat, typeSuffix, gen(body)]
       .join(" ")
 
     when "if"
@@ -124,6 +134,10 @@ generate = (node, indent="") ->
     else
       "<UNKNOWN #{JSON.stringify(node)} >"
 
-ast = parse(fs.readFileSync("./test/examples/Alarm.mo", "utf8"))
-console.log(JSON.stringify(ast, null, 2))
-console.log(generate(ast))
+module.exports = generate
+
+# Main
+if !module.parent
+  ast = parse(fs.readFileSync("./test/examples/heros.mo", "utf8"))
+  console.log(JSON.stringify(ast, null, 2))
+  console.log(generate(ast))

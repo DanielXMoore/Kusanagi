@@ -38,7 +38,7 @@ FuncSortOpt
   Empty
 
 SharedPatOpt
-  "shared"? __ "query"? __ PatPlain? -> [$1, $3, $5]
+  "shared"? __ "query"? __ PatPlain?
 
 TypObj
   "{" __ TypField __ ( ";" __ TypField __ )* ";"? __ "}"
@@ -265,7 +265,10 @@ Binassign
   ":=" # NOTE: Moved here from ExpNondec
 
 ExpObj
-  "{" __ ExpObjField*:fields "}" -> fields
+  # Object Pattern https://github.com/dfinity/motoko/blob/master/doc/modules/language-guide/pages/language-manual.adoc#object-pattern
+  # This different from PatNullary because exp fields can optionally start with "var"
+  # TODO: Add indentation based object syntax
+  $("{" __ ExpObjField* "}")
 
 ExpObjField
   # NOTE: Extracted field rule for easier iteration
@@ -402,6 +405,7 @@ ExpNest
   Exp
 
 Block
+  # TODO: Add indentation based block syntax
   "{" __ BlockDeclaration*:decs "}" -> { type: "block", decs: decs }
 
 # NOTE: Extracted block declaration with optional trailing semi-colon when object closes to make field iteration easier in Block
@@ -447,7 +451,9 @@ PatPlainPart
 PatNullary
   # TODO: String value of parsed pattern for now
   $(PatPlain)
-  "{" ( PatField (";" PatField )* )? "}"
+  # Object Pattern https://github.com/dfinity/motoko/blob/master/doc/modules/language-guide/pages/language-manual.adoc#object-pattern
+  # TODO: Add indentation based object syntax
+  $("{" ( PatField (";" PatField )* )? "}") # Return string as written for now
 
 PatUn
   PatNullary
@@ -477,25 +483,25 @@ PatField
   Id __ TypeSuffix?
 
 DecVar
-  "var" __ Id:id __ TypeSuffix? __ "=" __ Exp:exp ->
-    return { type: "var", id, exp, }
+  "var" __ Id:id __ TypeSuffix?:typeSuffix __ "=" __ Exp:exp ->
+    return { type: "var", id, exp, typeSuffix}
 
 DecNonvar
   "let" __ Pat:pat __ "=" __ Exp:exp ->
     return { type: "let", pat, exp}
   # TODO
-  "type" __ Id __ ("<" ( TypBind ( "," __ TypBind )* )? ">")? __ "=" __ Typ
+  $("type" __ Id __ ("<" ( TypBind ( "," __ TypBind )* )? ">")? __ "=" __ Typ)
   ObjSort:type __ Id?:id __ "="? __ ObjBody:body ->
     return { id, type, body }
   $(SharedPatOpt):shared __ "func" __ Id?:id __ Typing? __ PatPlain:pat __ $(TypeSuffix?):typeSuffix __ FuncBody:body ->
     // TODO: Typing
     return { type: "func", shared, id, pat, typeSuffix, body}
-  SharedPatOpt:shared __ ObjSort?:sort __ "class" __ Id?:id __ Typing? __ PatPlain:pat __ $(TypeSuffix?):typeSuffix __ ClassBody:body ->
+  $(SharedPatOpt):shared __ ObjSort?:sort __ "class" __ Id?:id __ Typing? __ PatPlain:pat __ $(TypeSuffix?):typeSuffix __ ClassBody:body ->
     // TODO: Typing
     return { type: "class", sort, shared, id, pat, typeSuffix, body}
 
 TypeSuffix
-  ":" __ Typ:typ -> typ
+  $(":" __ Typ:typ)
 
 Typing
   "<" ( TypBind ("," __ TypBind )* )? ">"
