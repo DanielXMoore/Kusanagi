@@ -46,3 +46,4 @@
 2022-06-28
 
   1.5   | 8:45am - 10:15| Code generation
+  1.5   | 11:45am - 1:15| Code generation
