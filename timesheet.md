@@ -42,3 +42,7 @@
 2022-06-27
 
   1.5   | 2pm - 3:30pm  | Parsing more tokens, starting code generation
+
+2022-06-28
+
+  1.5   | 8:45am - 10:15| Code generation

@@ -3,6 +3,7 @@
 Prog
   __ Imports:imps __ Declarations:decs ->
     return {
+      type: "program",
       imports: imps,
       declarations: decs,
     }
@@ -37,9 +38,7 @@ FuncSortOpt
   Empty
 
 SharedPatOpt
-  "shared" __ "query"? __ PatPlain?
-  "query" __ PatPlain?
-  Empty
+  "shared"? __ "query"? __ PatPlain? -> [$1, $3, $5]
 
 TypObj
   "{" __ TypField __ ( ";" __ TypField __ )* ";"? __ "}"
@@ -84,18 +83,18 @@ TypRest
   "or" __ Typ
 
 TypItem
-  Id __ ":" __ Typ
+  Id __ TypeSuffix
   Typ
 
 TypArgs
   "<" ( Typ ("," __ Typ)* )? ">"
 
 TypField
-  "var"? __ Id __ ":" __ Typ
-  Id Typing TypNullary __ ":" __ Typ
+  "var"? __ Id __ TypeSuffix
+  Id Typing TypNullary __ TypeSuffix
 
 TypTag
-  "#" Id __ (":" __ Typ)?
+  "#" Id __ TypeSuffix?
 
 TypBind
   Id __ "<:" __ Typ
@@ -144,10 +143,12 @@ Character
 
 # https://github.com/dfinity/motoko/blob/master/doc/modules/language-guide/pages/language-manual.adoc#text
 Text
-  "\"" $(Character*) "\"" -> $2
+  "\"" $(Character*) "\"" ->
+    return JSON.stringify($2)
 
 Char
-  "'" Character "'" -> $2
+  "'" Character "'" ->
+    return JSON.stringify($2)
 
 # https://github.com/dfinity/motoko/blob/master/doc/modules/language-guide/pages/language-manual.adoc#identifiers
 Id
@@ -372,7 +373,7 @@ ExpNondec
   "await"    __ ExpNest:exp -> { type: "await",  exp: exp }
   "assert"   __ ExpNest:exp -> { type: "assert", exp: exp }
   # TODO: Typ for label
-  "label"    __ Id:id (":" __ Typ)? __ ExpNest:exp -> { type: "label", id: id, exp: exp }
+  "label"    __ Id:id TypeSuffix? __ ExpNest:exp -> { type: "label", id: id, exp: exp }
   "break"    __ Id:id ExpNullary?:exp -> { type: "break", id: id, exp: exp }
   "continue" __ Id:id ->       { type: "continue", id: id }
   "debug"    __ ExpNest:exp -> { type: "debug", exp: exp }
@@ -416,25 +417,27 @@ Catch
   "catch" PatNullary ExpNest
 
 ExpField
-  "var"? __ Id (__ ":" __ Typ)? (__ "=" __ Exp)?
+  "var"? __ Id __ TypeSuffix? (__ "=" __ Exp)?
 
 DecField
-  Vis:vis __ Stab:stab __ Dec:dec ->
-    return { vis, stab, dec }
+  Vis?:vis __ Stab?:stab __ Dec:dec ->
+    return { type: "dec", vis, stab, dec }
 
 Vis
   "private"
   "public"
   "system"
-  Empty
 
 Stab
   "flexible"
   "stable"
-  Empty
 
 PatPlain
-  "(" __ PatPlainPart*:parts ")" -> parts
+  "(" __ PatPlainPart*:parts ")" ->
+    return {
+      type: "parens",
+      exps: parts,
+    }
   "_"
   Lit
   Id
@@ -472,25 +475,29 @@ Pat
   PatBin
 
 PatField
-  Id (__ ":" __ Typ)? __ "=" __  Pat
-  Id (__ ":" __ Typ)?
+  Id __ TypeSuffix? __ "=" __  Pat
+  Id __ TypeSuffix?
 
 DecVar
-  "var" __ Id:id (__ ":" __ Typ)? __ "=" __ Exp:exp ->
+  "var" __ Id:id __ TypeSuffix? __ "=" __ Exp:exp ->
     return { type: "var", id, exp, }
 
 DecNonvar
   "let" __ Pat:pat __ "=" __ Exp:exp ->
     return { type: "let", pat, exp}
+  # TODO
   "type" __ Id __ ("<" ( TypBind ( "," __ TypBind )* )? ">")? __ "=" __ Typ
   ObjSort:type __ Id?:id __ "="? __ ObjBody:body ->
     return { id, type, body }
-  SharedPatOpt:shared __ "func" __ Id?:id __ Typing? __ PatPlain:pat __ (":" __ Typ)? __ FuncBody:body ->
-    // TODO: Typing, Typ
-    return { type: "func", shared, id, pat, body}
-  SharedPatOpt:shared __ ObjSort?:sort __ "class" __ Id?:id __ Typing? __ PatPlain:pat __ (":" __ Typ)? __ ClassBody:body ->
-    // TODO: Typing, Typ
-    return { type: "class", sort, shared, id, pat, body}
+  SharedPatOpt:shared __ "func" __ Id?:id __ Typing? __ PatPlain:pat __ $(TypeSuffix?):typeSuffix __ FuncBody:body ->
+    // TODO: Typing
+    return { type: "func", shared, id, pat, typeSuffix, body}
+  SharedPatOpt:shared __ ObjSort?:sort __ "class" __ Id?:id __ Typing? __ PatPlain:pat __ $(TypeSuffix?):typeSuffix __ ClassBody:body ->
+    // TODO: Typing
+    return { type: "class", sort, shared, id, pat, typeSuffix, body}
+
+TypeSuffix
+  ":" __ Typ:typ -> typ
 
 Typing
   "<" ( TypBind ("," __ TypBind )* )? ">"
@@ -505,7 +512,11 @@ FuncBody
   Block
 
 ObjBody
-  "{" __ ObjBodyField*:fields "}" __ -> fields
+  "{" __ ObjBodyField*:decs "}" __ ->
+    return {
+      type: "block",
+      decs: decs,
+    }
 
 # NOTE: Extracted dec-field with optional trailing semi-colon when object closes to make field iteration easier in ObjBody
 ObjBodyField
