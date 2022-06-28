@@ -49,7 +49,7 @@ generate = (node, indent="") ->
       if id
         code.push " ", id
 
-      code.push " ", generate(body)
+      code.push " ", genNested(body)
       code.join("")
 
     when "block"
@@ -58,14 +58,14 @@ generate = (node, indent="") ->
       if decs.length
         code = decs.map(genNested)
 
-        "{\n" + code.join(";\n") + "\n}"
+        "{\n#{indent}" + code.join(";\n#{indent}") + "\n#{indent.slice(0, -2)}}"
       else
         "{}"
 
     when "dec"
       {vis, stab, dec} = node
 
-      code = indent + [vis, stab, generate(dec, indent)].filter (x) -> !!x
+      [vis, stab, gen(dec)].filter (x) -> !!x
       .join(" ")
 
     when "let"
@@ -111,20 +111,12 @@ generate = (node, indent="") ->
     when "func"
       {id, pat, body, shared, typeSuffix} = node
 
-      code = ["func", id, generate(pat), typeSuffix, genNested(body, indent)]
-
-      sharedPat = [shared[0], shared[1], generate(shared[2])]
-      .filter (x) -> !!x
+      ["#{shared}func", id, gen(pat), typeSuffix, gen(body)]
       .join(" ")
-
-      if sharedPat
-        code.unshift sharedPat
-
-      code.join(" ")
 
     when "if"
       {exp, condition} = node
-      "if #{generate(condition)} #{generate(exp)}"
+      "if #{gen(condition)} #{gen(exp)}"
 
     when "parens"
       ["(", node.exps.map(gen).join(", "), ")"].join("")
@@ -132,4 +124,6 @@ generate = (node, indent="") ->
     else
       "<UNKNOWN #{JSON.stringify(node)} >"
 
-console.log(generate(parse(fs.readFileSync("./test/examples/Alarm.mo", "utf8"))))
+ast = parse(fs.readFileSync("./test/examples/Alarm.mo", "utf8"))
+console.log(JSON.stringify(ast, null, 2))
+console.log(generate(ast))

@@ -143,12 +143,10 @@ Character
 
 # https://github.com/dfinity/motoko/blob/master/doc/modules/language-guide/pages/language-manual.adoc#text
 Text
-  "\"" $(Character*) "\"" ->
-    return JSON.stringify($2)
+  $("\"" $(Character*) "\"")
 
 Char
-  "'" Character "'" ->
-    return JSON.stringify($2)
+  $("'" Character "'")
 
 # https://github.com/dfinity/motoko/blob/master/doc/modules/language-guide/pages/language-manual.adoc#identifiers
 Id
@@ -489,7 +487,7 @@ DecNonvar
   "type" __ Id __ ("<" ( TypBind ( "," __ TypBind )* )? ">")? __ "=" __ Typ
   ObjSort:type __ Id?:id __ "="? __ ObjBody:body ->
     return { id, type, body }
-  SharedPatOpt:shared __ "func" __ Id?:id __ Typing? __ PatPlain:pat __ $(TypeSuffix?):typeSuffix __ FuncBody:body ->
+  $(SharedPatOpt):shared __ "func" __ Id?:id __ Typing? __ PatPlain:pat __ $(TypeSuffix?):typeSuffix __ FuncBody:body ->
     // TODO: Typing
     return { type: "func", shared, id, pat, typeSuffix, body}
   SharedPatOpt:shared __ ObjSort?:sort __ "class" __ Id?:id __ Typing? __ PatPlain:pat __ $(TypeSuffix?):typeSuffix __ ClassBody:body ->
