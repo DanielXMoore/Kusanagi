@@ -41,10 +41,10 @@ generate = (node, indent="") ->
 
       code.join("")
 
-    when "actor"
+    when "actor", "module", "object"
       {type, id, body} = node
 
-      code = ["actor"]
+      code = [type]
 
       if id
         code.push " ", id
@@ -113,20 +113,37 @@ generate = (node, indent="") ->
       {base, op, exp} = node
       "#{base} #{op} #{generate(exp)}"
 
-    when "func"
-      {id, pat, body, shared, typeSuffix} = node
+    when "class"
+      {id, sort, pat, body, shared, typeSuffix, typing} = node
 
       if pat.type is "parens"
         pat = gen(pat)
       else
         pat = " #{gen(pat)}"
 
-      ["#{shared}func", id, pat, typeSuffix, gen(body)]
+      ["#{shared}#{sort}class", "#{id}#{typing}", pat, typeSuffix, gen(body)]
+      .join(" ")
+
+    when "func"
+      {id, pat, body, shared, typeSuffix, typing} = node
+
+      if pat.type is "parens"
+        pat = gen(pat)
+      else
+        pat = " #{gen(pat)}"
+
+      ["#{shared}func", "#{id}#{typing}", pat, typeSuffix, gen(body)]
       .join(" ")
 
     when "if"
       {exp, condition} = node
+      # TODO else
       "if #{gen(condition)} #{gen(exp)}"
+
+    when "for"
+      {pat, source, exp} = node
+
+      "for (#{gen(pat)} in #{gen(source)}) #{gen(exp)}"
 
     when "parens"
       ["(", node.exps.map(gen).join(", "), ")"].join("")
@@ -138,6 +155,6 @@ module.exports = generate
 
 # Main
 if !module.parent
-  ast = parse(fs.readFileSync("./test/examples/heros.mo", "utf8"))
+  ast = parse(fs.readFileSync("./test/examples/life/Grid.mo", "utf8"))
   console.log(JSON.stringify(ast, null, 2))
   console.log(generate(ast))

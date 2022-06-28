@@ -493,18 +493,18 @@ DecNonvar
   $("type" __ Id __ ("<" ( TypBind ( "," __ TypBind )* )? ">")? __ "=" __ Typ)
   ObjSort:type __ Id?:id __ "="? __ ObjBody:body ->
     return { id, type, body }
-  $(SharedPatOpt):shared __ "func" __ Id?:id __ Typing? __ PatPlain:pat __ $(TypeSuffix?):typeSuffix __ FuncBody:body ->
+  $(SharedPatOpt):shared __ "func" __ Id?:id __ $(Typing?):typing __ PatPlain:pat __ $(TypeSuffix?):typeSuffix __ FuncBody:body ->
     // TODO: Typing
-    return { type: "func", shared, id, pat, typeSuffix, body}
-  $(SharedPatOpt):shared __ ObjSort?:sort __ "class" __ Id?:id __ Typing? __ PatPlain:pat __ $(TypeSuffix?):typeSuffix __ ClassBody:body ->
+    return { type: "func", shared, id, typing, pat, typeSuffix, body}
+  $(SharedPatOpt):shared __ $(ObjSort?):sort __ "class" __ Id?:id __ $(Typing?):typing __ PatPlain:pat __ $(TypeSuffix?):typeSuffix __ ClassBody:body ->
     // TODO: Typing
-    return { type: "class", sort, shared, id, pat, typeSuffix, body}
+    return { type: "class", sort, shared, id, typing, pat, typeSuffix, body}
 
 TypeSuffix
   $(":" __ Typ:typ)
 
 Typing
-  "<" ( TypBind ("," __ TypBind )* )? ">"
+  $("<" ( TypBind ("," __ TypBind )* )? ">")
 
 Dec
   DecVar

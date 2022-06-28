@@ -5,5 +5,5 @@ generate = require "../source/generate"
 
 describe "generate", ->
   it "should generate Motoko code from source", ->
-    ast = parse(readFileSync("./test/examples/Alarm.mo", "utf8"))
+    ast = parse(readFileSync("./test/examples/Pub.mo", "utf8"))
     assert ast
