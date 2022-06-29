@@ -167,11 +167,11 @@ HexDigit
 
 Number
   # NOTE: Keeping numbers as a text string exactly as written
-  $(Digit ( "_" Digit )*)
+  $(Digit ( "_"? Digit )*)
 
 HexNumber
   # NOTE: Keeping numbers as a text string exactly as written
-  $(HexDigit ( "_" HexDigit )*)
+  $(HexDigit ( "_"? HexDigit )*)
 
 # https://github.com/dfinity/motoko/blob/master/doc/modules/language-guide/pages/language-manual.adoc#integers
 Nat
@@ -373,17 +373,16 @@ ExpNondec
   "async"    __ ExpNest:exp -> { type: "async",  exp: exp }
   "await"    __ ExpNest:exp -> { type: "await",  exp: exp }
   "assert"   __ ExpNest:exp -> { type: "assert", exp: exp }
-  # TODO: Typ for label
-  "label"    __ Id:id TypeSuffix? __ ExpNest:exp -> { type: "label", id: id, exp: exp }
-  "break"    __ Id:id ExpNullary?:exp -> { type: "break", id: id, exp: exp }
+  "label"    __ Id:id __ $(TypeSuffix?):typeSuffix __ ExpNest:exp -> { type: "label", id: id, typeSuffix: typeSuffix, exp: exp }
+  "break"    __ Id:id __ ExpNullary?:exp -> { type: "break", id: id, exp: exp }
   "continue" __ Id:id ->       { type: "continue", id: id }
   "debug"    __ ExpNest:exp -> { type: "debug", exp: exp }
-  "if"       __ ExpNullary:condition __ ExpNest:exp ( __ "else" __ ExpNest )? -> { type: "if", condition: condition, exp: exp, else: "TODO" }
+  "if"       __ ExpNullary:condition __ ExpNest:exp ElseBlock?:elseBlock -> { type: "if", condition: condition, exp: exp, elseBlock: elseBlock }
   "try"      __ ExpNest:exp __ Catch:c -> { type: "try", exp: exp, catch: c }
   "throw"    __ ExpNest:exp -> { type: "throw", exp: exp }
-  "switch"   __ ExpNullary:condition "{" ( Case (";" Case )* )? "}" -> { type: "switch", cases: "TODO" }
+  "switch"   __ ExpNullary:condition __ "{" __ Case*:cases "}" -> { type: "switch", condition: condition, cases: cases }
   "while"    __ ExpNullary:condition ExpNest:exp -> { type: "while", condition: condition, exp: exp }
-  "loop"     __ ExpNest:exp ( __ "while" __ ExpNest )? -> { type: "loop", exp: exp, condition: "TODO" }
+  "loop"     __ ExpNest:exp WhileBlock?:whileBlock -> { type: "loop", exp: exp, whileBlock: whileBlock }
   "for"      __ "(" __ Pat:pat __ "in" __ Exp:source __ ")" __ ExpNest:exp -> { type: "for", pat: pat, source: source, exp: exp }
   "ignore"   __ ExpNest:exp -> { type: "ignore", exp: exp }
   "do"       __ Block:block -> { type: "do", block: block }
@@ -391,6 +390,12 @@ ExpNondec
   # NOTE: Moved ":=" into Binassign
   ExpBin:base __ Binassign:op __ Exp:exp -> { type: "binassign", base: base, op: op, exp: exp}
   ExpBin
+
+ElseBlock
+  __ "else" __ ExpNest:exp -> exp
+
+WhileBlock
+  __ "while" __ ExpNest:exp -> exp
 
 ExpNonvar
   ExpNondec
@@ -413,10 +418,20 @@ BlockDeclaration
   Dec:dec __ ( ";" / (__ &"}") ) __ -> dec
 
 Case
-  "case" PatNullary ExpNest
+  "case" __ PatNullary:pat __ ExpNest:exp  __ ( ";" / &"}" ) __ ->
+    return {
+      type: "case",
+      pat,
+      exp,
+    }
 
 Catch
-  "catch" PatNullary ExpNest
+  "catch" __ PatNullary:pat __ ExpNest:exp ->
+    return {
+      type: "catch",
+      pat,
+      exp,
+    }
 
 ExpField
   "var"? __ Id __ TypeSuffix? (__ "=" __ Exp)?
@@ -449,8 +464,7 @@ PatPlainPart
   PatBin:pat __ ( "," / (__ &")") ) __ -> pat
 
 PatNullary
-  # TODO: String value of parsed pattern for now
-  $(PatPlain)
+  PatPlain
   # Object Pattern https://github.com/dfinity/motoko/blob/master/doc/modules/language-guide/pages/language-manual.adoc#object-pattern
   # TODO: Add indentation based object syntax
   $("{" ( PatField (";" PatField )* )? "}") # Return string as written for now
@@ -483,7 +497,7 @@ PatField
   Id __ TypeSuffix?
 
 DecVar
-  "var" __ Id:id __ TypeSuffix?:typeSuffix __ "=" __ Exp:exp ->
+  "var" __ Id:id __ $(TypeSuffix?):typeSuffix __ "=" __ Exp:exp ->
     return { type: "var", id, exp, typeSuffix}
 
 DecNonvar
@@ -493,7 +507,7 @@ DecNonvar
   $("type" __ Id __ ("<" ( TypBind ( "," __ TypBind )* )? ">")? __ "=" __ Typ)
   ObjSort:type __ Id?:id __ "="? __ ObjBody:body ->
     return { id, type, body }
-  $(SharedPatOpt):shared __ "func" __ Id?:id __ $(Typing?):typing __ PatPlain:pat __ $(TypeSuffix?):typeSuffix __ FuncBody:body ->
+  $(SharedPatOpt):shared __ "func" __ $(Id?):id __ $(Typing?):typing __ PatPlain:pat __ $(TypeSuffix?):typeSuffix __ FuncBody:body ->
     // TODO: Typing
     return { type: "func", shared, id, typing, pat, typeSuffix, body}
   $(SharedPatOpt):shared __ $(ObjSort?):sort __ "class" __ Id?:id __ $(Typing?):typing __ PatPlain:pat __ $(TypeSuffix?):typeSuffix __ ClassBody:body ->
@@ -512,7 +526,11 @@ Dec
   ExpNondec
 
 FuncBody
-  "=" __ Exp:exp -> exp
+  "=" __ Exp:exp ->
+    return {
+      type: "=",
+      exp
+    }
   Block
 
 ObjBody
@@ -527,7 +545,12 @@ ObjBodyField
   DecField:field __ ( ";" / (__ &"}") ) __ -> field
 
 ClassBody
-  "=" __ Id? __ ObjBody
+  "=" __ Id?:id __ ObjBody:exp ->
+    return {
+      type: "=",
+      id,
+      exp,
+    }
   ObjBody
 
 Comment

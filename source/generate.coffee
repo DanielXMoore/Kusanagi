@@ -71,12 +71,12 @@ generate = (node, indent="") ->
     when "let"
       {pat, exp} = node
 
-      "let #{generate(pat)} = #{generate(exp)}"
+      "let #{gen(pat)} = #{gen(exp)}"
 
     when "var"
       {id, exp, typeSuffix} = node
 
-      "var #{id}#{typeSuffix} = #{generate(exp)}"
+      "var #{id}#{typeSuffix} = #{gen(exp)}"
 
     when "exppost"
       {base, rest} = node
@@ -90,28 +90,28 @@ generate = (node, indent="") ->
       # TODO: TypArgs
       {fnArgs} = node
       if fnArgs.type is "parens"
-        generate(fnArgs)
+        gen(fnArgs)
       else
-        " #{generate(fnArgs)}"
+        " #{gen(fnArgs)}"
 
-    when "await", "return"
-      "#{node.type} #{generate(node.exp)}"
+    when "assert", "async", "await", "return", "break", "continue", "debug", "throw", "ignore"
+      "#{node.type} #{gen(node.exp)}"
 
     when "expbin"
       {exps} = node
       i = 1
 
-      code = [generate(exps[0])]
+      code = [gen(exps[0])]
 
       while i < exps.length
-        code.push exps[i], generate(exps[i+1])
+        code.push exps[i], gen(exps[i+1])
         i += 2
 
       code.join(" ")
 
     when "binassign"
       {base, op, exp} = node
-      "#{base} #{op} #{generate(exp)}"
+      "#{gen(base)} #{op} #{gen(exp)}"
 
     when "class"
       {id, sort, pat, body, shared, typeSuffix, typing} = node
@@ -136,18 +136,75 @@ generate = (node, indent="") ->
       .join(" ")
 
     when "if"
-      {exp, condition} = node
-      # TODO else
-      "if #{gen(condition)} #{gen(exp)}"
+      {exp, condition, elseBlock} = node
+      if elseBlock
+        """
+          if #{gen(condition)} #{gen(exp)}
+          #{indent.slice(0, -2)}else #{gen(elseBlock)}
+        """
+      else
+        "if #{gen(condition)} #{gen(exp)}"
 
     when "for"
       {pat, source, exp} = node
 
       "for (#{gen(pat)} in #{gen(source)}) #{gen(exp)}"
 
+    when "do"
+      {block, option} = node
+
+      if option
+        "do ? #{gen(block)}"
+      else
+        "do #{gen(block)}"
+
+    when "index"
+      {exp} = node
+      "[#{gen(exp)}]"
+
     when "parens"
       ["(", node.exps.map(gen).join(", "), ")"].join("")
 
+    when "="
+      {id, exp} = node
+
+      if id
+        "= #{id} #{gen(exp)}"
+      else
+        "= #{gen(exp)}"
+
+    when "switch"
+      {condition, cases} = node
+
+      """
+        switch #{gen(condition)} {
+        #{indent}#{cases.map(genNested).join(";\n#{indent}")}
+        #{indent.slice(0, -2)}}
+      """
+
+    when "case", "catch"
+      {type, pat, exp} = node
+      "#{type} #{gen(pat)} #{gen(exp)}"
+
+    when "try"
+      {exp, catch:c} = node
+
+      """
+        try #{gen(exp)}
+        #{indent.slice(0, -2)}#{gen(c)}
+      """
+
+    when "loop"
+      {exp, whileBlock} = node
+      if whileBlock
+        """
+          loop #{gen(exp)}
+          #{indent.slice(0, -2)}while #{gen(whileBlock)}
+        """
+      else
+        """
+          loop #{gen(exp)}
+        """
     else
       "<UNKNOWN #{JSON.stringify(node)} >"
 
@@ -155,6 +212,6 @@ module.exports = generate
 
 # Main
 if !module.parent
-  ast = parse(fs.readFileSync("./test/examples/life/Grid.mo", "utf8"))
+  ast = parse(fs.readFileSync("./test/examples/Loop.mo", "utf8"))
   console.log(JSON.stringify(ast, null, 2))
   console.log(generate(ast))
