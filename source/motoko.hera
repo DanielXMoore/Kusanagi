@@ -148,16 +148,12 @@ Text
 Char
   $("'" Character "'")
 
+ReservedWord
+  /(actor|and|assert|await|break|case|catch|class|continue|debug|debug_show|do|else|flexible|false|for|func|if|ignore|in|import|not|null|object|or|label|let|loop|private|public|query|return|shared|stable|system|switch|true|try|type|var|while)\s/
+
 # https://github.com/dfinity/motoko/blob/master/doc/modules/language-guide/pages/language-manual.adoc#identifiers
 Id
-  /[a-zA-Z][a-zA-Z0-9_]*/ ->
-    const id = $0
-    if (["actor", "and", "assert", "await", "break", "case", "catch", "class", "continue", "debug", "debug_show", "do", "else", "flexible", "false", "for", "func", "if", "ignore", "in", "import", "not", "null", "object", "or", "label", "let", "loop", "private", "public", "query", "return", "shared", "stable", "system", "switch", "true", "try", "type", "var", "while"].includes(id)) {
-      // console.log("skipping reserved word", id)
-      return $skip
-    }
-    // console.log("Id", id)
-    return id
+  !ReservedWord $(/[a-zA-Z][a-zA-Z0-9_]*/):id -> id
 
 Digit
   [0-9]
@@ -437,8 +433,8 @@ ExpField
   "var"? __ Id __ TypeSuffix? (__ "=" __ Exp)?
 
 DecField
-  Vis?:vis __ Stab?:stab __ Dec:dec ->
-    return { type: "dec", vis, stab, dec }
+  $(( Vis __ )? ( Stab __ )?):prefix Dec:dec ->
+    return { type: "dec", prefix, dec }
 
 Vis
   "private"

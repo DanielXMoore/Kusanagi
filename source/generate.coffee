@@ -64,10 +64,9 @@ generate = (node, indent="") ->
         "{}"
 
     when "dec"
-      {vis, stab, dec} = node
+      {prefix, dec} = node
 
-      [vis, stab, gen(dec)].filter (x) -> !!x
-      .join(" ")
+      "#{prefix}#{gen(dec)}"
 
     when "let"
       {pat, exp} = node
@@ -213,6 +212,10 @@ module.exports = generate
 
 # Main
 if !module.parent
-  ast = parse(fs.readFileSync("./test/examples/Basic.ku", "utf8"))
-  console.log(JSON.stringify(ast, null, 2))
-  console.log(generate(ast))
+  if false # tokenize test
+    ast = parse(fs.readFileSync("./test/examples/Basic.ku", "utf8"), tokenize: true)
+    fs.writeFileSync("./tokens.json", JSON.stringify(ast, null, 2))
+  else
+    ast = parse(fs.readFileSync("./test/examples/Basic.ku", "utf8"))
+
+    console.log(generate(ast))

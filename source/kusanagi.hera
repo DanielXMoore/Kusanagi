@@ -148,16 +148,12 @@ Text
 Char
   $("'" Character "'")
 
+ReservedWord
+  /(actor|and|assert|await|break|case|catch|class|continue|debug|debug_show|do|else|flexible|false|for|func|if|ignore|in|import|not|null|object|or|label|let|loop|private|public|query|return|shared|stable|system|switch|true|try|type|var|while)\s/
+
 # https://github.com/dfinity/motoko/blob/master/doc/modules/language-guide/pages/language-manual.adoc#identifiers
 Id
-  /[a-zA-Z][a-zA-Z0-9_]*/ ->
-    const id = $0
-    if (["actor", "and", "assert", "await", "break", "case", "catch", "class", "continue", "debug", "debug_show", "do", "else", "flexible", "false", "for", "func", "if", "ignore", "in", "import", "not", "null", "object", "or", "label", "let", "loop", "private", "public", "query", "return", "shared", "stable", "system", "switch", "true", "try", "type", "var", "while"].includes(id)) {
-      // console.log("skipping reserved word", id)
-      return $skip
-    }
-    // console.log("Id", id)
-    return id
+  !ReservedWord $(/[a-zA-Z][a-zA-Z0-9_]*/):id -> id
 
 Digit
   [0-9]
@@ -325,7 +321,7 @@ ExpPostRest
       id,
     }
   # Function application
-  TypArgs?:typArgs __ ExpNullary:fnArgs ->
+  $((TypArgs __ )?):typArgs ExpNullary:fnArgs ->
     return {
       type: "application",
       typArgs,
@@ -370,21 +366,21 @@ ExpBinRest
 ExpNondec
   "return" __ Exp?:exp ->
     return {type: "return", exp}
-  "async"    __ ExpNest:exp -> { type: "async",  exp: exp }
-  "await"    __ ExpNest:exp -> { type: "await",  exp: exp }
-  "assert"   __ ExpNest:exp -> { type: "assert", exp: exp }
-  "label"    __ Id:id __ $(TypeSuffix?):typeSuffix __ ExpNest:exp -> { type: "label", id: id, typeSuffix: typeSuffix, exp: exp }
+  "async"    ExpNest:exp -> { type: "async",  exp: exp }
+  "await"    ExpNest:exp -> { type: "await",  exp: exp }
+  "assert"   ExpNest:exp -> { type: "assert", exp: exp }
+  "label"    __ Id:id __ $(TypeSuffix?):typeSuffix ExpNest:exp -> { type: "label", id: id, typeSuffix: typeSuffix, exp: exp }
   "break"    __ Id:id __ ExpNullary?:exp -> { type: "break", id: id, exp: exp }
   "continue" __ Id:id ->       { type: "continue", id: id }
-  "debug"    __ ExpNest:exp -> { type: "debug", exp: exp }
-  "if"       __ ExpNullary:condition __ ExpNest:exp ElseBlock?:elseBlock -> { type: "if", condition: condition, exp: exp, elseBlock: elseBlock }
-  "try"      __ ExpNest:exp __ Catch:c -> { type: "try", exp: exp, catch: c }
-  "throw"    __ ExpNest:exp -> { type: "throw", exp: exp }
+  "debug"    ExpNest:exp -> { type: "debug", exp: exp }
+  "if"       __ ExpNullary:condition ExpNest:exp ElseBlock?:elseBlock -> { type: "if", condition: condition, exp: exp, elseBlock: elseBlock }
+  "try"      ExpNest:exp __ Catch:c -> { type: "try", exp: exp, catch: c }
+  "throw"    ExpNest:exp -> { type: "throw", exp: exp }
   "switch"   __ ExpNullary:condition __ "{" __ Case*:cases "}" -> { type: "switch", condition: condition, cases: cases }
   "while"    __ ExpNullary:condition ExpNest:exp -> { type: "while", condition: condition, exp: exp }
-  "loop"     __ ExpNest:exp WhileBlock?:whileBlock -> { type: "loop", exp: exp, whileBlock: whileBlock }
-  "for"      __ "(" __ Pat:pat __ "in" __ Exp:source __ ")" __ ExpNest:exp -> { type: "for", pat: pat, source: source, exp: exp }
-  "ignore"   __ ExpNest:exp -> { type: "ignore", exp: exp }
+  "loop"     ExpNest:exp WhileBlock?:whileBlock -> { type: "loop", exp: exp, whileBlock: whileBlock }
+  "for"      __ "(" __ Pat:pat __ "in" __ Exp:source __ ")" ExpNest:exp -> { type: "for", pat: pat, source: source, exp: exp }
+  "ignore"   ExpNest:exp -> { type: "ignore", exp: exp }
   "do"       __ Block:block -> { type: "do", block: block }
   "do" __ "?" __ Block ->      { type: "do", block: block, option: true }
   # NOTE: Moved ":=" into Binassign
@@ -392,10 +388,10 @@ ExpNondec
   ExpBin
 
 ElseBlock
-  __ "else" __ ExpNest:exp -> exp
+  __ "else" ExpNest:exp -> exp
 
 WhileBlock
-  __ "while" __ ExpNest:exp -> exp
+  __ "while" ExpNest:exp -> exp
 
 ExpNonvar
   ExpNondec
@@ -407,7 +403,7 @@ Exp
 
 ExpNest
   Block
-  Exp
+  __ Exp:exp -> exp
 
 Block
   __ "{" __ BlockDeclaration*:decs "}" -> { type: "block", decs: decs }
@@ -417,14 +413,14 @@ NestedBlockDeclarations
   PushIndent NestedBlockDeclaration*:decs PopIndent -> decs
 
 NestedBlockDeclaration
-  Indent Dec:dec EOS -> dec
+  Nested Dec:dec -> dec
 
 # NOTE: Extracted block declaration with optional trailing semi-colon when object closes to make field iteration easier in Block
 BlockDeclaration
   Dec:dec __ ( ";" / (__ &"}") ) __ -> dec
 
 Case
-  "case" __ PatNullary:pat __ ExpNest:exp  __ ( ";" / &"}" ) __ ->
+  "case" __ PatNullary:pat ExpNest:exp  __ ( ";" / &"}" ) __ ->
     return {
       type: "case",
       pat,
@@ -432,7 +428,7 @@ Case
     }
 
 Catch
-  "catch" __ PatNullary:pat __ ExpNest:exp ->
+  "catch" __ PatNullary:pat ExpNest:exp ->
     return {
       type: "catch",
       pat,
@@ -443,8 +439,8 @@ ExpField
   "var"? __ Id __ TypeSuffix? (__ "=" __ Exp)?
 
 DecField
-  Vis?:vis __ Stab?:stab __ Dec:dec ->
-    return { type: "dec", vis, stab, dec }
+  $(( Vis __ )? ( Stab __ )?):prefix Dec:dec ->
+    return { type: "dec", prefix, dec }
 
 Vis
   "private"
@@ -567,7 +563,7 @@ NestedObjBodyFields
   PushIndent NestedObjBodyField*:fields PopIndent -> fields
 
 NestedObjBodyField
-  Indent DecField:field EOS -> field
+  Nested DecField:field -> field
 
 ClassBody
   __ "=" __ Id?:id __ ObjBody:exp ->
@@ -599,6 +595,7 @@ _
 
 # End of statemnt
 # TODO: need to handle comments in EOS
+# TODO: EOS shouldn't consume newlines so multiple nested blocks can close on the same EOS
 EOS
   (_? EOL)+ _ EOF
   (_? EOL)+
@@ -622,19 +619,20 @@ Indent
     return global.currentIndent = $1.length
 
 Nested
-  Indent ->
+  EOS? Indent:indent ->
     const prevIndent = global.indentLevels[global.indentLevels.length-1]
     if (global.verbose) {
       console.log("global indent", global.currentIndent)
-      console.log("Indented", $1, prevIndent)
+      console.log("Indented", indent, prevIndent)
     }
-    if ($1 !== prevIndent + 1) {
+    if (indent !== prevIndent + 1) {
+      debugger
       if (global.verbose) {
         console.log("skipped nested")
       }
       return $skip
     }
-    return $1
+    return indent
 
 # Indentation management
 
@@ -654,6 +652,6 @@ PushIndent
 PopIndent
   "" ->
     if (global.verbose) {
-      console.log("popping indent")
+      console.log("popping indent", global.indentLevels[global.indentLevels.length-1], "->", global.indentLevels[global.indentLevels.length-2])
     }
     global.indentLevels.pop()

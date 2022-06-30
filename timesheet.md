@@ -50,5 +50,9 @@
 
 2022-06-29
 
-  2.0   | 10:15am - 12:15| Loop, switch, try catch
-  1.5   | 4:30pm - 6:00pm| Adding nested indentation based syntax to kusanagi.hera
+  2.0   |10:15am - 12:15| Loop, switch, try catch
+  1.5   |4:30pm - 6:00pm| Adding nested indentation based syntax to kusanagi.hera
+
+2022-06-30
+
+  2.0   |10:30am-12:30pm| Fixed multiple nested indented blocks, refactored reserved words
