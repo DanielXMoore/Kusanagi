@@ -2,10 +2,15 @@
 
 require "@danielx/hera/register"
 
-parser = require './parser'
+{parse} = require "./kusanagi"
+generate = require "./generate"
+
 encoding = "utf8"
 fs = require "fs"
 
 input = fs.readFileSync process.stdin.fd, encoding
 
-process.stdout.write parser.parse(input)
+ast = parse input
+output = generate ast
+
+process.stdout.write output

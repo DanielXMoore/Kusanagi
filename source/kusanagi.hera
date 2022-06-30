@@ -640,7 +640,7 @@ Init
   "" ->
     global.currentIndent = 0
     global.indentLevels = []
-    global.verbose = true
+    global.verbose = false
 
 PushIndent
   "" ->

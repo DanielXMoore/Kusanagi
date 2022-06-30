@@ -1,3 +1,9 @@
+Development Notes
+=================
+
+These are technical development notes that will be of interest for anyone building or maintaining
+this software.
+
 Fun Facts
 ---
 
