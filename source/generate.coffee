@@ -2,7 +2,8 @@ require "@danielx/hera/register"
 
 fs = require "fs"
 
-{parse} = require "./motoko"
+# {parse} = require "./motoko"
+{parse} = require "./kusanagi"
 
 indentation = "  "
 
@@ -212,6 +213,6 @@ module.exports = generate
 
 # Main
 if !module.parent
-  ast = parse(fs.readFileSync("./test/examples/Loop.mo", "utf8"))
+  ast = parse(fs.readFileSync("./test/examples/Basic.ku", "utf8"))
   console.log(JSON.stringify(ast, null, 2))
   console.log(generate(ast))

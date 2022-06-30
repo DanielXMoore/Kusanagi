@@ -1,0 +1,659 @@
+## Currently adapting from Grammar.txt
+
+Prog
+  Init __ Imports:imps __ Declarations:decs ->
+    return {
+      type: "program",
+      imports: imps,
+      declarations: decs,
+    }
+
+Imports
+  Imp ( ";" __ Imp )* __ ";"? ->
+    return [$1].concat($2.map(([_1, _2, imp]) => imp))
+  "" ->
+    return []
+
+Imp
+  "import" __ PatNullary:pat __ "="? __ Text:source __ -> [source, pat]
+
+Declarations
+  Dec ( ";" Dec )* __ ";"? __ ->
+    return [$1].concat($2.map(([_1, _2, dec]) => dec))
+  "" ->
+    return []
+
+Empty
+  __ ->
+    return ""
+
+ObjSort
+  "object"
+  "actor"
+  "module"
+
+FuncSortOpt
+  "shared" __ "query"?
+  "query"
+  Empty
+
+SharedPatOpt
+  ("shared" _)? ("query" _)? (PatPlain _)?
+
+TypObj
+  "{" __ TypField __ ( ";" __ TypField __ )* ";"? __ "}"
+  "{" Empty "}"
+
+TypVariant
+  "{" __ "#" __ "}"
+  "{" __ TypTag ( __ ";" __ TypTag )* __ ";"? __ "}"
+
+TypNullary
+  "(" __ TypItem ( __ "," __ TypItem )* __ ")"
+  "(" Empty ")"
+  Id ("." Id)* TypArgs?
+  "[" __ "var"? __ Typ __ "]"
+  TypObj
+  TypVariant
+
+TypUn
+  TypNullary
+  "?" TypUn
+
+TypPre
+  # NOTE: converted recursive "async" to optional
+  "async"? __ ObjSort:type __ TypObj:body ->
+    return {
+      async: !!$1,
+      type,
+      body,
+    }
+  "async"? __ TypUn
+
+TypNobin
+  FuncSortOpt __ ("<" __ ( TypBind ("," TypBind )* )? ">")? __ TypUn __ "->" __ TypNobin
+  TypPre
+
+Typ
+  TypNobin TypRest*
+  # NOTE: Eliminated left recursion
+
+TypRest
+  __ "and" __ Typ
+  __ "or" __ Typ
+
+TypItem
+  Id __ TypeSuffix
+  Typ
+
+TypArgs
+  "<" ( Typ ("," __ Typ)* )? ">"
+
+TypField
+  "var"? __ Id __ TypeSuffix
+  Id Typing TypNullary __ TypeSuffix
+
+TypTag
+  "#" Id __ TypeSuffix?
+
+TypBind
+  Id __ "<:" __ Typ
+  Id
+
+Bool
+  "true"
+  "false"
+
+Ascii
+  [\x00-\x7f]
+
+AsciiNoNL
+  [\x00-\x09\x0b-\x7f]
+
+Utf8Cont
+  [\x80-\xbf]
+
+Utf8Enc
+  [\xc2-\xdf] Utf8Cont
+  [\xe0] [\xa0-\xbf] Utf8Cont
+  [\xed] [\x80-\x9f] Utf8Cont
+  [\xe1-\xec\xee-\xef] Utf8Cont Utf8Cont
+  [\xf0] [\x90-\xbf] Utf8Cont Utf8Cont
+  [\xf4] [\x80-\x8f] Utf8Cont Utf8Cont
+  [\xf1-\xf3] Utf8Cont Utf8Cont Utf8Cont
+
+Utf8
+  Ascii
+  Utf8Enc
+
+Utf8NoNL
+  AsciiNoNL
+  Utf8Enc
+
+Escape
+  [nrt\\'"]
+
+# https://github.com/dfinity/motoko/blob/master/doc/modules/language-guide/pages/language-manual.adoc#characters
+Character
+  [^"\\\x00-\x1f\x7f-\xff]
+  Utf8Enc
+  "\\" Escape
+  "\\" HexDigit HexDigit
+  "\\u{" HexNumber "}"
+
+# https://github.com/dfinity/motoko/blob/master/doc/modules/language-guide/pages/language-manual.adoc#text
+Text
+  $("\"" $(Character*) "\"")
+
+Char
+  $("'" Character "'")
+
+# https://github.com/dfinity/motoko/blob/master/doc/modules/language-guide/pages/language-manual.adoc#identifiers
+Id
+  /[a-zA-Z][a-zA-Z0-9_]*/ ->
+    const id = $0
+    if (["actor", "and", "assert", "await", "break", "case", "catch", "class", "continue", "debug", "debug_show", "do", "else", "flexible", "false", "for", "func", "if", "ignore", "in", "import", "not", "null", "object", "or", "label", "let", "loop", "private", "public", "query", "return", "shared", "stable", "system", "switch", "true", "try", "type", "var", "while"].includes(id)) {
+      // console.log("skipping reserved word", id)
+      return $skip
+    }
+    // console.log("Id", id)
+    return id
+
+Digit
+  [0-9]
+
+HexDigit
+  [0-9a-fA-F]
+
+Number
+  # NOTE: Keeping numbers as a text string exactly as written
+  $(Digit ( "_"? Digit )*)
+
+HexNumber
+  # NOTE: Keeping numbers as a text string exactly as written
+  $(HexDigit ( "_"? HexDigit )*)
+
+# https://github.com/dfinity/motoko/blob/master/doc/modules/language-guide/pages/language-manual.adoc#integers
+Nat
+  "0x" HexNumber
+  Number
+
+# https://github.com/dfinity/motoko/blob/master/doc/modules/language-guide/pages/language-manual.adoc#floats
+Float
+  Number "." Number?
+  Number ( "." Number? )? [eE] [-+]? Number
+  "0x" HexNumber "." HexNumber?
+  "0x" HexNumber ( "." HexNumber? )? [pP] [-+]? Number
+
+# https://github.com/dfinity/motoko/blob/master/doc/modules/language-guide/pages/language-manual.adoc#literals
+Lit
+  "null"
+  Bool
+  Nat
+  Float
+  Char
+  Text
+
+# https://github.com/dfinity/motoko/blob/master/doc/modules/language-guide/pages/language-manual.adoc#unary-operators
+Unop
+  "+"
+  "-"
+  "^"
+
+# https://github.com/dfinity/motoko/blob/master/doc/modules/language-guide/pages/language-manual.adoc#numeric-binary-operators
+# https://github.com/dfinity/motoko/blob/master/doc/modules/language-guide/pages/language-manual.adoc#bitwise-and-wrapping-binary-operators
+Binop
+  "+"
+  "-"
+  "*"
+  "/"
+  "%"
+  "**"
+  "+%"
+  "-%"
+  "*%"
+  "**%"
+  "&"
+  "|"
+  "^"
+  "<<"
+  ">>" # NOTE: removed leading whitespace
+  "<<>"
+  "<>>"
+  # https://github.com/dfinity/motoko/blob/master/doc/modules/language-guide/pages/language-manual.adoc#text-operators
+  "#"
+
+# https://github.com/dfinity/motoko/blob/master/doc/modules/language-guide/pages/language-manual.adoc#relational-operators
+# NOTE: removed surrounding whitespace from angle brackets since PEG doesn't have a separate tokenization phase and has more
+# context for the operator. May need to add it back later to be strictly match the spec. Can likely use a RegExp lookahead
+# assertion for the whitespace matching in ExpBinRest if necessary.
+Relop
+  "=="
+  "!="
+  "<" # NOTE: removed surrounding whitespace
+  "<="
+  ">" # NOTE: removed surrounding whitespace
+  ">="
+
+# https://github.com/dfinity/motoko/blob/master/doc/modules/language-guide/pages/language-manual.adoc#assignment-operators
+Unassign
+  "+="
+  "-="
+  "^="
+
+# https://github.com/dfinity/motoko/blob/master/doc/modules/language-guide/pages/language-manual.adoc#assignment-operators
+Binassign
+  "+="
+  "-="
+  "*="
+  "/="
+  "%="
+  "**-"
+  "+%="
+  "-%="
+  "*%="
+  "**%="
+  "&="
+  "|="
+  "^="
+  "<<="
+  ">>="
+  "<<>="
+  "<>>="
+  "@="
+  "#=" # NOTE: Added
+  ":=" # NOTE: Moved here from ExpNondec
+
+ExpObj
+  # Object Pattern https://github.com/dfinity/motoko/blob/master/doc/modules/language-guide/pages/language-manual.adoc#object-pattern
+  # This different from PatNullary because exp fields can optionally start with "var"
+  # TODO: Add indentation based object syntax
+  $("{" __ ExpObjField* "}")
+
+ExpObjField
+  # NOTE: Extracted field rule for easier iteration
+  ExpField:field __ ( ";" / (__ &"}") ) __ -> field
+
+ExpPlain
+  Lit
+  # NOTE: Extracted expression part for easier iteration
+  "(" __ ExpPlainPart*:exps ")" -> { type: "parens", exps: exps }
+
+ExpPlainPart
+  Exp:exp __ ( "," / (__ &")") ) __ -> exp
+
+ExpNullary
+  ExpObj
+  ExpPlain
+  Id
+
+ExpPost
+  ExpNullary:exp ExpPostRest*:rest ->
+    if (rest.length) {
+      return {
+        // TODO better naming
+        type: "exppost",
+        base: exp,
+        rest: rest,
+      }
+    } else {
+      return exp
+    }
+  "[" "var"? ( ExpNonvar ( "," ExpNonvar )* )? "]"
+  # NOTE: Eliminated left recursion
+
+ExpPostRest
+  # Array Indexing
+  # https://github.com/dfinity/motoko/blob/master/doc/modules/language-guide/pages/language-manual.adoc#array-indexing
+  "[" Exp:exp "]" ->
+    return {
+      type: "index",
+      exp,
+    }
+  # Tuple Projection
+  # https://github.com/dfinity/motoko/blob/master/doc/modules/language-guide/pages/language-manual.adoc#tuples
+  "." Nat:nat ->
+    return {
+      type: "projection",
+      id: nat
+    }
+  # Object Projection (member access)
+  # https://github.com/dfinity/motoko/blob/master/doc/modules/language-guide/pages/language-manual.adoc#object-projection-member-access
+  "." Id:id ->
+    return {
+      type: "projection",
+      id,
+    }
+  # Function application
+  TypArgs?:typArgs __ ExpNullary:fnArgs ->
+    return {
+      type: "application",
+      typArgs,
+      fnArgs
+    }
+  "!"
+
+ExpUn
+  ExpPost
+  # Variant Pattern
+  # NOTE: Combined and added `?` to prevent shadowing
+  # https://github.com/dfinity/motoko/blob/master/doc/modules/language-guide/pages/language-manual.adoc#variant-pattern
+  "#" Id __ ExpNullary?
+  "?" ExpUn
+  Unop ExpUn
+  Unassign ExpUn
+  "actor" ExpPlain
+  "not" ExpUn
+  "debug_show" ExpUn
+  "to_candid" "(" ( Exp ( "," Exp )* )? ")"
+  "from_candid" ExpUn
+
+ExpBin
+  # NOTE: Eliminated left recursion
+  ExpUn:exp ExpBinRest*:rest ->
+    if (rest.length) {
+      return {
+        type: "expbin",
+        exps: [exp].concat(...rest),
+      }
+    } else {
+      return exp
+    }
+
+ExpBinRest
+  __ Binop __ ExpBin    -> [$2, $4]
+  __ Relop __ ExpBin    -> [$2, $4]
+  __ "and" __ ExpBin    -> [$2, $4]
+  __ "or"  __ ExpBin    -> [$2, $4]
+  __ ":"   __ TypNobin  -> [$2, $4]
+
+ExpNondec
+  "return" __ Exp?:exp ->
+    return {type: "return", exp}
+  "async"    __ ExpNest:exp -> { type: "async",  exp: exp }
+  "await"    __ ExpNest:exp -> { type: "await",  exp: exp }
+  "assert"   __ ExpNest:exp -> { type: "assert", exp: exp }
+  "label"    __ Id:id __ $(TypeSuffix?):typeSuffix __ ExpNest:exp -> { type: "label", id: id, typeSuffix: typeSuffix, exp: exp }
+  "break"    __ Id:id __ ExpNullary?:exp -> { type: "break", id: id, exp: exp }
+  "continue" __ Id:id ->       { type: "continue", id: id }
+  "debug"    __ ExpNest:exp -> { type: "debug", exp: exp }
+  "if"       __ ExpNullary:condition __ ExpNest:exp ElseBlock?:elseBlock -> { type: "if", condition: condition, exp: exp, elseBlock: elseBlock }
+  "try"      __ ExpNest:exp __ Catch:c -> { type: "try", exp: exp, catch: c }
+  "throw"    __ ExpNest:exp -> { type: "throw", exp: exp }
+  "switch"   __ ExpNullary:condition __ "{" __ Case*:cases "}" -> { type: "switch", condition: condition, cases: cases }
+  "while"    __ ExpNullary:condition ExpNest:exp -> { type: "while", condition: condition, exp: exp }
+  "loop"     __ ExpNest:exp WhileBlock?:whileBlock -> { type: "loop", exp: exp, whileBlock: whileBlock }
+  "for"      __ "(" __ Pat:pat __ "in" __ Exp:source __ ")" __ ExpNest:exp -> { type: "for", pat: pat, source: source, exp: exp }
+  "ignore"   __ ExpNest:exp -> { type: "ignore", exp: exp }
+  "do"       __ Block:block -> { type: "do", block: block }
+  "do" __ "?" __ Block ->      { type: "do", block: block, option: true }
+  # NOTE: Moved ":=" into Binassign
+  ExpBin:base __ Binassign:op __ Exp:exp -> { type: "binassign", base: base, op: op, exp: exp}
+  ExpBin
+
+ElseBlock
+  __ "else" __ ExpNest:exp -> exp
+
+WhileBlock
+  __ "while" __ ExpNest:exp -> exp
+
+ExpNonvar
+  ExpNondec
+  DecNonvar
+
+Exp
+  ExpNonvar
+  DecVar
+
+ExpNest
+  Block
+  Exp
+
+Block
+  __ "{" __ BlockDeclaration*:decs "}" -> { type: "block", decs: decs }
+  EOS NestedBlockDeclarations:decs     -> { type: "block", decs: decs, nested: true }
+
+NestedBlockDeclarations
+  PushIndent NestedBlockDeclaration*:decs PopIndent -> decs
+
+NestedBlockDeclaration
+  Indent Dec:dec EOS -> dec
+
+# NOTE: Extracted block declaration with optional trailing semi-colon when object closes to make field iteration easier in Block
+BlockDeclaration
+  Dec:dec __ ( ";" / (__ &"}") ) __ -> dec
+
+Case
+  "case" __ PatNullary:pat __ ExpNest:exp  __ ( ";" / &"}" ) __ ->
+    return {
+      type: "case",
+      pat,
+      exp,
+    }
+
+Catch
+  "catch" __ PatNullary:pat __ ExpNest:exp ->
+    return {
+      type: "catch",
+      pat,
+      exp,
+    }
+
+ExpField
+  "var"? __ Id __ TypeSuffix? (__ "=" __ Exp)?
+
+DecField
+  Vis?:vis __ Stab?:stab __ Dec:dec ->
+    return { type: "dec", vis, stab, dec }
+
+Vis
+  "private"
+  "public"
+  "system"
+
+Stab
+  "flexible"
+  "stable"
+
+PatPlain
+  "(" __ PatPlainPart*:parts ")" ->
+    return {
+      type: "parens",
+      exps: parts,
+    }
+  "_"
+  Lit
+  Id
+
+# NOTE: Extracted PatPlainPart with optional trailing comma before close parenthesis
+PatPlainPart
+  PatBin:pat __ ( "," / (__ &")") ) __ -> pat
+
+PatNullary
+  PatPlain
+  # Object Pattern https://github.com/dfinity/motoko/blob/master/doc/modules/language-guide/pages/language-manual.adoc#object-pattern
+  # TODO: Add indentation based object syntax
+  $("{" ( PatField (";" PatField )* )? "}") # Return string as written for now
+
+PatUn
+  PatNullary
+  "#" Id
+  "#" Id PatNullary
+  "?" PatUn
+  Unop Lit
+
+PatBin
+  PatUn:first PatBinRest*:rest ->
+    if (!rest.length) {
+      return first
+    } else {
+      return [first].concat(...rest)
+    }
+  # NOTE: Eliminated left recursion
+
+PatBinRest
+  __ "or" __ PatBin -> [$2, $4]
+  __ ":"  __ Typ    -> [$2, $4]
+
+Pat
+  PatBin
+
+PatField
+  Id __ TypeSuffix? __ "=" __  Pat
+  Id __ TypeSuffix?
+
+DecVar
+  "var" __ Id:id __ $(TypeSuffix?):typeSuffix __ "=" __ Exp:exp ->
+    return { type: "var", id, exp, typeSuffix}
+
+DecNonvar
+  "let" __ Pat:pat __ "=" __ Exp:exp ->
+    return { type: "let", pat, exp}
+  # TODO
+  $("type" __ Id __ ("<" ( TypBind ( "," __ TypBind )* )? ">")? __ "=" __ Typ)
+
+  # TODO: temporary until better whitespace handling for production below
+  ObjSort:type ObjBody:body ->
+    return { id: undefined, type, body }
+  # TODO: Handle whitespace for nesting
+  ObjSort:type __ Id?:id __ "="? ObjBody:body ->
+    return { id, type, body }
+
+  $(SharedPatOpt):shared "func" _ $(Id?):id __ $(Typing?):typing __ PatPlain:pat $(TypeSuffix?):typeSuffix FuncBody:body ->
+    // TODO: Typing
+    return { type: "func", shared, id, typing, pat, typeSuffix, body}
+  $(SharedPatOpt):shared $(ObjSort?):sort __ "class" __ Id?:id __ $(Typing?):typing __ PatPlain:pat $(TypeSuffix?):typeSuffix ClassBody:body ->
+    // TODO: Typing
+    return { type: "class", sort, shared, id, typing, pat, typeSuffix, body}
+
+TypeSuffix
+  $( __ ":" __ Typ:typ ) ->
+    debugger
+    return $1
+
+Typing
+  $("<" ( TypBind ("," __ TypBind )* )? ">")
+
+Dec
+  DecVar
+  DecNonvar
+  ExpNondec
+
+FuncBody
+  Block
+  __ "=" __ Exp:exp ->
+    return {
+      type: "=",
+      exp
+    }
+
+ObjBody
+  __ "{" __ ObjBodyField*:decs "}" __ ->
+    return {
+      type: "block",
+      decs: decs,
+    }
+  EOS NestedObjBodyFields:decs ->
+    return {
+      type: "block",
+      decs: decs,
+    }
+
+# NOTE: Extracted dec-field with optional trailing semi-colon when object closes to make field iteration easier in ObjBody
+ObjBodyField
+  DecField:field __ ( ";" / (__ &"}") ) __ -> field
+
+NestedObjBodyFields
+  PushIndent NestedObjBodyField*:fields PopIndent -> fields
+
+NestedObjBodyField
+  Indent DecField:field EOS -> field
+
+ClassBody
+  __ "=" __ Id?:id __ ObjBody:exp ->
+    return {
+      type: "=",
+      id,
+      exp,
+    }
+  ObjBody
+
+Comment
+  MultilineComment
+  SingleLineComment
+
+MultilineComment
+  # TODO: handle nested comments
+  "/*" $((!"*/" [^])*) "*/"
+
+SingleLineComment
+  /\/\/[^\r\n]*/
+
+# Any or no whitespace including newlines and comments
+__
+  ([\s]+ / Comment)*
+
+# Non-newline whitespace
+_
+  /[ \t]+/
+
+# End of statemnt
+# TODO: need to handle comments in EOS
+EOS
+  (_? EOL)+ _ EOF
+  (_? EOL)+
+  EOF
+
+# End of line
+EOL
+  "\r\n"
+  "\n"
+  "\r"
+
+# End of file
+EOF
+  !/[\s\S]/
+
+Indent
+  ( "  " / "\t" )* ->
+    if (global.verbose) {
+      console.log("setting global indent", $1.length)
+    }
+    return global.currentIndent = $1.length
+
+Nested
+  Indent ->
+    const prevIndent = global.indentLevels[global.indentLevels.length-1]
+    if (global.verbose) {
+      console.log("global indent", global.currentIndent)
+      console.log("Indented", $1, prevIndent)
+    }
+    if ($1 !== prevIndent + 1) {
+      if (global.verbose) {
+        console.log("skipped nested")
+      }
+      return $skip
+    }
+    return $1
+
+# Indentation management
+
+Init
+  "" ->
+    global.currentIndent = 0
+    global.indentLevels = []
+    global.verbose = true
+
+PushIndent
+  "" ->
+    if (global.verbose) {
+      console.log("pushing indent", global.currentIndent)
+    }
+    global.indentLevels.push(global.currentIndent)
+
+PopIndent
+  "" ->
+    if (global.verbose) {
+      console.log("popping indent")
+    }
+    global.indentLevels.pop()
