@@ -199,25 +199,25 @@ Unop
 # https://github.com/dfinity/motoko/blob/master/doc/modules/language-guide/pages/language-manual.adoc#numeric-binary-operators
 # https://github.com/dfinity/motoko/blob/master/doc/modules/language-guide/pages/language-manual.adoc#bitwise-and-wrapping-binary-operators
 Binop
-  "+"
-  "-"
-  "*"
-  "/"
-  "%"
   "**"
   "+%"
   "-%"
   "*%"
   "**%"
+  "<<>"
+  "<>>"
+  "<<"
+  ">>" # NOTE: removed leading whitespace
+  # https://github.com/dfinity/motoko/blob/master/doc/modules/language-guide/pages/language-manual.adoc#text-operators
+  "#"
+  "+"
+  "-"
+  "*"
+  "/"
+  "%"
   "&"
   "|"
   "^"
-  "<<"
-  ">>" # NOTE: removed leading whitespace
-  "<<>"
-  "<>>"
-  # https://github.com/dfinity/motoko/blob/master/doc/modules/language-guide/pages/language-manual.adoc#text-operators
-  "#"
 
 # https://github.com/dfinity/motoko/blob/master/doc/modules/language-guide/pages/language-manual.adoc#relational-operators
 # NOTE: removed surrounding whitespace from angle brackets since PEG doesn't have a separate tokenization phase and has more
@@ -226,10 +226,10 @@ Binop
 Relop
   "=="
   "!="
-  "<" # NOTE: removed surrounding whitespace
   "<="
-  ">" # NOTE: removed surrounding whitespace
   ">="
+  "<" # NOTE: removed surrounding whitespace
+  ">" # NOTE: removed surrounding whitespace
 
 # https://github.com/dfinity/motoko/blob/master/doc/modules/language-guide/pages/language-manual.adoc#assignment-operators
 Unassign
@@ -295,8 +295,13 @@ ExpPost
     } else {
       return exp
     }
-  "[" "var"? ( ExpNonvar ( "," ExpNonvar )* )? "]"
+  # Array
+  # https://github.com/dfinity/motoko/blob/master/doc/modules/language-guide/pages/language-manual.adoc#arrays
+  "[" __ ( "var" __ )? ArrayPart* "]"
   # NOTE: Eliminated left recursion
+
+ArrayPart
+  ExpNonvar:exp ( "," / (__ &"]") ) __ -> exp
 
 ExpPostRest
   # Array Indexing
@@ -452,8 +457,8 @@ PatPlain
       exps: parts,
     }
   "_"
-  Lit
   Id
+  Lit
 
 # NOTE: Extracted PatPlainPart with optional trailing comma before close parenthesis
 PatPlainPart
@@ -467,9 +472,8 @@ PatNullary
 
 PatUn
   PatNullary
-  "#" Id
-  "#" Id PatNullary
-  "?" PatUn
+  "#" Id PatNullary? # NOTE: Merged in "#" Id with optional nullary to prevent shadowing
+  "?" __ PatUn
   Unop Lit
 
 PatBin

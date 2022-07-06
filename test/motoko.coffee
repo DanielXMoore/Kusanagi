@@ -4,33 +4,24 @@ parser = require "../source/motoko"
 
 describe "Motoko Grammar", ->
   describe "examples", ->
-    it "Alarm.mo", ->
-      assert parser.parse readFileSync("./test/examples/Alarm.mo", "utf8")
+    [
+      "Alarm.mo"
+      "Heros.mo"
+      "JSON.mo"
+      "Loop.mo"
+      "Pub.mo"
+      "Sub.mo"
+      "Switch.mo"
+      "TryCatch.mo"
+      "life/Grid.mo"
+      "life/Random.mo"
+      "life/State.mo"
+      "life/main.mo"
+      "uuid/Source.mo"
+    ].forEach (file) ->
 
-    it "Pub.mo", ->
-      assert parser.parse readFileSync("./test/examples/Pub.mo", "utf8")
-
-    it "Sub.mo", ->
-      assert parser.parse readFileSync("./test/examples/Sub.mo", "utf8")
-
-    it "Heros.mo", ->
-      assert parser.parse readFileSync("./test/examples/heros.mo", "utf8")
-
-    it "life/Grid.mo", ->
-      assert parser.parse readFileSync("./test/examples/life/Grid.mo", "utf8")
-
-    it "life/Random.mo", ->
-      assert parser.parse readFileSync("./test/examples/life/Random.mo", "utf8")
-
-    it "life/State.mo", ->
-      assert parser.parse readFileSync("./test/examples/life/State.mo", "utf8")
-
-    it "life/main.mo", ->
-      result = parser.parse readFileSync("./test/examples/life/main.mo", "utf8")
-
-      assert.equal result.declarations[0].type, "actor"
-      assert.equal result.declarations[0].id, "Life"
-      assert.equal result.declarations[0].body.decs.length, 5
+      it file, ->
+        assert parser.parse readFileSync("./test/examples/#{file}", "utf8")
 
   it "should parse imports", ->
     result = parser.parse """
