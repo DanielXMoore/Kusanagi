@@ -274,9 +274,15 @@ ExpPlain
   Lit
   # NOTE: Extracted expression part for easier iteration
   "(" __ ExpPlainPart*:exps ")" -> { type: "parens", exps: exps }
+  # NOTE: Added Parentheses-less tuple
+  _ Exp:first CommaExp*:exps ->
+    return { type: "parens", exps: [first, ...exps] }
 
 ExpPlainPart
   Exp:exp __ ( "," / (__ &")") ) __ -> exp
+
+CommaExp
+  "," __ Exp:exp -> exp
 
 ExpNullary
   ExpObj
@@ -332,7 +338,7 @@ ExpPostRest
       typArgs,
       fnArgs
     }
-  "!"
+  "!" # Null break
 
 ExpUn
   ExpPost
@@ -378,13 +384,15 @@ ExpNondec
   "break"    __ Id:id __ ExpNullary?:exp -> { type: "break", id: id, exp: exp }
   "continue" __ Id:id ->       { type: "continue", id: id }
   "debug"    ExpNest:exp -> { type: "debug", exp: exp }
-  "if"       __ ExpNullary:condition ExpNest:exp ElseBlock?:elseBlock -> { type: "if", condition: condition, exp: exp, elseBlock: elseBlock }
+  "if"       ExpNullary:condition ExpNest:exp ElseBlock?:elseBlock -> { type: "if", condition: condition, exp: exp, elseBlock: elseBlock }
   "try"      ExpNest:exp __ Catch:c -> { type: "try", exp: exp, catch: c }
   "throw"    ExpNest:exp -> { type: "throw", exp: exp }
   "switch"   __ ExpNullary:condition __ "{" __ Case*:cases "}" -> { type: "switch", condition: condition, cases: cases }
   "while"    __ ExpNullary:condition ExpNest:exp -> { type: "while", condition: condition, exp: exp }
   "loop"     ExpNest:exp WhileBlock?:whileBlock -> { type: "loop", exp: exp, whileBlock: whileBlock }
   "for"      __ "(" __ Pat:pat __ "in" __ Exp:source __ ")" ExpNest:exp -> { type: "for", pat: pat, source: source, exp: exp }
+  # NOTE: Added paren-less `for`
+  "for"      _ Pat:pat __ "in" __ Exp:source ExpNest:exp -> { type: "for", pat: pat, source: source, exp: exp }
   "ignore"   ExpNest:exp -> { type: "ignore", exp: exp }
   "do"       __ Block:block -> { type: "do", block: block }
   "do" __ "?" __ Block ->      { type: "do", block: block, option: true }
@@ -528,7 +536,6 @@ DecNonvar
 
 TypeSuffix
   $( __ ":" __ Typ:typ ) ->
-    debugger
     return $1
 
 Typing
@@ -599,7 +606,6 @@ _
 
 # End of statemnt
 # TODO: need to handle comments in EOS
-# TODO: EOS shouldn't consume newlines so multiple nested blocks can close on the same EOS
 EOS
   (_? EOL)+ _ EOF
   (_? EOL)+
@@ -630,7 +636,6 @@ Nested
       console.log("Indented", indent, prevIndent)
     }
     if (indent !== prevIndent + 1) {
-      debugger
       if (global.verbose) {
         console.log("skipped nested")
       }
