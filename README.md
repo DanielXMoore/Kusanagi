@@ -37,13 +37,18 @@ module
 Getting Started
 ---------------
 
+Repo setup:
+```
+git clone git@github.com:DanielXMoore/kusanagi.git
+cd kusanagi
+yarn
+```
+
 Basic demo:
 
 ```bash
 ./source/cli.coffee < test/examples/Basic.ku
 ```
-
-Starting out with a very hacky line by line approach. Expanding into a complete parser with test cases.
 
 Directory Structure
 -------------------
