@@ -6,7 +6,7 @@ describe "Motoko Grammar", ->
   describe "examples", ->
     [
       "Alarm.mo"
-      "Heros.mo"
+      "heros.mo"
       "JSON.mo"
       "Loop.mo"
       "Pub.mo"
