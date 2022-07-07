@@ -264,16 +264,16 @@ ExpObj
   # Object Pattern https://github.com/dfinity/motoko/blob/master/doc/modules/language-guide/pages/language-manual.adoc#object-pattern
   # This different from PatNullary because exp fields can optionally start with "var"
   # TODO: Add indentation based object syntax
-  $("{" __ ExpObjField* "}")
+  $( __ "{" __ ExpObjField* "}")
 
 ExpObjField
   # NOTE: Extracted field rule for easier iteration
   ExpField:field __ ( ";" / (__ &"}") ) __ -> field
 
 ExpPlain
-  Lit
+  __ Lit:lit -> lit
   # NOTE: Extracted expression part for easier iteration
-  "(" __ ExpPlainPart*:exps ")" -> { type: "parens", exps: exps }
+  __ "(" __ ExpPlainPart*:exps ")" -> { type: "parens", exps: exps }
   # NOTE: Added Parentheses-less tuple
   _ Exp:first CommaExp*:exps ->
     return { type: "parens", exps: [first, ...exps] }
@@ -387,15 +387,17 @@ ExpNondec
   "if"       ExpNullary:condition ExpNest:exp ElseBlock?:elseBlock -> { type: "if", condition: condition, exp: exp, elseBlock: elseBlock }
   "try"      ExpNest:exp __ Catch:c -> { type: "try", exp: exp, catch: c }
   "throw"    ExpNest:exp -> { type: "throw", exp: exp }
-  "switch"   __ ExpNullary:condition __ "{" __ Case*:cases "}" -> { type: "switch", condition: condition, cases: cases }
-  "while"    __ ExpNullary:condition ExpNest:exp -> { type: "while", condition: condition, exp: exp }
+  "switch"   ExpNullary:condition __ "{" __ Case*:cases "}" -> { type: "switch", condition: condition, cases: cases }
+  # NOTE: Added brace-less switch
+  "switch"   ExpNullary:condition EOS NestedCases:cases -> { type: "switch", condition: condition, cases: cases }
+  "while"    ExpNullary:condition ExpNest:exp -> { type: "while", condition: condition, exp: exp }
   "loop"     ExpNest:exp WhileBlock?:whileBlock -> { type: "loop", exp: exp, whileBlock: whileBlock }
   "for"      __ "(" __ Pat:pat __ "in" __ Exp:source __ ")" ExpNest:exp -> { type: "for", pat: pat, source: source, exp: exp }
   # NOTE: Added paren-less `for`
   "for"      _ Pat:pat __ "in" __ Exp:source ExpNest:exp -> { type: "for", pat: pat, source: source, exp: exp }
   "ignore"   ExpNest:exp -> { type: "ignore", exp: exp }
-  "do"       __ Block:block -> { type: "do", block: block }
-  "do" __ "?" __ Block ->      { type: "do", block: block, option: true }
+  "do"        Block:block -> { type: "do", block: block }
+  "do" __ "?" Block ->       { type: "do", block: block, option: true }
   # NOTE: Moved ":=" into Binassign
   ExpBin:base __ Binassign:op __ Exp:exp -> { type: "binassign", base: base, op: op, exp: exp}
   ExpBin
@@ -433,7 +435,18 @@ BlockDeclaration
   Dec:dec __ ( ";" / (__ &"}") ) __ -> dec
 
 Case
-  "case" __ PatNullary:pat ExpNest:exp  __ ( ";" / &"}" ) __ ->
+  "case" PatNullary:pat ExpNest:exp  __ ( ";" / &"}" ) __ ->
+    return {
+      type: "case",
+      pat,
+      exp,
+    }
+
+NestedCases
+  PushIndent NestedCase*:cases PopIndent -> cases
+
+NestedCase
+  Nested "case" PatNullary:pat ExpNest:exp ->
     return {
       type: "case",
       pat,
@@ -441,7 +454,7 @@ Case
     }
 
 Catch
-  "catch" __ PatNullary:pat ExpNest:exp ->
+  "catch" PatNullary:pat ExpNest:exp ->
     return {
       type: "catch",
       pat,
@@ -465,11 +478,14 @@ Stab
   "stable"
 
 PatPlain
-  "(" __ PatPlainPart*:parts ")" ->
+  __ "(" __ PatPlainPart*:parts ")" ->
     return {
       type: "parens",
       exps: parts,
     }
+  # NOTE: Added Parentheses-less tuple
+  _ PatBin:first CommaPat*:pats ->
+    return { type: "parens", exps: [first, ...pats] }
   "_"
   Id
   Lit
@@ -477,6 +493,9 @@ PatPlain
 # NOTE: Extracted PatPlainPart with optional trailing comma before close parenthesis
 PatPlainPart
   PatBin:pat __ ( "," / (__ &")") ) __ -> pat
+
+CommaPat
+  "," __ PatBin:pat -> pat
 
 PatNullary
   PatPlain
