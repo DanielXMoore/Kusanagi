@@ -53,6 +53,16 @@ generate = (node, indent="") ->
       code.push " ", genNested(body)
       code.join("")
 
+    when "array"
+      {exps, v} = node
+
+      if exps.length
+        code = exps.map(genNested)
+
+        "[#{v}\n#{indent}" + code.join(",\n#{indent}") + "\n#{indent.slice(0, -2)}]"
+      else
+        "[#{v}]"
+
     when "block"
       {decs} = node
 

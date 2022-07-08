@@ -42,5 +42,21 @@ module
 
           nat8to16(bs[0]) << 8 | nat8to16(bs[1])
 
-        case (? s)
+        case ? s
           s
+
+    public func nestedObject()
+      var o = {
+        x = 7
+        y = 3
+        z = {
+          a = 34
+        }
+      }
+
+    public func nestedArray()
+      var a = [ var
+        1
+        2
+        3
+      ]

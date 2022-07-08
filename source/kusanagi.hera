@@ -263,17 +263,24 @@ Binassign
 ExpObj
   # Object Pattern https://github.com/dfinity/motoko/blob/master/doc/modules/language-guide/pages/language-manual.adoc#object-pattern
   # This different from PatNullary because exp fields can optionally start with "var"
-  # TODO: Add indentation based object syntax
   $( __ "{" __ ExpObjField* "}")
+  # NOTE: Added indentation based object syntax
+  __ "{" EOS NestedObjectFields:fields __ "}" -> { type: "block", decs: fields }
 
 ExpObjField
   # NOTE: Extracted field rule for easier iteration
   ExpField:field __ ( ";" / (__ &"}") ) __ -> field
 
+NestedObjectFields
+  PushIndent NestedObjectField*:fields PopIndent -> fields
+
+NestedObjectField
+  Nested ExpField:field -> field
+
 ExpPlain
-  __ Lit:lit -> lit
+  _? Lit:lit -> lit
   # NOTE: Extracted expression part for easier iteration
-  __ "(" __ ExpPlainPart*:exps ")" -> { type: "parens", exps: exps }
+  _? "(" __ ExpPlainPart*:exps ")" -> { type: "parens", exps: exps }
   # NOTE: Added Parentheses-less tuple
   _ Exp:first CommaExp*:exps ->
     return { type: "parens", exps: [first, ...exps] }
@@ -303,11 +310,19 @@ ExpPost
     }
   # Array
   # https://github.com/dfinity/motoko/blob/master/doc/modules/language-guide/pages/language-manual.adoc#arrays
-  "[" __ ( "var" __ )? ArrayPart* "]"
+  # NOTE: Added indentation based array syntax
+  "[" $((_? "var")?):v EOS NestedArrayParts:exps __ "]" -> { type: "array", v: v, exps: exps }
+  "[" __ $(( "var" __ )?):v ArrayPart*:exps "]" -> { type: "array", v: v, exps: exps }
   # NOTE: Eliminated left recursion
 
 ArrayPart
   ExpNonvar:exp ( "," / (__ &"]") ) __ -> exp
+
+NestedArrayParts
+  PushIndent NestedArrayPart*:exps PopIndent -> exps
+
+NestedArrayPart
+  Nested ExpNonvar:exp -> exp
 
 ExpPostRest
   # Array Indexing
@@ -539,18 +554,12 @@ DecNonvar
   # TODO
   $("type" __ Id __ ("<" ( TypBind ( "," __ TypBind )* )? ">")? __ "=" __ Typ)
 
-  # TODO: temporary until better whitespace handling for production below
-  ObjSort:type ObjBody:body ->
-    return { id: undefined, type, body }
-  # TODO: Handle whitespace for nesting
-  ObjSort:type __ Id?:id __ "="? ObjBody:body ->
+  ObjSort:type $(__ Id)?:id (__ "=")? ObjBody:body ->
     return { id, type, body }
 
   $(SharedPatOpt):shared "func" _ $(Id?):id __ $(Typing?):typing __ PatPlain:pat $(TypeSuffix?):typeSuffix FuncBody:body ->
-    // TODO: Typing
     return { type: "func", shared, id, typing, pat, typeSuffix, body}
   $(SharedPatOpt):shared $(ObjSort?):sort __ "class" __ Id?:id __ $(Typing?):typing __ PatPlain:pat $(TypeSuffix?):typeSuffix ClassBody:body ->
-    // TODO: Typing
     return { type: "class", sort, shared, id, typing, pat, typeSuffix, body}
 
 TypeSuffix
