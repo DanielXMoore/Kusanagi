@@ -1,5 +1,7 @@
 import Debug "mo:base/Debug"
 
+/* /* Nested comment */ */
+
 module
   public class Grid(state : State.State)
     let grid = state

@@ -4,7 +4,7 @@ TODO
 - [x] Indentation based switch/case
 - [x] Indentation based object syntax
 - [x] Indentation based array syntax
-- [ ] Handle nested comments
+- [x] Handle nested comments
 
 More complex
 ----

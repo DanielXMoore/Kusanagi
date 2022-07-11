@@ -553,12 +553,18 @@ ClassBody
     }
   ObjBody
 
+# https://github.com/dfinity/motoko/blob/master/doc/modules/language-guide/pages/language-manual.adoc#comments
 Comment
-  # Multiline comment
-  # TODO: handle nested comments
-  "/*" $((!"*/" [^])*) "*/"
+  MultilineComment
+  SingleLineComment
 
-  # Single line comment
+# https://github.com/dfinity/motoko/blob/master/doc/modules/language-guide/pages/language-manual.adoc#comments
+MultilineComment
+  # Note: Nested Comments
+  "/*" ( (!("/*" / "*/") . ) / MultilineComment )* "*/"
+
+# https://github.com/dfinity/motoko/blob/master/doc/modules/language-guide/pages/language-manual.adoc#comments
+SingleLineComment
   /\/\/[^\r\n]*/
 
 # Any or no whitespace including newlines and comments

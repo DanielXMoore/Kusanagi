@@ -6,6 +6,7 @@ describe "Kusanagi", ->
   describe "Parsing Examples", ->
     [
       "Basic.ku"
+      "Full.ku"
     ].forEach (file) ->
       it file, ->
         assert parser.parse readFileSync("./test/examples/#{file}", "utf8")
