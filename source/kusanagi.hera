@@ -280,7 +280,7 @@ NestedObjectField
 ExpPlain
   _? Lit:lit -> lit
   # NOTE: Extracted expression part for easier iteration
-  _? "(" __ ExpPlainPart*:exps ")" -> { type: "parens", exps: exps }
+  _? "(" __ ExpPlainPart*:exps ")" -> { type: "parens", exps }
   # NOTE: Added Parentheses-less tuple
   _ Exp:first CommaExp*:exps ->
     return { type: "parens", exps: [first, ...exps] }
@@ -311,8 +311,8 @@ ExpPost
   # Array
   # https://github.com/dfinity/motoko/blob/master/doc/modules/language-guide/pages/language-manual.adoc#arrays
   # NOTE: Added indentation based array syntax
-  "[" $((_? "var")?):v EOS NestedArrayParts:exps __ "]" -> { type: "array", v: v, exps: exps }
-  "[" __ $(( "var" __ )?):v ArrayPart*:exps "]" -> { type: "array", v: v, exps: exps }
+  "[" $((_? "var")?):v EOS NestedArrayParts:exps __ "]" -> { type: "array", v, exps }
+  "[" __ $(( "var" __ )?):v ArrayPart*:exps "]" -> { type: "array", v, exps }
   # NOTE: Eliminated left recursion
 
 ArrayPart
@@ -392,29 +392,29 @@ ExpBinRest
 ExpNondec
   "return" __ Exp?:exp ->
     return {type: "return", exp}
-  "async"    ExpNest:exp -> { type: "async",  exp: exp }
-  "await"    ExpNest:exp -> { type: "await",  exp: exp }
-  "assert"   ExpNest:exp -> { type: "assert", exp: exp }
-  "label"    __ Id:id __ $(TypeSuffix?):typeSuffix ExpNest:exp -> { type: "label", id: id, typeSuffix: typeSuffix, exp: exp }
-  "break"    __ Id:id __ ExpNullary?:exp -> { type: "break", id: id, exp: exp }
-  "continue" __ Id:id ->       { type: "continue", id: id }
-  "debug"    ExpNest:exp -> { type: "debug", exp: exp }
-  "if"       ExpNullary:condition ExpNest:exp ElseBlock?:elseBlock -> { type: "if", condition: condition, exp: exp, elseBlock: elseBlock }
-  "try"      ExpNest:exp __ Catch:c -> { type: "try", exp: exp, catch: c }
-  "throw"    ExpNest:exp -> { type: "throw", exp: exp }
-  "switch"   ExpNullary:condition __ "{" __ Case*:cases "}" -> { type: "switch", condition: condition, cases: cases }
+  "async"    ExpNest:exp -> { type: "async",  exp }
+  "await"    ExpNest:exp -> { type: "await",  exp }
+  "assert"   ExpNest:exp -> { type: "assert", exp }
+  "label"    __ Id:id __ $(TypeSuffix?):typeSuffix ExpNest:exp -> { type: "label", id, typeSuffix, exp }
+  "break"    __ Id:id __ ExpNullary?:exp -> { type: "break", id, exp }
+  "continue" __ Id:id ->       { type: "continue", id }
+  "debug"    ExpNest:exp -> { type: "debug", exp }
+  "if"       ExpNullary:condition ExpNest:exp ElseBlock?:elseBlock -> { type: "if", condition, exp, elseBlock }
+  "try"      ExpNest:exp __ Catch:c -> { type: "try", exp, catch: c }
+  "throw"    ExpNest:exp -> { type: "throw", exp }
+  "switch"   ExpNullary:condition __ "{" __ Case*:cases "}" -> { type: "switch", condition, cases }
   # NOTE: Added brace-less switch
-  "switch"   ExpNullary:condition EOS NestedCases:cases -> { type: "switch", condition: condition, cases: cases }
-  "while"    ExpNullary:condition ExpNest:exp -> { type: "while", condition: condition, exp: exp }
-  "loop"     ExpNest:exp WhileBlock?:whileBlock -> { type: "loop", exp: exp, whileBlock: whileBlock }
-  "for"      __ "(" __ Pat:pat __ "in" __ Exp:source __ ")" ExpNest:exp -> { type: "for", pat: pat, source: source, exp: exp }
+  "switch"   ExpNullary:condition EOS NestedCases:cases -> { type: "switch", condition, cases }
+  "while"    ExpNullary:condition ExpNest:exp -> { type: "while", condition, exp }
+  "loop"     ExpNest:exp WhileBlock?:whileBlock -> { type: "loop", exp, whileBlock }
+  "for"      __ "(" __ Pat:pat __ "in" __ Exp:source __ ")" ExpNest:exp -> { type: "for", pat, source, exp }
   # NOTE: Added paren-less `for`
-  "for"      _ Pat:pat __ "in" __ Exp:source ExpNest:exp -> { type: "for", pat: pat, source: source, exp: exp }
-  "ignore"   ExpNest:exp -> { type: "ignore", exp: exp }
-  "do"        Block:block -> { type: "do", block: block }
-  "do" __ "?" Block ->       { type: "do", block: block, option: true }
+  "for"      _ Pat:pat __ "in" __ Exp:source ExpNest:exp -> { type: "for", pat, source, exp }
+  "ignore"   ExpNest:exp -> { type: "ignore", exp }
+  "do"        Block:block -> { type: "do", block }
+  "do" __ "?" Block ->       { type: "do", block, option: true }
   # NOTE: Moved ":=" into Binassign
-  ExpBin:base __ Binassign:op __ Exp:exp -> { type: "binassign", base: base, op: op, exp: exp}
+  ExpBin:base __ Binassign:op __ Exp:exp -> { type: "binassign", base, op, exp}
   ExpBin
 
 ElseBlock

@@ -193,10 +193,10 @@
     lodash "^4.14.0"
     minimatch "^3.0.2"
 
-"@danielx/hera@^0.7.6":
-  version "0.7.6"
-  resolved "https://registry.yarnpkg.com/@danielx/hera/-/hera-0.7.6.tgz#4764282eb9cdae7ecdc95a5f27a2dee9c8747fbc"
-  integrity sha512-csmbAuTZ5Sj/961eACY0kXjppY/lCtHBkIU7ygfDmuV+POa7EAKgD7KQoS+dqUt31BY8tdoTR9U68xfHPxxcVg==
+"@danielx/hera@^0.7.8":
+  version "0.7.8"
+  resolved "https://registry.yarnpkg.com/@danielx/hera/-/hera-0.7.8.tgz#9bb14edc4fcb9eb64c4af941bb713c122d53892c"
+  integrity sha512-4+ak2/TPGavjW7kZsQzPgsrfL1OFYcYKxi6a8cVu/i4KUiO15fJ+/PxyLCHO1y41IIQoHd6eOKl3OxkVNp8PaQ==
 
 "@istanbuljs/load-nyc-config@^1.0.0":
   version "1.1.0"
