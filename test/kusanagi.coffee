@@ -15,17 +15,17 @@ describe "Kusanagi", ->
     [
       "Alarm.mo"
       "heros.mo"
-      # "JSON.mo" TODO: ;
+      "JSON.mo"
       "Loop.mo"
       "Pub.mo"
       "Sub.mo"
       "Switch.mo"
       "TryCatch.mo"
-      # "life/Grid.mo" TODO: else
+      "life/Grid.mo"
       "life/Random.mo"
       "life/State.mo"
       "life/main.mo"
-      # "uuid/Source.mo" TODO: ;
+      "uuid/Source.mo"
     ].forEach (file) ->
 
       it file, ->

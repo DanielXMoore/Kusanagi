@@ -436,8 +436,12 @@ ExpNest
   __ Exp:exp -> exp
 
 Block
-  __ "{" __ BlockDeclaration*:decs "}" -> { type: "block", decs: decs }
-  EOS NestedBlockDeclarations:decs     -> { type: "block", decs: decs, nested: true }
+  __ "{" __ BlockDeclaration*:decs "}" -> { type: "block", decs }
+  EOS NestedBlockDeclarations:decs ->
+    // Skip if there were no indented declarations found
+    if (!decs.length) return $skip
+
+    return { type: "block", decs, nested: true }
 
 NestedBlockDeclarations
   PushIndent NestedBlockDeclaration*:decs PopIndent -> decs
