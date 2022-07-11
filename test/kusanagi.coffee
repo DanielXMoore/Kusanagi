@@ -17,6 +17,7 @@ describe "Kusanagi", ->
       "heros.mo"
       "JSON.mo"
       "Loop.mo"
+      "Property.mo"
       "Pub.mo"
       "Sub.mo"
       "Switch.mo"

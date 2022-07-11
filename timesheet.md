@@ -4,3 +4,4 @@
 |2022-07-06| 1.0   | Parentheses-less for loop and tuple/function application
 |2022-07-07| 1.25  | Nested switch statement
 |2022-07-08| 1.0   | Nested object and array syntax
+|2022-07-11| 2.0   | Nested comments, object block syntax, more example files, object shorthand in parser
