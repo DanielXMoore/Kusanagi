@@ -5,3 +5,4 @@
 |2022-07-07| 1.25  | Nested switch statement
 |2022-07-08| 1.0   | Nested object and array syntax
 |2022-07-11| 2.0   | Nested comments, object block syntax, more example files, object shorthand in parser
+|2022-07-13| 1.5   | Comments at end of line, hex numbers, build step for cli tool

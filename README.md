@@ -42,12 +42,13 @@ Repo setup:
 git clone git@github.com:DanielXMoore/kusanagi.git
 cd kusanagi
 yarn
+yarn build
 ```
 
 Basic demo:
 
 ```bash
-./source/cli.coffee < test/examples/Basic.ku
+./dist/kusanagi < test/examples/Basic.ku
 ```
 
 Directory Structure

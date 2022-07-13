@@ -1,9 +1,4 @@
-#!./node_modules/.bin/coffee
-
-require "@danielx/hera/register"
-
 {parse} = require "./kusanagi"
-# {parse} = require "./motoko"
 generate = require "./generate"
 
 encoding = "utf8"

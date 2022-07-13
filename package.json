@@ -1,16 +1,25 @@
 {
   "name": "kusanagi",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "CoffeeScript style syntax for Motoko language",
-  "main": "index.js",
+  "main": "dist/main.js",
+  "bin": {
+    "kusanagi": "dist/kusanagi"
+  },
+  "files": [
+    "dist/"
+  ],
   "scripts": {
+    "build": "./build/build.sh",
     "test": "mocha"
   },
   "author": "ORIGYN ENTERPRISE SA",
   "license": "UNLICENSED",
   "devDependencies": {
     "@danielx/coffeecoverage": "^4.0.0-pre.3",
-    "@danielx/hera": "^0.7.8",
+    "@danielx/hera": "^0.7.9",
+    "esbuild": "^0.14.49",
+    "esbuild-coffeescript": "^2.1.0",
     "mocha": "^10.0.0",
     "nyc": "^15.1.0"
   },
