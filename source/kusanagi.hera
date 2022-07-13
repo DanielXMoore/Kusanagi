@@ -176,17 +176,17 @@ Nat
 
 # https://github.com/dfinity/motoko/blob/master/doc/modules/language-guide/pages/language-manual.adoc#floats
 Float
-  Number "." Number?
-  Number ( "." Number? )? [eE] [-+]? Number
   "0x" HexNumber "." HexNumber?
   "0x" HexNumber ( "." HexNumber? )? [pP] [-+]? Number
+  Number "." Number?
+  Number ( "." Number? )? [eE] [-+]? Number
 
 # https://github.com/dfinity/motoko/blob/master/doc/modules/language-guide/pages/language-manual.adoc#literals
 Lit
   "null"
   Bool
-  Nat
-  Float
+  $(Nat)
+  $(Float)
   Char
   Text
 

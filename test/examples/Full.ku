@@ -6,6 +6,8 @@ module
   public class Grid(state : State.State)
     let grid = state
 
+    let hex = 0x321.123
+
     let n = grid.size()
 
     public func size() : Nat

@@ -6,6 +6,8 @@ TODO
 - [x] Indentation based array syntax
 - [x] Handle nested comments
 - [x] Handle comments in EOS
+- [x] Hex numbers
+- [ ] Output comments
 
 More complex
 ----
