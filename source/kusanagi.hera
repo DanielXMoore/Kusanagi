@@ -640,10 +640,9 @@ _
   /[ \t]+/
 
 # End of statemnt
-# TODO: need to handle comments in EOS
 EOS
-  (_? EOL)+ _ EOF
-  (_? EOL)+
+  ((_? Comment?)* EOL)+ _ EOF
+  ((_? Comment?)* EOL)+
   EOF
 
 # End of line

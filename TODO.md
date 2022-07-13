@@ -5,6 +5,7 @@ TODO
 - [x] Indentation based object syntax
 - [x] Indentation based array syntax
 - [x] Handle nested comments
+- [x] Handle comments in EOS
 
 More complex
 ----

@@ -23,14 +23,14 @@ module
         let cool = true
 
         for j in grid[i].keys()
-          let yo = "wat"
+          let yo = "wat" // Comment at EOS
           dst.set i, j, nextCell i, j
 
     func tryCatch() : ()
       try
-        Debug.print "Ring!"
+        Debug.print "Ring!" /* Comment at EOS */
       catch e
-        Debug.print "!"
+        Debug.print "!" /* /* Nested Comment at EOS */ */ // Also regular comment at EOS
 
     public func setClockSequence(seq : ?Nat16)
       var s : Nat16 = switch seq
