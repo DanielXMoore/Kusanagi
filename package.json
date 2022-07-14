@@ -10,7 +10,7 @@
     "dist/"
   ],
   "scripts": {
-    "build": "./build/build.sh",
+    "build": "bash ./build/build.sh",
     "test": "mocha"
   },
   "author": "ORIGYN ENTERPRISE SA",
