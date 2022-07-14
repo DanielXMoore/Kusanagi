@@ -2,7 +2,7 @@
 set -euo pipefail
 
 rm -r dist/ || true
-mkdir --parents dist
+mkdir -p dist
 
 # normal files
 coffee build/main.coffee
