@@ -6,3 +6,5 @@
 |2022-07-08| 1.0   | Nested object and array syntax
 |2022-07-11| 2.0   | Nested comments, object block syntax, more example files, object shorthand in parser
 |2022-07-13| 1.5   | Comments at end of line, hex numbers, build step for cli tool
+|2022-07-14| 0.75  | Built script cross platform fixes
+|2022-07-18| 1.5   | Demo website
