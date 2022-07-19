@@ -46,10 +46,13 @@ TypObj
 
 TypVariant
   $(__ "{" __ "#" __ "}")
-  # TODO: get array of TypTags
-  __ "{" __ TypTag ( __ ";" __ TypTag )* __ ";"? __ "}"
+  # NOTE: Using block node for code generation since it wraps with braces and delimits with semi-colons
+  __ "{" TypVariantField*:tags "}" -> { type: "block", decs: tags }
   # NOTE: Using block node for code generation since it wraps with braces and delimits with semi-colons
   EOS NestedTypTags:tags -> { type: "block", decs: tags }
+
+TypVariantField
+  __ TypTag:typTag TypFieldDelimiter -> typTag
 
 NestedTypTags
   PushIndent NestedTypTag*:tags PopIndent -> tags
@@ -58,12 +61,21 @@ NestedTypTag
   Nested TypTag:tag -> tag
 
 TypNullary
-  "(" __ TypItem ( __ "," __ TypItem )* __ ")"
-  "(" Empty ")" -> {type: "parens", exps: []}
+  # NOTE: Overloading "parens" handler for code generation
+  "(" TypItemField*:exps ")" -> { type: "parens", exps }
+  $("(" Empty ")")
   $(Id ("." Id)*):id TypArgs?:typArgs -> { type: "type", id, typArgs }
-  "[" __ "var"? __ Typ __ "]"
+  # NOTE: Overloading "array" handler for code generation
+  "[" $(__ "var")?:prefix __ Typ:typ __ "]" -> { type: "array", prefix, exps: [typ] }
   TypObj
   TypVariant
+
+TypItemField
+  __ TypItem:item __ TypItemDelimiter -> item
+
+TypItemDelimiter
+  ","
+  ","? __ &")"
 
 TypUn
   TypNullary
@@ -71,13 +83,11 @@ TypUn
 
 TypPre
   # NOTE: converted recursive "async" to optional
-  # TODO: Maybe use async node for code generation?
   "async"? __ ObjSort:type __ TypObj:body ->
-    return {
-      async: !!$1,
-      type,
-      body,
-    }
+    var exp = { type, body }
+    if ($1) return { type: "async", exp }
+    return exp
+
   ("async" _)? TypUn:exp ->
     if ($1) {
       return {type: "async", exp}
@@ -106,8 +116,10 @@ TypItem
   Typ
 
 TypArgs
-  # TODO: ast nodes
-  "<" ( Typ ("," __ Typ)* )? ">"
+  "<" TypArgField*:binds ">" -> { type: "typebind", binds }
+
+TypArgField
+  __ Typ ( ("," __) / (","? __ &">") )
 
 TypField
   $"var"?:prefix $(__ Id):id (__ TypeSuffix):suffix __ TypFieldDelimiter -> { type: "typefield", prefix, id, suffix }
@@ -116,7 +128,8 @@ TypField
 
 TypFieldDelimiter
   # TypFields end with a semi-colon or an optional final semi-colon then the closing brace
-  ( ";" __ ) / ( ( ";" __ )? &"}" )
+  ";"  __
+  ";"? __ &"}"
 
 TypTag
   $("#" Id __):id TypeSuffix?:suffix -> { type: "typetag", id, suffix }
@@ -336,8 +349,8 @@ ExpPost
   # Array
   # https://github.com/dfinity/motoko/blob/master/doc/modules/language-guide/pages/language-manual.adoc#arrays
   # NOTE: Added indentation based array syntax
-  "[" $((_? "var")?):v EOS NestedArrayParts:exps __ "]" -> { type: "array", v, exps }
-  "[" __ $(( "var" __ )?):v ArrayPart*:exps "]" -> { type: "array", v, exps }
+  "[" $((_? "var")?):prefix EOS NestedArrayParts:exps __ "]" -> { type: "array", prefix, exps }
+  "[" __ $(( "var" __ )?):prefix ArrayPart*:exps "]" -> { type: "array", prefix, exps }
   # NOTE: Eliminated left recursion
 
 ArrayPart

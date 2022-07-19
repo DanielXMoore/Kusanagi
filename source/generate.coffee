@@ -54,14 +54,14 @@ generate = (node, indent="") ->
       code.join("")
 
     when "array"
-      {exps, v} = node
+      {exps, prefix} = node
 
       if exps.length
         code = exps.map(genNested)
 
-        "[#{v}\n#{indent}" + code.join(",\n#{indent}") + "\n#{indent.slice(0, -2)}]"
+        "[#{prefix}\n#{indent}" + code.join(",\n#{indent}") + "\n#{indent.slice(0, -2)}]"
       else
-        "[#{v}]"
+        "[#{prefix}]"
 
     when "block"
       {decs} = node
