@@ -8,6 +8,7 @@ TODO
 - [x] Handle comments in EOS
 - [x] Hex numbers
 - [ ] Output comments
+- [ ] Better indentation handling with blocks
 
 More complex
 ----

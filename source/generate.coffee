@@ -21,7 +21,7 @@ generate = (node, indent="") ->
     .join("")
 
   if node is undefined or node is null
-    return
+    return ""
 
   return switch node.type
     when "program"
@@ -88,6 +88,36 @@ generate = (node, indent="") ->
 
       "var #{id}#{typeSuffix} = #{gen(exp)}"
 
+    when "typebind"
+      bindings = binds.map gen
+      .join(", ")
+
+      "<#{bindings}>"
+
+    when "typedec"
+      {id, typing, exp} = node
+
+      # TODO: Fix indentation
+      "type#{id}#{gen(typing)} = #{genNested(exp)}"
+
+    when "typefield"
+      {prefix, id, suffix} = node
+
+      "#{prefix}#{id}#{gen(suffix)}"
+
+    when "typetag"
+      {id, suffix} = node
+
+      if suffix
+        "#{id}: #{gen(suffix)}"
+      else
+        id
+
+    when "type"
+      {id, typArgs} = node
+
+      "#{id}#{gen(typArgs)}"
+
     when "exppost"
       {base, rest} = node
 
@@ -122,6 +152,9 @@ generate = (node, indent="") ->
     when "binassign"
       {base, op, exp} = node
       "#{gen(base)} #{op} #{gen(exp)}"
+
+    when "label"
+      throw new Error "TODO: type: label"
 
     when "class"
       {id, sort, pat, body, shared, typeSuffix, typing} = node

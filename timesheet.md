@@ -8,3 +8,4 @@
 |2022-07-13| 1.5   | Comments at end of line, hex numbers, build step for cli tool
 |2022-07-14| 0.75  | Built script cross platform fixes
 |2022-07-18| 1.5   | Demo website
+|2022-07-19| 2     | Variant type, Type AST and code generation

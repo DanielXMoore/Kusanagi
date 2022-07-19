@@ -41,17 +41,26 @@ SharedPatOpt
   ("shared" _)? ("query" _)? (PatPlain _)?
 
 TypObj
-  "{" __ TypField __ ( ";" __ TypField __ )* ";"? __ "}"
-  "{" Empty "}"
+  "{" __ TypField*:decs "}" -> { type: "block", decs }
+  $("{" Empty "}")
 
 TypVariant
-  "{" __ "#" __ "}"
-  "{" __ TypTag ( __ ";" __ TypTag )* __ ";"? __ "}"
+  $(__ "{" __ "#" __ "}")
+  # TODO: get array of TypTags
+  __ "{" __ TypTag ( __ ";" __ TypTag )* __ ";"? __ "}"
+  # NOTE: Using block node for code generation since it wraps with braces and delimits with semi-colons
+  EOS NestedTypTags:tags -> { type: "block", decs: tags }
+
+NestedTypTags
+  PushIndent NestedTypTag*:tags PopIndent -> tags
+
+NestedTypTag
+  Nested TypTag:tag -> tag
 
 TypNullary
   "(" __ TypItem ( __ "," __ TypItem )* __ ")"
-  "(" Empty ")"
-  Id ("." Id)* TypArgs?
+  "(" Empty ")" -> {type: "parens", exps: []}
+  $(Id ("." Id)*):id TypArgs?:typArgs -> { type: "type", id, typArgs }
   "[" __ "var"? __ Typ __ "]"
   TypObj
   TypVariant
@@ -62,39 +71,55 @@ TypUn
 
 TypPre
   # NOTE: converted recursive "async" to optional
+  # TODO: Maybe use async node for code generation?
   "async"? __ ObjSort:type __ TypObj:body ->
     return {
       async: !!$1,
       type,
       body,
     }
-  "async"? __ TypUn
+  ("async" _)? TypUn:exp ->
+    if ($1) {
+      return {type: "async", exp}
+    } else {
+      return exp
+    }
 
 TypNobin
-  FuncSortOpt __ ("<" __ ( TypBind ("," TypBind )* )? ">")? __ TypUn __ "->" __ TypNobin
+  FuncSortOpt __ Typing? __ TypUn __ "->" __ TypNobin
   TypPre
 
 Typ
-  TypNobin TypRest*
+  TypNobin:base TypRest*:rest ->
+    if(rest.length) {
+      return [base, ...rest]
+    }
+    return base
   # NOTE: Eliminated left recursion
 
 TypRest
-  __ "and" __ Typ
-  __ "or" __ Typ
+  __ "and":op __ Typ:type -> [op, type]
+  __  "or":op __ Typ:type -> [op, type]
 
 TypItem
   Id __ TypeSuffix
   Typ
 
 TypArgs
+  # TODO: ast nodes
   "<" ( Typ ("," __ Typ)* )? ">"
 
 TypField
-  "var"? __ Id __ TypeSuffix
-  Id Typing TypNullary __ TypeSuffix
+  $"var"?:prefix $(__ Id):id (__ TypeSuffix):suffix __ TypFieldDelimiter -> { type: "typefield", prefix, id, suffix }
+  # TODO: ast nodes
+  Id Typing TypNullary __ TypeSuffix __ TypFieldDelimiter
+
+TypFieldDelimiter
+  # TypFields end with a semi-colon or an optional final semi-colon then the closing brace
+  ( ";" __ ) / ( ( ";" __ )? &"}" )
 
 TypTag
-  "#" Id __ TypeSuffix?
+  $("#" Id __):id TypeSuffix?:suffix -> { type: "typetag", id, suffix }
 
 TypBind
   Id __ "<:" __ Typ
@@ -553,10 +578,8 @@ DecVar
     return { type: "var", id, exp, typeSuffix}
 
 DecNonvar
-  "let" __ Pat:pat __ "=" __ Exp:exp ->
-    return { type: "let", pat, exp}
-  # TODO
-  $("type" __ Id __ ("<" ( TypBind ( "," __ TypBind )* )? ">")? __ "=" __ Typ)
+  "let"  __ Pat:pat  __ "=" __ Exp:exp -> { type: "let", pat, exp}
+  "type" $(__ Id):id __ Typing?:typing __ "=" _? Typ:exp -> { type: "typedec", id, typing, exp }
 
   ObjSort:type $(__ Id)?:id (__ "=")? ObjBody:body ->
     return { id, type, body }
@@ -567,11 +590,13 @@ DecNonvar
     return { type: "class", sort, shared, id, typing, pat, typeSuffix, body}
 
 TypeSuffix
-  $( __ ":" __ Typ:typ ) ->
-    return $1
+  __ ":" __ Typ:typ -> typ
 
 Typing
-  $("<" ( TypBind ("," __ TypBind )* )? ">")
+  "<" TypingField*:binds ">" -> { type: "typebind", binds }
+
+TypingField
+  TypBind:typBind __ ( "," / &">" ) -> typBind
 
 Dec
   DecVar

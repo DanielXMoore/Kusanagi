@@ -2,14 +2,17 @@ parser = require "../source/kusanagi"
 
 {readFileSync} = require "fs"
 
+generate = require "../source/generate"
+
 describe "Kusanagi", ->
   describe "Parsing Examples", ->
     [
-      "Basic.ku"
-      "Full.ku"
+      "Basic"
+      "Full"
+      "NestedVariant"
     ].forEach (file) ->
       it file, ->
-        assert parser.parse readFileSync("./test/examples/#{file}", "utf8")
+        assert parser.parse readFileSync("./test/examples/#{file}.ku", "utf8")
 
   describe "Parsing .mo files", ->
     [
@@ -31,3 +34,11 @@ describe "Kusanagi", ->
 
       it file, ->
         assert parser.parse readFileSync("./test/examples/#{file}", "utf8")
+
+  describe "nested variant", ->
+    assert.equal generate(parser.parse readFileSync("./test/examples/NestedVariant.ku", "utf8")), """
+      type test = {
+        #nat: Nat;
+        #text: Text
+      }
+    """

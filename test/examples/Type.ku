@@ -1,0 +1,4 @@
+type Counter = {
+  topic : Text;
+  value : Nat;
+};

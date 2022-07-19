@@ -29,7 +29,6 @@
     ],
     "require": [
       "coffeescript/register",
-      "@danielx/coffeecoverage/register-istanbul",
       "@danielx/hera/register",
       "./test/helper.coffee"
     ],
