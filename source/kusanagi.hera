@@ -43,16 +43,16 @@ SharedPatOpt
 TypObj
   "{" __ DelimitedTypField*:decs "}" -> { type: "block", decs }
   $("{" Empty "}")
-  # TODO: Nested type object is fighting with nested TypVariant
+  # NOTE: Using "block" for code generation to handle semi-colon delimited object fields
   EOS NestedTypFields:decs -> { type: "block", decs }
 
 DelimitedTypField
   TypField:field __ TypFieldDelimiter -> field
 
 TypField
-  $"var"?:prefix $(__ Id):id (__ TypeSuffix):suffix -> { type: "typefield", prefix, id, suffix }
+  $"var"?:prefix $(__ Id):id TypeSuffix:suffix -> { type: "typefield", prefix, id, suffix }
   # TODO: ast nodes
-  Id Typing TypNullary __ TypeSuffix
+  Id Typing TypNullary TypeSuffix
 
 TypFieldDelimiter
   # TypFields end with a semi-colon or an optional final semi-colon then the closing brace
@@ -121,6 +121,7 @@ TypPre
     }
 
 TypNobin
+  # TODO: AST nodes
   FuncSortOpt __ Typing? __ TypUn __ "->" __ TypNobin
   TypPre
 
@@ -137,7 +138,7 @@ TypRest
   __  "or":op __ Typ:type -> [op, type]
 
 TypItem
-  Id __ TypeSuffix
+  Id TypeSuffix
   Typ
 
 TypArgs
@@ -534,7 +535,7 @@ Catch
     }
 
 ExpField
-  "var"? __ Id __ TypeSuffix? (__ "=" __ Exp)?
+  "var"? __ Id TypeSuffix? (__ "=" __ Exp)?
 
 DecField
   $(( Vis __ )? ( Stab __ )?):prefix Dec:dec ->
@@ -598,8 +599,8 @@ Pat
   PatBin
 
 PatField
-  Id __ TypeSuffix? __ "=" __  Pat
-  Id __ TypeSuffix?
+  Id TypeSuffix? __ "=" __  Pat
+  Id TypeSuffix?
 
 DecVar
   "var" __ Id:id __ $(TypeSuffix?):typeSuffix __ "=" __ Exp:exp ->
@@ -708,6 +709,8 @@ EOL
 EOF
   !/[\s\S]/
 
+# Indentation management
+
 Indent
   ( "  " / "\t" )* ->
     if (global.verbose) {
@@ -730,12 +733,10 @@ Nested
     }
     return indent
 
-# Indentation management
-
 Init
   "" ->
     global.currentIndent = 0
-    global.indentLevels = []
+    global.indentLevels = [0]
     global.verbose = false
 
 PushIndent
@@ -751,3 +752,4 @@ PopIndent
       console.log("popping indent", global.indentLevels[global.indentLevels.length-1], "->", global.indentLevels[global.indentLevels.length-2])
     }
     global.indentLevels.pop()
+    global.currentIndent = global.indentLevels[global.indentLevels.length-1]

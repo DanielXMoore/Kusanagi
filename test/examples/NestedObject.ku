@@ -1,0 +1,15 @@
+module
+  public func nestedArray()
+    var a = [ var
+      1
+      2
+      3
+    ]
+
+  var o = {
+    x = 7
+    var y = 3
+    z = {
+      a = 34
+    }
+  }

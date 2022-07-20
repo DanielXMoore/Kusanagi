@@ -115,7 +115,7 @@ EOF
 Init
   "" ->
     global.currentIndent = 0
-    global.indentLevels = []
+    global.indentLevels = [0]
     global.verbose = false
 
 PushIndent
@@ -131,3 +131,4 @@ PopIndent
       console.log("popping indent")
     }
     global.indentLevels.pop()
+    global.currentIndent = global.indentLevels[global.indentLevels.length-1]

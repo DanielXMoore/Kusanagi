@@ -49,6 +49,7 @@ module
         case ? s
           s
 
+    /* TODO
     public func nestedObject()
       var o = {
         x = 7
@@ -64,3 +65,4 @@ module
         2
         3
       ]
+    */

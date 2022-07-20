@@ -7,11 +7,13 @@ TODO
 - [x] Handle nested comments
 - [x] Handle comments in EOS
 - [x] Hex numbers
+- [x] Nested Type Variant syntax
+- [x] Nested Type Object syntax
+- [ ] BUG: Indentation state is getting lost in more complex examples
+  - [ ] Related: Mixing and matching brace-based blocks and indentation doesn't quite work yet.
 - [ ] Output comments
-- [ ] Better indentation handling with blocks
 
 More complex
 ----
 
-- [ ] Optional braces when declaring objects
-- [ ] Mixing and matching brace-based blocks and indentation doesn't quite work yet.
+- [ ] Maybe: Optional braces when declaring objects

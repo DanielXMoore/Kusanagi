@@ -1,4 +1,10 @@
-type Counter = {
+// Nested syntax
+type Counter =
+  topic : Text
+  value : Nat
+
+// Object syntax
+type Counter2 = {
   topic : Text;
   value : Nat;
-};
+}

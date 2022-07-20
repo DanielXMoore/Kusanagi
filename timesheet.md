@@ -9,3 +9,4 @@
 |2022-07-14| 0.75  | Built script cross platform fixes
 |2022-07-18| 1.5   | Demo website
 |2022-07-19| 3.5   | Nested variant type, Type AST and code generation, some code cleanup, nested type object
+|2022-07-20| 2.25  | Nested type objects and indentation handling

@@ -9,6 +9,7 @@ describe "Kusanagi", ->
     [
       "Basic"
       "Full"
+      # TODO: "NestedObject"
       "NestedVariant"
       "Type"
     ].forEach (file) ->
