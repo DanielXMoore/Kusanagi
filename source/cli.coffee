@@ -6,7 +6,8 @@ fs = require "fs"
 
 input = fs.readFileSync process.stdin.fd, encoding
 
-ast = parse input
+ast = parse input,
+  verbose: process.argv.includes "--verbose"
 
 if process.argv.includes "--ast"
   process.stdout.write JSON.stringify(ast, null, 2)
