@@ -96,7 +96,7 @@ generate = (node, indent="") ->
     when "typefield"
       {prefix, id, suffix} = node
 
-      "#{prefix}#{id}#{gen(suffix)}"
+      "#{prefix}#{id} : #{gen(suffix)}"
 
     when "typetag"
       {id, suffix} = node
