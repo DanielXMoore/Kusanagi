@@ -1,10 +1,3 @@
-require "@danielx/hera/register"
-
-fs = require "fs"
-
-# {parse} = require "./motoko"
-{parse} = require "./kusanagi"
-
 indentation = "  "
 
 generate = (node, indent="") ->
@@ -252,13 +245,3 @@ generate = (node, indent="") ->
       "<UNKNOWN #{JSON.stringify(node)} >"
 
 module.exports = generate
-
-# Main
-if !module.parent
-  if false # tokenize test
-    ast = parse(fs.readFileSync("./test/examples/Basic.ku", "utf8"), tokenize: true)
-    fs.writeFileSync("./tokens.json", JSON.stringify(ast, null, 2))
-  else
-    ast = parse(fs.readFileSync("./test/examples/Basic.ku", "utf8"))
-
-    console.log(generate(ast))

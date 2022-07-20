@@ -10,6 +10,7 @@ describe "Kusanagi", ->
       "Basic"
       "Full"
       "NestedVariant"
+      "Type"
     ].forEach (file) ->
       it file, ->
         assert parser.parse readFileSync("./test/examples/#{file}.ku", "utf8")
@@ -35,7 +36,7 @@ describe "Kusanagi", ->
       it file, ->
         assert parser.parse readFileSync("./test/examples/#{file}", "utf8")
 
-  describe "nested variant", ->
+  it "nested variant", ->
     assert.equal generate(parser.parse readFileSync("./test/examples/NestedVariant.ku", "utf8")), """
       type test = {
         #nat: Nat;

@@ -8,4 +8,4 @@
 |2022-07-13| 1.5   | Comments at end of line, hex numbers, build step for cli tool
 |2022-07-14| 0.75  | Built script cross platform fixes
 |2022-07-18| 1.5   | Demo website
-|2022-07-19| 2.5   | Variant type, Type AST and code generation, some code cleanup
+|2022-07-19| 3.5   | Nested variant type, Type AST and code generation, some code cleanup, nested type object

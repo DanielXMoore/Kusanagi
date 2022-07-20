@@ -18,7 +18,7 @@ Imp
   "import" __ PatNullary:pat __ "="? __ Text:source __ -> [source, pat]
 
 Declarations
-  Dec ( ";" Dec )* __ ";"? __ ->
+  Dec ( (";" / &EOS ) __ Dec )* __ ";"? __ ->
     return [$1].concat($2.map(([_1, _2, dec]) => dec))
   "" ->
     return []
@@ -41,8 +41,31 @@ SharedPatOpt
   ("shared" _)? ("query" _)? (PatPlain _)?
 
 TypObj
-  "{" __ TypField*:decs "}" -> { type: "block", decs }
+  "{" __ DelimitedTypField*:decs "}" -> { type: "block", decs }
   $("{" Empty "}")
+  # TODO: Nested type object is fighting with nested TypVariant
+  EOS NestedTypFields:decs -> { type: "block", decs }
+
+DelimitedTypField
+  TypField:field __ TypFieldDelimiter -> field
+
+TypField
+  $"var"?:prefix $(__ Id):id (__ TypeSuffix):suffix -> { type: "typefield", prefix, id, suffix }
+  # TODO: ast nodes
+  Id Typing TypNullary __ TypeSuffix
+
+TypFieldDelimiter
+  # TypFields end with a semi-colon or an optional final semi-colon then the closing brace
+  ";"  __
+  ";"? __ &"}"
+
+NestedTypFields
+  PushIndent NestedTypField*:fields PopIndent ->
+    if (!fields.length) return $skip
+    return fields
+
+NestedTypField
+  Nested TypField:field &EOS -> field
 
 TypVariant
   $(__ "{" __ "#" __ "}")
@@ -55,20 +78,22 @@ TypVariantField
   __ TypTag:typTag TypFieldDelimiter -> typTag
 
 NestedTypTags
-  PushIndent NestedTypTag*:tags PopIndent -> tags
+  PushIndent NestedTypTag*:tags PopIndent ->
+    if (!tags.length) return $skip
+    return tags
 
 NestedTypTag
-  Nested TypTag:tag -> tag
+  Nested TypTag:tag &EOS -> tag
 
 TypNullary
   # NOTE: Overloading "parens" handler for code generation
   "(" TypItemField*:exps ")" -> { type: "parens", exps }
   $("(" Empty ")")
-  $(Id ("." Id)*):id TypArgs?:typArgs -> { type: "type", id, typArgs }
   # NOTE: Overloading "array" handler for code generation
   "[" $(__ "var")?:prefix __ Typ:typ __ "]" -> { type: "array", prefix, exps: [typ] }
-  TypObj
   TypVariant
+  TypObj
+  $(Id ("." Id)*):id TypArgs?:typArgs -> { type: "type", id, typArgs }
 
 TypItemField
   __ TypItem:item __ TypItemDelimiter -> item
@@ -120,16 +145,6 @@ TypArgs
 
 TypArgField
   __ Typ ( ("," __) / (","? __ &">") )
-
-TypField
-  $"var"?:prefix $(__ Id):id (__ TypeSuffix):suffix __ TypFieldDelimiter -> { type: "typefield", prefix, id, suffix }
-  # TODO: ast nodes
-  Id Typing TypNullary __ TypeSuffix __ TypFieldDelimiter
-
-TypFieldDelimiter
-  # TypFields end with a semi-colon or an optional final semi-colon then the closing brace
-  ";"  __
-  ";"? __ &"}"
 
 TypTag
   $("#" Id __):id TypeSuffix?:suffix -> { type: "typetag", id, suffix }
@@ -313,7 +328,7 @@ NestedObjectFields
   PushIndent NestedObjectField*:fields PopIndent -> fields
 
 NestedObjectField
-  Nested ExpField:field -> field
+  Nested ExpField:field &EOS -> field
 
 ExpPlain
   _? Lit:lit -> lit
@@ -360,7 +375,7 @@ NestedArrayParts
   PushIndent NestedArrayPart*:exps PopIndent -> exps
 
 NestedArrayPart
-  Nested ExpNonvar:exp -> exp
+  Nested ExpNonvar:exp &EOS -> exp
 
 ExpPostRest
   # Array Indexing
@@ -485,7 +500,7 @@ NestedBlockDeclarations
   PushIndent NestedBlockDeclaration*:decs PopIndent -> decs
 
 NestedBlockDeclaration
-  Nested Dec:dec -> dec
+  Nested Dec:dec &EOS -> dec
 
 # NOTE: Extracted block declaration with optional trailing semi-colon when object closes to make field iteration easier in Block
 BlockDeclaration
@@ -503,7 +518,7 @@ NestedCases
   PushIndent NestedCase*:cases PopIndent -> cases
 
 NestedCase
-  Nested "case" PatNullary:pat ExpNest:exp ->
+  Nested "case" PatNullary:pat ExpNest:exp &EOS ->
     return {
       type: "case",
       pat,
@@ -644,7 +659,7 @@ NestedObjBodyFields
   PushIndent NestedObjBodyField*:fields PopIndent -> fields
 
 NestedObjBodyField
-  Nested DecField:field -> field
+  Nested DecField:field &EOS -> field
 
 ClassBody
   __ "=" __ Id?:id __ ObjBody:exp ->
