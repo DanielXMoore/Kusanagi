@@ -2,6 +2,17 @@ import Debug "mo:base/Debug"
 
 /* /* Nested comment */ */
 
+// Nested syntax
+type Counter =
+  topic : Text
+  value : Nat
+
+// Object syntax
+type Counter2 = {
+  topic : Text;
+  value : Nat;
+}
+
 module
   public class Grid(state : State.State)
     let grid = state
@@ -49,7 +60,6 @@ module
         case ? s
           s
 
-    /* TODO
     public func nestedObject()
       var o = {
         x = 7
@@ -65,4 +75,3 @@ module
         2
         3
       ]
-    */

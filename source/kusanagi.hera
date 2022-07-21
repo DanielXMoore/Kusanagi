@@ -713,19 +713,16 @@ EOF
 
 Indent
   ( "  " / "\t" )* ->
-    if (global.verbose) {
-      console.log("setting global indent", $1.length)
-    }
-    return global.currentIndent = $1.length
+    return $1.length
 
 Nested
   EOS? Indent:indent ->
-    const prevIndent = global.indentLevels[global.indentLevels.length-1]
+    const currentIndent = global.indentLevels[global.indentLevels.length-1]
     if (global.verbose) {
       console.log("global indent", global.currentIndent)
-      console.log("Indented", indent, prevIndent)
+      console.log("Indented", indent, currentIndent)
     }
-    if (indent !== prevIndent + 1) {
+    if (indent !== currentIndent) {
       if (global.verbose) {
         console.log("skipped nested")
       }
@@ -741,6 +738,7 @@ Init
 
 PushIndent
   "" ->
+    global.currentIndent++
     if (global.verbose) {
       console.log("pushing indent", global.currentIndent)
     }

@@ -24,7 +24,9 @@ describe "generate", ->
             if (get(i, j)) {
               l == 2 or l == 3
             }
-            else l == 3
+            else {
+              l == 3
+            }
           };
           func next (dst:Grid)  {
             for (i in grid.keys()) {
