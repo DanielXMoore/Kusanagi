@@ -10,3 +10,4 @@
 |2022-07-18| 1.5   | Demo website
 |2022-07-19| 3.5   | Nested variant type, Type AST and code generation, some code cleanup, nested type object
 |2022-07-20| 3     | Nested type objects and indentation handling, updated demo site
+|2022-07-21| 1     | Fixed Type Parameters in func and class

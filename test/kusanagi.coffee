@@ -44,3 +44,22 @@ describe "Kusanagi", ->
         #text: Text
       }
     """
+
+  it "type binding in function application", ->
+    assert.equal generate(parser.parse """
+      let map = Map.RBTree<Key, Value>(Nat.compare)
+    """), """
+      let map = Map.RBTree<Key, Value>(Nat.compare)
+    """
+
+  it "type declaration", ->
+    assert.equal generate(parser.parse """
+      type Tree<X, Y> =
+        #node : (Color, Tree<X, Y>, (X, ?Y), Tree<X, Y>)
+        #leaf
+    """), """
+      type Tree<X, Y> = {
+        #node : (Color, Tree<X, Y>, (X, ?Y), Tree<X, Y>);
+        #leaf
+      }
+    """

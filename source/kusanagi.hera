@@ -145,7 +145,7 @@ TypArgs
   "<" TypArgField*:binds ">" -> { type: "typebind", binds }
 
 TypArgField
-  __ Typ ( ("," __) / (","? __ &">") )
+  __ Typ:typ ( ("," __) / (","? __ &">") ) -> typ
 
 TypTag
   $("#" Id __):id TypeSuffix?:suffix -> { type: "typetag", id, suffix }
@@ -613,9 +613,9 @@ DecNonvar
   ObjSort:type $(__ Id)?:id (__ "=")? ObjBody:body ->
     return { id, type, body }
 
-  $(SharedPatOpt):shared "func" _ $(Id?):id __ $(Typing?):typing __ PatPlain:pat $(TypeSuffix?):typeSuffix FuncBody:body ->
+  $(SharedPatOpt):shared "func" _ $(Id?):id __ Typing?:typing __ PatPlain:pat $(TypeSuffix?):typeSuffix FuncBody:body ->
     return { type: "func", shared, id, typing, pat, typeSuffix, body}
-  $(SharedPatOpt):shared $(ObjSort?):sort __ "class" __ Id?:id __ $(Typing?):typing __ PatPlain:pat $(TypeSuffix?):typeSuffix ClassBody:body ->
+  $(SharedPatOpt):shared $(ObjSort?):sort __ "class" __ Id?:id __ Typing?:typing __ PatPlain:pat $(TypeSuffix?):typeSuffix ClassBody:body ->
     return { type: "class", sort, shared, id, typing, pat, typeSuffix, body}
 
 TypeSuffix
@@ -625,7 +625,7 @@ Typing
   "<" TypingField*:binds ">" -> { type: "typebind", binds }
 
 TypingField
-  TypBind:typBind __ ( "," / &">" ) -> typBind
+  TypBind:typBind __ ( ("," __) / &">" ) -> typBind
 
 Dec
   DecVar
@@ -673,8 +673,8 @@ ClassBody
 
 # https://github.com/dfinity/motoko/blob/master/doc/modules/language-guide/pages/language-manual.adoc#comments
 Comment
-  MultilineComment
-  SingleLineComment
+  $MultilineComment  -> { type: "comment", comment: $1 }
+  $SingleLineComment -> { type: "comment", comment: $1 }
 
 # https://github.com/dfinity/motoko/blob/master/doc/modules/language-guide/pages/language-manual.adoc#comments
 MultilineComment

@@ -82,6 +82,7 @@ generate = (node, indent="") ->
       "var #{id}#{typeSuffix} = #{gen(exp)}"
 
     when "typebind"
+      {binds} = node
       bindings = binds.map gen
       .join(", ")
 
@@ -120,12 +121,15 @@ generate = (node, indent="") ->
       ".#{node.id}"
 
     when "application"
-      # TODO: TypArgs
-      {fnArgs} = node
-      if fnArgs.type is "parens"
+      {fnArgs, typArgs} = node
+      typeBinding = gen(typArgs)
+
+      result = if fnArgs.type is "parens"
         gen(fnArgs)
       else
         " #{gen(fnArgs)}"
+
+      "#{typeBinding}#{result}"
 
     when "assert", "async", "await", "return", "break", "continue", "debug", "throw", "ignore"
       "#{node.type} #{gen(node.exp)}"
@@ -157,7 +161,7 @@ generate = (node, indent="") ->
       else
         pat = " #{gen(pat)}"
 
-      ["#{shared}#{sort}class", "#{id}#{typing}", pat, typeSuffix, gen(body)]
+      ["#{shared}#{sort}class", "#{id}#{gen(typing)}", pat, typeSuffix, gen(body)]
       .join(" ")
 
     when "func"
@@ -168,7 +172,7 @@ generate = (node, indent="") ->
       else
         pat = " #{gen(pat)}"
 
-      ["#{shared}func", "#{id}#{typing}", pat, typeSuffix, gen(body)]
+      ["#{shared}func", "#{id}#{gen(typing)}", pat, typeSuffix, gen(body)]
       .join(" ")
 
     when "if"
