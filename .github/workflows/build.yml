@@ -19,3 +19,8 @@ jobs:
       run: |
         yarn
         yarn test
+
+    - uses: actions/upload-artifact@v3
+      with:
+        name: my-artifact
+        path: dist/browser.js
