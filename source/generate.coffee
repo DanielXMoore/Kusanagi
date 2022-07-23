@@ -18,22 +18,13 @@ generate = (node, indent="") ->
 
   return switch node.type
     when "program"
-      {imports, declarations} = node
+      {decs} = node
+      decs.map(gen).join(";")
 
-      code = []
+    when "import"
+      {pre, pat, source} = node
 
-      if imports.length
-        code.push imports.map(([source, pat]) ->
-          "import #{pat} #{source}"
-        ).join(";\n")
-
-        if declarations.length
-          code.push "\n\n"
-
-      if declarations.length
-        code.push declarations.map(gen).join(";\n")
-
-      code.join("")
+      "#{pre}import #{gen(pat)} #{gen(source)}"
 
     when "actor", "module", "object"
       {type, id, body} = node

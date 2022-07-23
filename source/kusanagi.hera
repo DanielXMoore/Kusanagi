@@ -1,27 +1,21 @@
 ## Currently adapting from Grammar.txt
 
 Prog
-  Init __ Imports:imps __ Declarations:decs ->
+  Init Imp*:imps Declaration*:decs __:post ->
     return {
       type: "program",
-      imports: imps,
-      declarations: decs,
+      decs: imps.concat(decs),
+      post: post
     }
 
-Imports
-  Imp ( ";" __ Imp )* __ ";"? ->
-    return [$1].concat($2.map(([_1, _2, imp]) => imp))
-  "" ->
-    return []
+StatementDelimiter
+  (";" / &EOS)
 
 Imp
-  "import" __ PatNullary:pat __ "="? __ Text:source __ -> [source, pat]
+  $__:pre "import" PatNullary:pat __ "="? __ Text:source StatementDelimiter -> {type: "import", source, pat, pre}
 
-Declarations
-  Dec ( (";" / &EOS ) __ Dec )* __ ";"? __ ->
-    return [$1].concat($2.map(([_1, _2, dec]) => dec))
-  "" ->
-    return []
+Declaration
+  $__:pre Dec:dec StatementDelimiter -> [pre, dec]
 
 Empty
   __ ->
@@ -558,7 +552,9 @@ PatPlain
     }
   # NOTE: Added Parentheses-less tuple
   _ PatBin:first CommaPat*:pats ->
-    return { type: "parens", exps: [first, ...pats] }
+    if (pats.length)
+      return { type: "parens", exps: [first, ...pats] }
+    return first
   "_"
   Id
   Lit
