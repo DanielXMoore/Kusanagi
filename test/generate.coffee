@@ -15,10 +15,13 @@ describe "generate", ->
       module {
         public class Grid (state:State.State)  {
           let grid = state;
+
           let n = grid.size();
+
           public func size ()  : Nat {
             n
           };
+
           func nextCell (i:Nat, j:Nat)  : State.Cell {
             let l:Nat = living(i, j);
             if (get(i, j)) {
@@ -28,9 +31,11 @@ describe "generate", ->
               l == 3
             }
           };
+
           func next (dst:Grid)  {
             for (i in grid.keys()) {
               let cool = true;
+
               for (j in grid[i].keys()) {
                 let yo = "wat";
                 dst.set(i, j, nextCell(i, j))
@@ -66,11 +71,15 @@ describe "generate", ->
       module {
         public class Grid (state:State.State)  {
           let grid = state;
+
           let hex = 0x321.123;
+
           let n = grid.size();
+
           public func size ()  : Nat {
             n
           };
+
           func nextCell (i:Nat, j:Nat)  : State.Cell {
             let l:Nat = living(i, j);
             if (get(i, j)) {
@@ -80,23 +89,27 @@ describe "generate", ->
               l == 3
             }
           };
+
           func next (dst:Grid)  {
             for (i in grid.keys()) {
               let cool = true;
+
               for (j in grid[i].keys()) {
-                let yo = "wat";
+                let yo = "wat"; // Comment at EOS
                 dst.set(i, j, nextCell(i, j))
               }
             }
           };
+
           func tryCatch ()  : () {
             try {
-              Debug.print "Ring!"
+              Debug.print "Ring!" /* Comment at EOS */
             }
             catch e {
-              Debug.print "!"
+              Debug.print "!" /* /* Nested Comment at EOS */ */ // Also regular comment at EOS
             }
           };
+
           public func setClockSequence (seq:?Nat16)  {
             var s: Nat16 = switch (seq) {
               case null {
@@ -108,13 +121,16 @@ describe "generate", ->
                     []
                   }
                 };
+
                 nat8to16(bs[0]) << 8 | nat8to16(bs[1])
               };
+
               case ? s {
                 s
               }
             }
           };
+
           public func nestedObject ()  {
             var o = {
               x = 7;
@@ -124,6 +140,7 @@ describe "generate", ->
               }
             }
           };
+
           public func nestedArray ()  {
             var a = [ var
               1,

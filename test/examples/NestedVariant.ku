@@ -1,3 +1,4 @@
 type test =
   #nat: Nat
+  /// Inline comment
   #text: Text

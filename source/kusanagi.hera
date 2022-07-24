@@ -42,7 +42,7 @@ TypObj
   EOS NestedTypFields:decs -> { type: "block", decs }
 
 DelimitedTypField
-  TypField:field __ TypFieldDelimiter -> field
+  $__:pre TypField:field $__:post TypFieldDelimiter -> [pre, field, post]
 
 TypField
   $"var"?:prefix $(__ Id):id TypeSuffix:suffix -> { type: "typefield", prefix, id, suffix }
@@ -67,7 +67,7 @@ TypVariant
   # NOTE: Using block node for code generation since it wraps with braces and delimits with semi-colons
   __ "{" TypVariantField*:tags "}" -> { type: "block", decs: tags }
   # NOTE: Using block node for code generation since it wraps with braces and delimits with semi-colons
-  EOS NestedTypTags:tags -> { type: "block", decs: tags }
+  $EOS:pre NestedTypTags:tags -> { type: "block", decs: tags, pre }
 
 TypVariantField
   __ TypTag:typTag TypFieldDelimiter -> typTag
@@ -78,7 +78,7 @@ NestedTypTags
     return tags
 
 NestedTypTag
-  Nested TypTag:tag &EOS -> tag
+  $Nested:pre TypTag:tag &EOS -> [pre, tag]
 
 TypNullary
   # NOTE: Overloading "parens" handler for code generation
@@ -314,7 +314,7 @@ ExpObj
   # This different from PatNullary because exp fields can optionally start with "var"
   $( __ "{" __ ExpObjField* "}")
   # NOTE: Added indentation based object syntax
-  __ "{" EOS NestedObjectFields:fields __ "}" -> { type: "block", decs: fields }
+  $__:pre "{" NestedObjectFields:fields $__:beforeClose "}" -> { type: "block", decs: fields, pre, beforeClose }
 
 ExpObjField
   # NOTE: Extracted field rule for easier iteration
@@ -324,7 +324,7 @@ NestedObjectFields
   PushIndent NestedObjectField*:fields PopIndent -> fields
 
 NestedObjectField
-  Nested ExpField:field &EOS -> field
+  $Nested:pre ExpField:field &EOS -> [pre, field]
 
 ExpPlain
   _? Lit:lit -> lit
@@ -486,17 +486,25 @@ ExpNest
 
 Block
   __ "{" __ BlockDeclaration*:decs "}" -> { type: "block", decs }
-  EOS NestedBlockDeclarations:decs ->
+  $EOS:pre NestedBlockDeclarations:nested ->
+    const [indent, decs] = nested
+
     // Skip if there were no indented declarations found
     if (!decs.length) return $skip
 
-    return { type: "block", decs, nested: true }
+    return {
+      type: "block",
+      decs,
+      pre,
+      beforeClose: "\n" + "".padStart(indent * 2),
+    }
 
 NestedBlockDeclarations
-  PushIndent NestedBlockDeclaration*:decs PopIndent -> decs
+  # TODO: PopIndent should return number of current indent level
+  PushIndent NestedBlockDeclaration*:decs PopIndent:indent -> [indent, decs]
 
 NestedBlockDeclaration
-  Nested Dec:dec &EOS -> dec
+  $Nested:pre Dec:dec &EOS -> [pre, dec]
 
 # NOTE: Extracted block declaration with optional trailing semi-colon when object closes to make field iteration easier in Block
 BlockDeclaration
@@ -562,9 +570,11 @@ PatPlain
 
 # NOTE: Extracted PatPlainPart with optional trailing comma before close parenthesis
 PatPlainPart
+  # TODO: Manage internal comment and whitespace tokens
   PatBin:pat __ ( "," / (__ &")") ) __ -> pat
 
 CommaPat
+  # TODO: Manage internal comment and whitespace tokens
   "," __ PatBin:pat -> pat
 
 PatNullary
@@ -589,39 +599,49 @@ PatBin
   # NOTE: Eliminated left recursion
 
 PatBinRest
+  # TODO: Manage internal comment and whitespace tokens
   __ "or" __ PatBin -> [$2, $4]
+  # TODO: Manage internal comment and whitespace tokens
   __ ":"  __ Typ    -> [$2, $4]
 
 Pat
   PatBin
 
 PatField
+  # TODO: Manage internal comment and whitespace tokens
   Id TypeSuffix? __ "=" __  Pat
   Id TypeSuffix?
 
 DecVar
+  # TODO: Manage internal comment and whitespace tokens
   "var" __ Id:id __ $(TypeSuffix?):typeSuffix __ "=" __ Exp:exp ->
     return { type: "var", id, exp, typeSuffix}
 
 DecNonvar
+  # TODO: Manage internal comment and whitespace tokens
   "let"  __ Pat:pat  __ "=" __ Exp:exp -> { type: "let", pat, exp}
+  # TODO: Manage internal comment and whitespace tokens
   "type" $(__ Id):id __ Typing?:typing __ "=" _? Typ:exp -> { type: "typedec", id, typing, exp }
 
   ObjSort:type $(__ Id)?:id (__ "=")? ObjBody:body ->
     return { id, type, body }
 
+  # TODO: Manage internal comment and whitespace tokens
   $(SharedPatOpt):shared "func" _ $(Id?):id __ Typing?:typing __ PatPlain:pat $(TypeSuffix?):typeSuffix FuncBody:body ->
     return { type: "func", shared, id, typing, pat, typeSuffix, body}
+  # TODO: Manage internal comment and whitespace tokens
   $(SharedPatOpt):shared $(ObjSort?):sort __ "class" __ Id?:id __ Typing?:typing __ PatPlain:pat $(TypeSuffix?):typeSuffix ClassBody:body ->
     return { type: "class", sort, shared, id, typing, pat, typeSuffix, body}
 
 TypeSuffix
+  # TODO: Manage internal comment and whitespace tokens
   __ ":" __ Typ:typ -> typ
 
 Typing
   "<" TypingField*:binds ">" -> { type: "typebind", binds }
 
 TypingField
+  # TODO: Manage internal comment and whitespace tokens
   TypBind:typBind __ ( ("," __) / &">" ) -> typBind
 
 Dec
@@ -631,35 +651,42 @@ Dec
 
 FuncBody
   Block
-  __ "=" __ Exp:exp ->
-    return {
+  $__:pre "=" $__:preExp Exp:exp ->
+    return [pre, {
       type: "=",
-      exp
-    }
+      exp: [preExp, exp]
+    }]
 
 ObjBody
-  __ "{" __ ObjBodyField*:decs "}" __ ->
+  # TODO: internal whitespace and comment handling
+  $__:pre "{" __ ObjBodyField*:decs "}" __ ->
     return {
       type: "block",
       decs: decs,
+      pre,
     }
-  EOS NestedObjBodyFields:decs ->
+  $EOS:pre NestedObjBodyFields:nestedFields ->
+    const [indent, decs] = nestedFields
     return {
       type: "block",
       decs: decs,
+      pre,
+      beforeClose: "".padStart(indent * 2),
     }
 
 # NOTE: Extracted dec-field with optional trailing semi-colon when object closes to make field iteration easier in ObjBody
 ObjBodyField
+  # TODO: whitespace and comment handling
   DecField:field __ ( ";" / (__ &"}") ) __ -> field
 
 NestedObjBodyFields
-  PushIndent NestedObjBodyField*:fields PopIndent -> fields
+  PushIndent NestedObjBodyField*:fields PopIndent:indent -> [indent, fields]
 
 NestedObjBodyField
-  Nested DecField:field &EOS -> field
+  $Nested:pre DecField:field &EOS -> [pre, field]
 
 ClassBody
+  # TODO: Whitespace and comment handling
   __ "=" __ Id?:id __ ObjBody:exp ->
     return {
       type: "=",
@@ -741,6 +768,8 @@ PushIndent
     }
     global.indentLevels.push(global.currentIndent)
 
+    return global.currentIndent
+
 PopIndent
   "" ->
     if (global.verbose) {
@@ -748,3 +777,5 @@ PopIndent
     }
     global.indentLevels.pop()
     global.currentIndent = global.indentLevels[global.indentLevels.length-1]
+
+    return global.currentIndent

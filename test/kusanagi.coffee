@@ -41,6 +41,7 @@ describe "Kusanagi", ->
     assert.equal generate(parser.parse readFileSync("./test/examples/NestedVariant.ku", "utf8")), """
       type test = {
         #nat: Nat;
+        /// Inline comment
         #text: Text
       }
 

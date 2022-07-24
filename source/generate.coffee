@@ -48,14 +48,23 @@ generate = (node, indent="") ->
         "[#{prefix}]"
 
     when "block"
-      {decs} = node
+      {decs, pre, beforeClose} = node
+
+      # TODO: Proper indentation before closing brace
+      beforeClose ?= "\n"
+
+      # Move newline inside brace
+      # TODO: better naming than pre2?
+      if pre is "\n"
+        pre2 = "\n"
+        pre = ""
 
       if decs.length
         code = decs.map(genNested)
 
-        "{\n#{indent}" + code.join(";\n#{indent}") + "\n#{indent.slice(0, -2)}}"
+        "#{gen(pre)}{#{gen(pre2)}#{code.join(";")}#{gen(beforeClose)}}"
       else
-        "{}"
+        "#{gen(pre)}{}"
 
     when "dec"
       {prefix, dec} = node
