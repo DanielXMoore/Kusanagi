@@ -134,4 +134,7 @@ describe "generate", ->
         }
       }
 
+      /* Trailing comments */
+      // Trailing comments
+
     """

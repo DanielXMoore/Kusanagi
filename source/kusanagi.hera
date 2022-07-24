@@ -1,7 +1,7 @@
 ## Currently adapting from Grammar.txt
 
 Prog
-  Init Imp*:imps Declaration*:decs __:post ->
+  Init Imp*:imps Declaration*:decs $__:post ->
     return {
       type: "program",
       decs: imps.concat(decs),

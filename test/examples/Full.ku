@@ -75,3 +75,6 @@ module
         2
         3
       ]
+
+/* Trailing comments */
+// Trailing comments
