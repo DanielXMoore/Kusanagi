@@ -39,6 +39,7 @@ describe "generate", ->
           }
         }
       }
+
     """
 
   it "should generate full example from full example", ->
@@ -132,4 +133,5 @@ describe "generate", ->
           }
         }
       }
+
     """

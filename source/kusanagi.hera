@@ -9,7 +9,8 @@ Prog
     }
 
 StatementDelimiter
-  (";" / &EOS)
+  ";"
+  &EOS
 
 Imp
   $__:pre "import" PatNullary:pat __ "="? __ Text:source StatementDelimiter -> {type: "import", source, pat, pre}

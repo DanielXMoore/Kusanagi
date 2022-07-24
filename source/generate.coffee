@@ -18,8 +18,8 @@ generate = (node, indent="") ->
 
   return switch node.type
     when "program"
-      {decs} = node
-      decs.map(gen).join(";")
+      {decs, post} = node
+      decs.map(gen).join(";") + post
 
     when "import"
       {pre, pat, source} = node

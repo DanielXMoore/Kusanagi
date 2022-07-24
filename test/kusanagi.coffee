@@ -43,6 +43,7 @@ describe "Kusanagi", ->
         #nat: Nat;
         #text: Text
       }
+
     """
 
   it "type binding in function application", ->
