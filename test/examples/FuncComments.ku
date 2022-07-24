@@ -1,0 +1,9 @@
+func size() : Nat
+  n
+
+/* C0 */ func /* C1 */ size /* C2 */ () /* C3 */ : /* C4 */ Nat /* C5 */
+  // C6
+  n
+
+func size() : Nat // End of line comment!
+  n

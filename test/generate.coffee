@@ -13,18 +13,18 @@ describe "generate", ->
       import State "State";
 
       module {
-        public class Grid (state:State.State)  {
+        public class Grid(state : State.State) {
           let grid = state;
 
           let n = grid.size();
 
-          public func size ()  : Nat {
+          public func size() : Nat {
             n
           };
 
-          func nextCell (i:Nat, j:Nat)  : State.Cell {
-            let l:Nat = living(i, j);
-            if (get(i, j)) {
+          func nextCell(i : Nat, j : Nat) : State.Cell {
+            let l : Nat = living(i, j);
+            if(get(i, j)) {
               l == 2 or l == 3
             }
             else {
@@ -32,7 +32,7 @@ describe "generate", ->
             }
           };
 
-          func next (dst:Grid)  {
+          func next(dst : Grid) {
             for (i in grid.keys()) {
               let cool = true;
 
@@ -69,20 +69,20 @@ describe "generate", ->
       };
 
       module {
-        public class Grid (state:State.State)  {
+        public class Grid(state : State.State) {
           let grid = state;
 
           let hex = 0x321.123;
 
           let n = grid.size();
 
-          public func size ()  : Nat {
+          public func size() : Nat {
             n
           };
 
-          func nextCell (i:Nat, j:Nat)  : State.Cell {
-            let l:Nat = living(i, j);
-            if (get(i, j)) {
+          func nextCell(i : Nat, j : Nat) : State.Cell {
+            let l : Nat = living(i, j);
+            if(get(i, j)) {
               l == 2 or l == 3
             }
             else {
@@ -90,7 +90,7 @@ describe "generate", ->
             }
           };
 
-          func next (dst:Grid)  {
+          func next(dst : Grid) {
             for (i in grid.keys()) {
               let cool = true;
 
@@ -101,7 +101,7 @@ describe "generate", ->
             }
           };
 
-          func tryCatch ()  : () {
+          func tryCatch() : () {
             try {
               Debug.print "Ring!" /* Comment at EOS */
             }
@@ -110,11 +110,11 @@ describe "generate", ->
             }
           };
 
-          public func setClockSequence (seq:?Nat16)  {
-            var s: Nat16 = switch (seq) {
+          public func setClockSequence(seq : ?Nat16) {
+            var s: Nat16 = switch(seq) {
               case null {
-                let bs = switch (rand.read 2) {
-                  case #ok(bs) bs;
+                let bs = switch(rand.read 2) {
+                  case #ok(bs)  bs;
                   case #eof(bs) bs;
                   case #err(_) {
                     assert (false);
@@ -131,7 +131,7 @@ describe "generate", ->
             }
           };
 
-          public func nestedObject ()  {
+          public func nestedObject() {
             var o = {
               x = 7;
               y = 3;
@@ -141,7 +141,7 @@ describe "generate", ->
             }
           };
 
-          public func nestedArray ()  {
+          public func nestedArray() {
             var a = [ var
               1,
               2,

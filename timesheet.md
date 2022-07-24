@@ -12,4 +12,4 @@
 |2022-07-20| 3     | Nested type objects and indentation handling, updated demo site
 |2022-07-21| 1     | Fixed Type Parameters in func and class
 |2022-07-23| 1     | Whitespace and comments for imports and top level declarations
-|2022-07-24| 1.5   | Indentation, comment and whitespace handling for blocks
+|2022-07-24| 4.75  | Indentation, comment and whitespace handling for blocks

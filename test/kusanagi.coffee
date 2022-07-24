@@ -9,6 +9,7 @@ describe "Kusanagi", ->
     [
       "Basic"
       "Full"
+      "Loop"
       "NestedObject"
       "NestedVariant"
       "Type"
@@ -64,4 +65,11 @@ describe "Kusanagi", ->
         #node : (Color, Tree<X, Y>, (X, ?Y), Tree<X, Y>);
         #leaf
       }
+    """
+
+  it "addition", ->
+    assert.equal generate(parser.parse """
+      let x = a + b
+    """), """
+      let x = a + b
     """

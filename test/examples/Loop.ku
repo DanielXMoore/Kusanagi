@@ -1,0 +1,5 @@
+module
+  public func looping()
+    loop
+      x := 1 + 2
+    while x < 1

@@ -29,42 +29,27 @@ generate = (node, indent="") ->
     when "actor", "module", "object"
       {type, id, body} = node
 
-      code = [type]
-
-      if id
-        code.push " ", id
-
-      code.push " ", genNested(body)
-      code.join("")
+      [type, id, body].map(gen).join("")
 
     when "array"
-      {exps, prefix} = node
+      {exps, prefix, beforeClose} = node
 
       if exps.length
         code = exps.map(genNested)
 
-        "[#{prefix}\n#{indent}" + code.join(",\n#{indent}") + "\n#{indent.slice(0, -2)}]"
+        "[#{prefix}\n" + code.join(",") + "#{gen(beforeClose)}]"
       else
         "[#{prefix}]"
 
     when "block"
-      {decs, pre, beforeClose} = node
-
-      # TODO: Proper indentation before closing brace
-      beforeClose ?= "\n"
-
-      # Move newline inside brace
-      # TODO: better naming than pre2?
-      if pre is "\n"
-        pre2 = "\n"
-        pre = ""
+      {decs, pre, afterOpen, beforeClose} = node
 
       if decs.length
         code = decs.map(genNested)
 
-        "#{gen(pre)}{#{gen(pre2)}#{code.join(";")}#{gen(beforeClose)}}"
+        "#{gen(pre)}{#{gen(afterOpen)}#{code.join(";")}#{gen(beforeClose)}}"
       else
-        "#{gen(pre)}{}"
+        "#{gen(pre)}{#{gen(afterOpen)}#{gen(beforeClose)}}"
 
     when "dec"
       {prefix, dec} = node
@@ -89,23 +74,19 @@ generate = (node, indent="") ->
       "<#{bindings}>"
 
     when "typedec"
-      {id, typing, exp} = node
+      {beforeEq, id, typing, exp} = node
 
-      # TODO: Fix indentation
-      "type#{id}#{gen(typing)} = #{genNested(exp)}"
+      "type#{gen(id)}#{gen(typing)}#{gen(beforeEq)}=#{gen(exp)}"
 
     when "typefield"
       {prefix, id, suffix} = node
 
-      "#{prefix}#{id} : #{gen(suffix)}"
+      "#{gen(prefix)}#{gen(id)}#{gen(suffix)}"
 
     when "typetag"
       {id, suffix} = node
 
-      if suffix
-        "#{id}: #{gen(suffix)}"
-      else
-        id
+      "#{gen(id)}#{gen(suffix)}"
 
     when "type"
       {id, typArgs} = node
@@ -156,39 +137,31 @@ generate = (node, indent="") ->
     when "class"
       {id, sort, pat, body, shared, typeSuffix, typing} = node
 
-      if pat.type is "parens"
-        pat = gen(pat)
-      else
-        pat = " #{gen(pat)}"
-
-      ["#{shared}#{sort}class", "#{id}#{gen(typing)}", pat, typeSuffix, gen(body)]
-      .join(" ")
+      [
+        shared
+        sort
+        "class"
+        id
+        typing
+        pat
+        typeSuffix
+        body
+      ].map(gen).join("")
 
     when "func"
       {id, pat, body, shared, typeSuffix, typing} = node
 
-      if pat.type is "parens"
-        pat = gen(pat)
-      else
-        pat = " #{gen(pat)}"
-
-      ["#{shared}func", "#{id}#{gen(typing)}", pat, typeSuffix, gen(body)]
-      .join(" ")
+      "#{shared}func#{id}#{gen(typing)}#{gen(pat)}#{gen(typeSuffix)}#{gen(body)}"
 
     when "if"
       {exp, condition, elseBlock} = node
-      if elseBlock
-        """
-          if #{gen(condition)} #{gen(exp)}
-          #{indent.slice(0, -2)}else #{gen(elseBlock)}
-        """
-      else
-        "if #{gen(condition)} #{gen(exp)}"
+
+      "if#{gen(condition)}#{gen(exp)}#{gen(elseBlock)}"
 
     when "for"
       {pat, source, exp} = node
 
-      "for (#{gen(pat)} in #{gen(source)}) #{gen(exp)}"
+      "for (#{gen(pat)} in #{gen(source)})#{gen(exp)}"
 
     when "do"
       {block, option} = node
@@ -203,7 +176,8 @@ generate = (node, indent="") ->
       "[#{gen(exp)}]"
 
     when "parens"
-      ["(", node.exps.map(gen).join(", "), ")"].join("")
+      {pre, exps} = node
+      [gen(pre), "(", exps.map(gen).join(", "), ")"].join("")
 
     when "="
       {id, exp} = node
@@ -216,35 +190,23 @@ generate = (node, indent="") ->
     when "switch"
       {condition, cases} = node
 
-      """
-        switch #{gen(condition)} {
-        #{indent}#{cases.map(genNested).join(";\n#{indent}")}
-        #{indent.slice(0, -2)}}
-      """
+      "switch#{gen(condition)}#{gen(cases)}"
 
     when "case", "catch"
-      {type, pat, exp} = node
-      "#{type} #{gen(pat)} #{gen(exp)}"
+      {type, pat, exp, pre} = node
+      "#{gen(pre)}#{type} #{gen(pat)}#{gen(exp)}"
 
     when "try"
-      {exp, catch:c} = node
+      {exp, catch:c, pre} = node
 
       """
-        try #{gen(exp)}
-        #{indent.slice(0, -2)}#{gen(c)}
+        try#{gen(exp)}#{gen(pre)}#{gen(c)}
       """
 
     when "loop"
       {exp, whileBlock} = node
-      if whileBlock
-        """
-          loop #{gen(exp)}
-          #{indent.slice(0, -2)}while #{gen(whileBlock)}
-        """
-      else
-        """
-          loop #{gen(exp)}
-        """
+
+      "loop#{gen(exp)}#{gen(whileBlock)}"
     else
       "<UNKNOWN #{JSON.stringify(node)} >"
 

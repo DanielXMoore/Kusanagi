@@ -8,10 +8,8 @@ module {
       };
       case {print} {
         Debug.print("Hey")
-      }
+      };
     };
-
-    switch Debug {}
   };
 
   public func setClockSequence(seq : ?Nat16) {

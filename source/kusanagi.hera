@@ -36,46 +36,64 @@ SharedPatOpt
   ("shared" _)? ("query" _)? (PatPlain _)?
 
 TypObj
-  "{" __ DelimitedTypField*:decs "}" -> { type: "block", decs }
+  "{" $__:afterOpen DelimitedTypField*:decs $__:beforeClose "}" -> { type: "block", decs, afterOpen, beforeClose }
   $("{" Empty "}")
   # NOTE: Using "block" for code generation to handle semi-colon delimited object fields
-  EOS NestedTypFields:decs -> { type: "block", decs }
+  $RestOfLine:pre $EOS?:afterOpen NestedTypFields:nested ->
+    const [indent, decs] = nested
+
+    return {
+      type: "block",
+      decs,
+      pre: pre.replace(/^\n$/, " "),
+      afterOpen: "\n" + afterOpen,
+      beforeClose: "\n" + "".padStart(indent * 2)
+    }
 
 DelimitedTypField
-  $__:pre TypField:field $__:post TypFieldDelimiter -> [pre, field, post]
+  $__:pre TypField:field $__:post BlockFieldDelimiter -> [pre, field, post]
 
 TypField
   $"var"?:prefix $(__ Id):id TypeSuffix:suffix -> { type: "typefield", prefix, id, suffix }
   # TODO: ast nodes
   Id Typing TypNullary TypeSuffix
 
-TypFieldDelimiter
+BlockFieldDelimiter
   # TypFields end with a semi-colon or an optional final semi-colon then the closing brace
-  ";"  __
-  ";"? __ &"}"
+  ";"
+  ";"? &( __ "}" )
 
 NestedTypFields
-  PushIndent NestedTypField*:fields PopIndent ->
+  PushIndent NestedTypField*:fields PopIndent:indent ->
     if (!fields.length) return $skip
-    return fields
+    return [indent, fields]
 
 NestedTypField
-  Nested TypField:field &EOS -> field
+  $Nested:pre TypField:field &EOS -> [pre, field]
 
 TypVariant
   $(__ "{" __ "#" __ "}")
   # NOTE: Using block node for code generation since it wraps with braces and delimits with semi-colons
-  __ "{" TypVariantField*:tags "}" -> { type: "block", decs: tags }
+  $__:pre "{" TypVariantField*:tags $__:beforeClose "}" -> { type: "block", decs: tags, pre, beforeClose }
   # NOTE: Using block node for code generation since it wraps with braces and delimits with semi-colons
-  $EOS:pre NestedTypTags:tags -> { type: "block", decs: tags, pre }
+  $RestOfLine:pre $EOS?:afterOpen NestedTypTags:nested ->
+    const [indent, tags] = nested
+
+    return {
+      type: "block",
+      decs: tags,
+      pre: pre.replace(/^\n$/, " "),
+      afterOpen: "\n" + afterOpen,
+      beforeClose: "\n",
+    }
 
 TypVariantField
-  __ TypTag:typTag TypFieldDelimiter -> typTag
+  __ TypTag:typTag BlockFieldDelimiter -> typTag
 
 NestedTypTags
-  PushIndent NestedTypTag*:tags PopIndent ->
+  PushIndent NestedTypTag*:tags PopIndent:indent ->
     if (!tags.length) return $skip
-    return tags
+    return [indent, tags]
 
 NestedTypTag
   $Nested:pre TypTag:tag &EOS -> [pre, tag]
@@ -85,6 +103,7 @@ TypNullary
   "(" TypItemField*:exps ")" -> { type: "parens", exps }
   $("(" Empty ")")
   # NOTE: Overloading "array" handler for code generation
+  # TODO: Internal whitespace and comments
   "[" $(__ "var")?:prefix __ Typ:typ __ "]" -> { type: "array", prefix, exps: [typ] }
   TypVariant
   TypObj
@@ -314,7 +333,13 @@ ExpObj
   # This different from PatNullary because exp fields can optionally start with "var"
   $( __ "{" __ ExpObjField* "}")
   # NOTE: Added indentation based object syntax
-  $__:pre "{" NestedObjectFields:fields $__:beforeClose "}" -> { type: "block", decs: fields, pre, beforeClose }
+  $__:pre "{" NestedObjectFields:fields $__:beforeClose "}" ->
+    return {
+      type: "block",
+      decs: fields,
+      pre,
+      beforeClose
+    }
 
 ExpObjField
   # NOTE: Extracted field rule for easier iteration
@@ -329,10 +354,13 @@ NestedObjectField
 ExpPlain
   _? Lit:lit -> lit
   # NOTE: Extracted expression part for easier iteration
-  _? "(" __ ExpPlainPart*:exps ")" -> { type: "parens", exps }
+  $_?:pre "(" __ ExpPlainPart*:exps ")" -> { type: "parens", exps, pre }
   # NOTE: Added Parentheses-less tuple
-  _ Exp:first CommaExp*:exps ->
-    return { type: "parens", exps: [first, ...exps] }
+  $_:pre Exp:first CommaExp*:exps ->
+    if (!exps.length)
+      return [pre, first]
+
+    return { type: "parens", exps: [first, ...exps], pre: pre.replace(/^ | $/, "") }
 
 ExpPlainPart
   Exp:exp __ ( "," / (__ &")") ) __ -> exp
@@ -360,18 +388,19 @@ ExpPost
   # Array
   # https://github.com/dfinity/motoko/blob/master/doc/modules/language-guide/pages/language-manual.adoc#arrays
   # NOTE: Added indentation based array syntax
-  "[" $((_? "var")?):prefix EOS NestedArrayParts:exps __ "]" -> { type: "array", prefix, exps }
+  "[" $((_? "var")?):prefix EOS NestedArrayParts:exps $__:beforeClose "]" -> { type: "array", prefix, exps, beforeClose }
   "[" __ $(( "var" __ )?):prefix ArrayPart*:exps "]" -> { type: "array", prefix, exps }
   # NOTE: Eliminated left recursion
 
 ArrayPart
+  # TODO: Internal whitespace / comments
   ExpNonvar:exp ( "," / (__ &"]") ) __ -> exp
 
 NestedArrayParts
   PushIndent NestedArrayPart*:exps PopIndent -> exps
 
 NestedArrayPart
-  Nested ExpNonvar:exp &EOS -> exp
+  $Nested:pre ExpNonvar:exp &EOS -> [pre, exp]
 
 ExpPostRest
   # Array Indexing
@@ -444,16 +473,40 @@ ExpNondec
   "async"    ExpNest:exp -> { type: "async",  exp }
   "await"    ExpNest:exp -> { type: "await",  exp }
   "assert"   ExpNest:exp -> { type: "assert", exp }
-  "label"    __ Id:id __ $(TypeSuffix?):typeSuffix ExpNest:exp -> { type: "label", id, typeSuffix, exp }
-  "break"    __ Id:id __ ExpNullary?:exp -> { type: "break", id, exp }
-  "continue" __ Id:id ->       { type: "continue", id }
+  "label"    ($__ Id):id TypeSuffix?:typeSuffix ExpNest:exp -> { type: "label", id, typeSuffix, exp }
+  "break"    ($__ Id):id ExpNullary?:exp -> { type: "break", id, exp }
+  "continue" ($__ Id):id -> { type: "continue", id }
   "debug"    ExpNest:exp -> { type: "debug", exp }
   "if"       ExpNullary:condition ExpNest:exp ElseBlock?:elseBlock -> { type: "if", condition, exp, elseBlock }
-  "try"      ExpNest:exp __ Catch:c -> { type: "try", exp, catch: c }
+  "try"      ExpNest:exp $__:pre Catch:c -> { type: "try", exp, catch: c, pre }
   "throw"    ExpNest:exp -> { type: "throw", exp }
-  "switch"   ExpNullary:condition __ "{" __ Case*:cases "}" -> { type: "switch", condition, cases }
+  "switch"   ExpNullary:condition $__:pre "{" $__:afterOpen Case*:cases $__:beforeClose "}" ->
+    return {
+      type: "switch",
+      condition,
+      cases: {
+        type: "block",
+        decs: cases,
+        pre,
+        afterOpen,
+        beforeClose,
+      }
+    }
   # NOTE: Added brace-less switch
-  "switch"   ExpNullary:condition EOS NestedCases:cases -> { type: "switch", condition, cases }
+  "switch"   ExpNullary:condition $RestOfLine:pre $EOS?:afterOpen NestedCases:nested ->
+    const [indent, cases] = nested
+
+    return {
+      type: "switch",
+      condition,
+      cases: {
+        type: "block",
+        decs: cases,
+        pre: pre.replace(/^\n$/, " "),
+        afterOpen: "\n" + afterOpen,
+        beforeClose: "\n" + "".padStart(indent * 2),
+      }
+    }
   "while"    ExpNullary:condition ExpNest:exp -> { type: "while", condition, exp }
   "loop"     ExpNest:exp WhileBlock?:whileBlock -> { type: "loop", exp, whileBlock }
   "for"      __ "(" __ Pat:pat __ "in" __ Exp:source __ ")" ExpNest:exp -> { type: "for", pat, source, exp }
@@ -467,10 +520,10 @@ ExpNondec
   ExpBin
 
 ElseBlock
-  __ "else" ExpNest:exp -> exp
+  $__ "else" ExpNest:exp
 
 WhileBlock
-  __ "while" ExpNest:exp -> exp
+  $__ "while" ExpNest:exp
 
 ExpNonvar
   ExpNondec
@@ -482,11 +535,11 @@ Exp
 
 ExpNest
   Block
-  __ Exp:exp -> exp
+  $__ Exp
 
 Block
-  __ "{" __ BlockDeclaration*:decs "}" -> { type: "block", decs }
-  $EOS:pre NestedBlockDeclarations:nested ->
+  $__:pre "{" __ BlockDeclaration*:decs "}" -> { type: "block", decs, pre }
+  $RestOfLine:pre $EOS?:afterOpen NestedBlockDeclarations:nested $TrailingComments:beforeClose ->
     const [indent, decs] = nested
 
     // Skip if there were no indented declarations found
@@ -495,8 +548,9 @@ Block
     return {
       type: "block",
       decs,
-      pre,
-      beforeClose: "\n" + "".padStart(indent * 2),
+      pre: pre.replace(/^\n$/, " "),
+      afterOpen: "\n" + afterOpen,
+      beforeClose: beforeClose + "\n" + "".padStart(indent * 2),
     }
 
 NestedBlockDeclarations
@@ -511,22 +565,26 @@ BlockDeclaration
   Dec:dec __ ( ";" / (__ &"}") ) __ -> dec
 
 Case
-  "case" PatNullary:pat ExpNest:exp  __ ( ";" / &"}" ) __ ->
+  $__:pre "case" PatNullary:pat ExpNest:exp BlockFieldDelimiter ->
     return {
       type: "case",
       pat,
       exp,
+      pre,
     }
 
 NestedCases
-  PushIndent NestedCase*:cases PopIndent -> cases
+  PushIndent NestedCase*:cases PopIndent:indent ->
+    if (!cases.length) return $skip
+    return [indent, cases]
 
 NestedCase
-  Nested "case" PatNullary:pat ExpNest:exp &EOS ->
+  $Nested:pre "case" PatNullary:pat ExpNest:exp &EOS ->
     return {
       type: "case",
       pat,
       exp,
+      pre,
     }
 
 Catch
@@ -599,16 +657,13 @@ PatBin
   # NOTE: Eliminated left recursion
 
 PatBinRest
-  # TODO: Manage internal comment and whitespace tokens
-  __ "or" __ PatBin -> [$2, $4]
-  # TODO: Manage internal comment and whitespace tokens
-  __ ":"  __ Typ    -> [$2, $4]
+  $__ "or" $__ PatBin
+  $__ ":"  $__ Typ
 
 Pat
   PatBin
 
 PatField
-  # TODO: Manage internal comment and whitespace tokens
   Id TypeSuffix? __ "=" __  Pat
   Id TypeSuffix?
 
@@ -621,21 +676,18 @@ DecNonvar
   # TODO: Manage internal comment and whitespace tokens
   "let"  __ Pat:pat  __ "=" __ Exp:exp -> { type: "let", pat, exp}
   # TODO: Manage internal comment and whitespace tokens
-  "type" $(__ Id):id __ Typing?:typing __ "=" _? Typ:exp -> { type: "typedec", id, typing, exp }
+  "type" ($__ Id):id ($__ Typing)?:typing $__:beforeEq "=" ($_? Typ):exp -> { type: "typedec", id, typing, exp, beforeEq }
 
   ObjSort:type $(__ Id)?:id (__ "=")? ObjBody:body ->
     return { id, type, body }
 
-  # TODO: Manage internal comment and whitespace tokens
-  $(SharedPatOpt):shared "func" _ $(Id?):id __ Typing?:typing __ PatPlain:pat $(TypeSuffix?):typeSuffix FuncBody:body ->
+  $(SharedPatOpt):shared "func" $(__ Id?):id ($__ Typing)?:typing ($__ PatPlain):pat $(TypeSuffix?):typeSuffix FuncBody:body ->
     return { type: "func", shared, id, typing, pat, typeSuffix, body}
-  # TODO: Manage internal comment and whitespace tokens
-  $(SharedPatOpt):shared $(ObjSort?):sort __ "class" __ Id?:id __ Typing?:typing __ PatPlain:pat $(TypeSuffix?):typeSuffix ClassBody:body ->
+  $(SharedPatOpt):shared $(ObjSort?):sort $__ "class" ($__ Id)?:id ($__ Typing)?:typing ($__ PatPlain):pat $(TypeSuffix?):typeSuffix ClassBody:body ->
     return { type: "class", sort, shared, id, typing, pat, typeSuffix, body}
 
 TypeSuffix
-  # TODO: Manage internal comment and whitespace tokens
-  __ ":" __ Typ:typ -> typ
+  $__ ":" $__ Typ:typ
 
 Typing
   "<" TypingField*:binds ">" -> { type: "typebind", binds }
@@ -665,13 +717,15 @@ ObjBody
       decs: decs,
       pre,
     }
-  $EOS:pre NestedObjBodyFields:nestedFields ->
+  $RestOfLine:pre $EOS?:afterOpen NestedObjBodyFields:nestedFields ->
     const [indent, decs] = nestedFields
+
     return {
       type: "block",
       decs: decs,
-      pre,
-      beforeClose: "".padStart(indent * 2),
+      pre: pre.replace(/^\n$/, " "),
+      afterOpen: "\n" + afterOpen,
+      beforeClose: "\n" + "".padStart(indent * 2),
     }
 
 # NOTE: Extracted dec-field with optional trailing semi-colon when object closes to make field iteration easier in ObjBody
@@ -697,12 +751,12 @@ ClassBody
 
 # https://github.com/dfinity/motoko/blob/master/doc/modules/language-guide/pages/language-manual.adoc#comments
 Comment
-  $MultilineComment  -> { type: "comment", comment: $1 }
-  $SingleLineComment -> { type: "comment", comment: $1 }
+  $MultilineComment
+  $SingleLineComment
 
 # https://github.com/dfinity/motoko/blob/master/doc/modules/language-guide/pages/language-manual.adoc#comments
 MultilineComment
-  # Note: Nested Comments
+  # Note: Allows for nested Comments
   "/*" ( (!("/*" / "*/") . ) / MultilineComment )* "*/"
 
 # https://github.com/dfinity/motoko/blob/master/doc/modules/language-guide/pages/language-manual.adoc#comments
@@ -719,9 +773,16 @@ _
 
 # End of statemnt
 EOS
-  ((_? Comment?)* EOL)+ _ EOF
-  ((_? Comment?)* EOL)+
+  RestOfLine+ _ EOF
+  RestOfLine+
   EOF
+
+RestOfLine
+  TrailingComments EOL
+
+# Trailing comments within a single logical line (newlines within a multi-line comment don't count
+TrailingComments
+  (_? Comment?)*
 
 # End of line
 EOL
