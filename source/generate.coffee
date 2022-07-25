@@ -96,36 +96,24 @@ generate = (node, indent="") ->
     when "exppost"
       {base, rest} = node
 
-      "#{base}#{rest.map(gen).join("")}"
+      gen([base, rest])
 
     when "projection"
       ".#{node.id}"
 
     when "application"
       {fnArgs, typArgs} = node
-      typeBinding = gen(typArgs)
 
-      result = if fnArgs.type is "parens"
-        gen(fnArgs)
-      else
-        " #{gen(fnArgs)}"
-
-      "#{typeBinding}#{result}"
+      gen([typArgs, fnArgs])
 
     when "assert", "async", "await", "return", "break", "continue", "debug", "throw", "ignore"
+      # TODO: More accurate whitespace
       "#{node.type} #{gen(node.exp)}"
 
     when "expbin"
       {exps} = node
-      i = 1
 
-      code = [gen(exps[0])]
-
-      while i < exps.length
-        code.push exps[i], gen(exps[i+1])
-        i += 2
-
-      code.join(" ")
+      gen exps
 
     when "binassign"
       {base, op, exp} = node
@@ -137,7 +125,7 @@ generate = (node, indent="") ->
     when "class"
       {id, sort, pat, body, shared, typeSuffix, typing} = node
 
-      [
+      gen [
         shared
         sort
         "class"
@@ -146,7 +134,7 @@ generate = (node, indent="") ->
         pat
         typeSuffix
         body
-      ].map(gen).join("")
+      ]
 
     when "func"
       {id, pat, body, shared, typeSuffix, typing} = node

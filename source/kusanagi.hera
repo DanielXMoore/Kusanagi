@@ -352,15 +352,12 @@ NestedObjectField
   $Nested:pre ExpField:field &EOS -> [pre, field]
 
 ExpPlain
-  _? Lit:lit -> lit
+  $_? Lit
   # NOTE: Extracted expression part for easier iteration
   $_?:pre "(" __ ExpPlainPart*:exps ")" -> { type: "parens", exps, pre }
   # NOTE: Added Parentheses-less tuple
-  $_:pre Exp:first CommaExp*:exps ->
-    if (!exps.length)
-      return [pre, first]
-
-    return { type: "parens", exps: [first, ...exps], pre: pre.replace(/^ | $/, "") }
+  $(_ TrailingComments):pre Exp:first CommaExp*:exps ->
+    return { type: "parens", exps: [first, ...exps], pre: pre.replace(/ $/, "") }
 
 ExpPlainPart
   Exp:exp __ ( "," / (__ &")") ) __ -> exp
@@ -440,7 +437,7 @@ ExpUn
   # https://github.com/dfinity/motoko/blob/master/doc/modules/language-guide/pages/language-manual.adoc#variant-pattern
   "#" Id __ ExpNullary?
   "?" ExpUn
-  Unop ExpUn
+  Unop ![\s] ExpUn
   Unassign ExpUn
   "actor" ExpPlain
   "not" ExpUn
@@ -461,11 +458,11 @@ ExpBin
     }
 
 ExpBinRest
-  __ Binop __ ExpBin    -> [$2, $4]
-  __ Relop __ ExpBin    -> [$2, $4]
-  __ "and" __ ExpBin    -> [$2, $4]
-  __ "or"  __ ExpBin    -> [$2, $4]
-  __ ":"   __ TypNobin  -> [$2, $4]
+  __ Binop __ ExpBin
+  __ Relop __ ExpBin
+  __ "and" __ ExpBin
+  __ "or"  __ ExpBin
+  __ ":"   __ TypNobin
 
 ExpNondec
   "return" __ Exp?:exp ->
@@ -520,10 +517,10 @@ ExpNondec
   ExpBin
 
 ElseBlock
-  $__ "else" ExpNest:exp
+  $__ "else" ExpNest
 
 WhileBlock
-  $__ "while" ExpNest:exp
+  $__ "while" ExpNest
 
 ExpNonvar
   ExpNondec

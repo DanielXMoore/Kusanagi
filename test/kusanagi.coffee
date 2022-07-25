@@ -9,7 +9,9 @@ describe "Kusanagi", ->
     [
       "Basic"
       "Full"
+      "Hex"
       "Loop"
+      "Math"
       "NestedObject"
       "NestedVariant"
       "Type"
@@ -73,3 +75,78 @@ describe "Kusanagi", ->
     """), """
       let x = a + b
     """
+
+  it "unary operator in function application", ->
+    assert.equal generate(parser.parse """
+      x +b
+    """), """
+      x(+b)
+    """
+
+  it "comment between function application", ->
+    assert.equal generate(parser.parse """
+      x /*A*/ +b
+    """), """
+      x /*A*/(+b)
+    """
+
+  describe "func", ->
+    it "simple func", ->
+      assert.equal generate(parser.parse """
+        func size() : Nat
+          n
+        """), """
+        func size() : Nat {
+          n
+        }
+      """
+
+    it "with end of line comment", ->
+      assert.equal generate(parser.parse """
+        func size() : Nat // End of line comment!
+          n
+        """), """
+        func size() : Nat // End of line comment!
+        {
+          n
+        }
+      """
+
+    it "with inline comments", ->
+      assert.equal generate(parser.parse """
+        /* C0 */ func /* C1 */ size /* C2 */ () /* C3 */ : /* C4 */ Nat /* C5 */
+          // C6
+          n
+      """), """
+        /* C0 */ func /* C1 */ size /* C2 */ () /* C3 */ : /* C4 */ Nat /* C5 */
+        {
+          // C6
+          n
+        }
+      """
+
+  describe "loop", ->
+    it "with while", ->
+      assert.equal generate(parser.parse """
+        loop
+          x := 1 + 2
+        while x < 1
+      """), """
+        loop {
+          x := 1 + 2
+        }
+        while x < 1
+      """
+
+    it "with comments", ->
+      assert.equal generate(parser.parse """
+        loop /**/
+          x := 1 + 2
+        while /**/ x < 1
+      """), """
+        loop /**/
+        {
+          x := 1 + 2
+        }
+        while /**/ x < 1
+      """
