@@ -111,3 +111,10 @@ PatField
 ```
 
 The next step is to add additional constructions specifying explicit indentation behavior where useful. [See `NestedExpressions` for a preview](./source/experiments.hera)
+
+Convert Markdown Table to CSV
+---
+
+```bash
+sed 's/^|//;s/|/,/g;/--/d'
+```
