@@ -479,3 +479,39 @@ describe "Kusanagi", ->
         3, 4
         ]
       """
+
+  describe "index", ->
+    it "should keep whitespace and comments", ->
+      compare """
+        let x = a[
+          /**/1   /*  */]
+        """, """
+        let x = a[
+          /**/1   /*  */]
+      """
+
+    it "should convert to function application when preceded by whitespace", ->
+      compare """
+        let x = a [1]
+      """, """
+        let x = a([1])
+      """
+
+  describe "projection", ->
+    it "should keep whitespace and comments", ->
+      compare """
+        let x = a. //
+          /**/   /*  */
+          b
+      """, """
+        let x = a. //
+          /**/   /*  */
+          b
+      """
+
+    it "should allow whitespace and comments before the '.'", ->
+      compare """
+        let x = a /**/ .b
+      """, """
+        let x = a /**/ .b
+      """

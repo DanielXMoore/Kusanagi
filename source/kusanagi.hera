@@ -382,25 +382,10 @@ NestedArrayPart
 ExpPostRest
   # Array Indexing
   # https://github.com/dfinity/motoko/blob/master/doc/modules/language-guide/pages/language-manual.adoc#array-indexing
-  "[" Exp:exp "]" ->
-    return {
-      type: "index",
-      exp,
-    }
-  # Tuple Projection
+  "[" __ Exp __ "]"
+  # Tuple Projection, Object Projection
   # https://github.com/dfinity/motoko/blob/master/doc/modules/language-guide/pages/language-manual.adoc#tuples
-  "." Nat:nat ->
-    return {
-      type: "projection",
-      id: nat
-    }
-  # Object Projection (member access)
-  # https://github.com/dfinity/motoko/blob/master/doc/modules/language-guide/pages/language-manual.adoc#object-projection-member-access
-  "." Id:id ->
-    return {
-      type: "projection",
-      id,
-    }
+  __ "." __ ( Nat / Id )
   # Function application
   $((TypArgs __ )?):typArgs ExpNullary:fnArgs ->
     return {

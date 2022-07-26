@@ -3,8 +3,6 @@ indentation = "  "
 generate = (node, indent="") ->
   gen = (item) ->
     generate(item, indent)
-  genNested = (item) ->
-    generate(item, indent + indentation)
 
   if typeof node is "string"
     return node
@@ -35,7 +33,7 @@ generate = (node, indent="") ->
       {decs, pre, afterOpen, beforeClose} = node
 
       if decs.length
-        code = decs.map(genNested)
+        code = decs.map(gen)
 
         "#{gen(pre)}{#{gen(afterOpen)}#{code.join(";")}#{gen(beforeClose)}}"
       else
@@ -55,9 +53,6 @@ generate = (node, indent="") ->
       {id, suffix} = node
 
       "#{gen(id)}#{gen(suffix)}"
-
-    when "projection"
-      ".#{node.id}"
 
     when "application"
       {fnArgs, typArgs} = node
@@ -116,10 +111,6 @@ generate = (node, indent="") ->
         "do ? #{gen(block)}"
       else
         "do #{gen(block)}"
-
-    when "index"
-      {exp} = node
-      "[#{gen(exp)}]"
 
     when "parens"
       {pre, exps, beforeClose} = node
