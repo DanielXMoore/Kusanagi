@@ -349,3 +349,11 @@ describe "Kusanagi", ->
         """, """
           let   /**/  x  /* */ = /**/ x
         """
+
+  describe "var", ->
+    it "should keep whitespace and comments", ->
+      compare """
+          var   /**/  x  /* */ = /**/ b
+        """, """
+          var   /**/  x  /* */ = /**/ b
+        """

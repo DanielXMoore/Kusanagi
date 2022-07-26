@@ -111,7 +111,7 @@ describe "generate", ->
           };
 
           public func setClockSequence(seq : ?Nat16) {
-            var s: Nat16 = switch(seq) {
+            var s : Nat16 = switch(seq) {
               case null {
                 let bs = switch(rand.read 2) {
                   case #ok(bs)  bs;

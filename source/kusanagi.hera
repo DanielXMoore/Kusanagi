@@ -542,7 +542,6 @@ Block
     }
 
 NestedBlockDeclarations
-  # TODO: PopIndent should return number of current indent level
   PushIndent NestedBlockDeclaration*:decs PopIndent:indent -> [indent, decs]
 
 NestedBlockDeclaration
@@ -656,9 +655,7 @@ PatField
   Id TypeSuffix?
 
 DecVar
-  # TODO: Manage internal comment and whitespace tokens
-  "var" __ Id:id __ $(TypeSuffix?):typeSuffix __ "=" __ Exp:exp ->
-    return { type: "var", id, exp, typeSuffix}
+  "var" __ Id:id (__ TypeSuffix)? __ "=" __ Exp
 
 DecNonvar
   "let"  __ Pat __ "=" __ Exp
@@ -673,7 +670,7 @@ DecNonvar
     return { type: "class", sort, shared, id, typing, pat, typeSuffix, body}
 
 TypeSuffix
-  $__ ":" $__ Typ:typ
+  __ ":" __ Typ
 
 Typing
   "<" TypingField* ">"

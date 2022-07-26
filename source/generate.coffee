@@ -56,11 +56,6 @@ generate = (node, indent="") ->
 
       "#{prefix}#{gen(dec)}"
 
-    when "var"
-      {id, exp, typeSuffix} = node
-
-      "var #{id}#{typeSuffix} = #{gen(exp)}"
-
     when "typefield"
       {prefix, id, suffix} = node
 
