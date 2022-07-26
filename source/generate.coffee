@@ -56,27 +56,10 @@ generate = (node, indent="") ->
 
       "#{prefix}#{gen(dec)}"
 
-    when "let"
-      {pat, exp} = node
-
-      "let #{gen(pat)} = #{gen(exp)}"
-
     when "var"
       {id, exp, typeSuffix} = node
 
       "var #{id}#{typeSuffix} = #{gen(exp)}"
-
-    when "typebind"
-      {binds} = node
-      bindings = binds.map gen
-      .join(", ")
-
-      "<#{bindings}>"
-
-    when "typedec"
-      {beforeEq, id, typing, exp} = node
-
-      "type#{gen(id)}#{gen(typing)}#{gen(beforeEq)}=#{gen(exp)}"
 
     when "typefield"
       {prefix, id, suffix} = node
@@ -87,11 +70,6 @@ generate = (node, indent="") ->
       {id, suffix} = node
 
       "#{gen(id)}#{gen(suffix)}"
-
-    when "type"
-      {id, typArgs} = node
-
-      "#{id}#{gen(typArgs)}"
 
     when "exppost"
       {base, rest} = node

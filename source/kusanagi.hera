@@ -27,8 +27,8 @@ SharedPatOpt
   ("shared" _)? ("query" _)? (PatPlain _)?
 
 TypObj
-  "{" $__:afterOpen DelimitedTypField*:decs $__:beforeClose "}" -> { type: "block", decs, afterOpen, beforeClose }
-  "{" __ "}"
+  __:pre "{" $__:afterOpen DelimitedTypField*:decs $__:beforeClose "}" -> { type: "block", decs, pre, afterOpen, beforeClose }
+  __ "{" __ "}"
   # NOTE: Using "block" for code generation to handle semi-colon delimited object fields
   $RestOfLine:pre $EOS?:afterOpen NestedTypFields:nested ->
     const [indent, decs] = nested
@@ -94,7 +94,7 @@ TypNullary
   __ "[" __ "var"? __ Typ __ "]"
   TypVariant
   TypObj
-  $(Id ("." Id)*):id TypArgs?:typArgs -> { type: "type", id, typArgs }
+  __ Id ("." Id)* TypArgs?
 
 TypItemField
   __ TypItem __ TypItemDelimiter
@@ -114,7 +114,7 @@ TypPre
     if ($1) return { type: "async", exp }
     return exp
 
-  ("async" _)? TypUn:exp ->
+  ("async" __)? TypUn:exp ->
     if ($1) {
       return {type: "async", exp}
     } else {
@@ -127,8 +127,7 @@ FuncSortOpt
   __
 
 TypNobin
-  # TODO: AST nodes
-  FuncSortOpt __ Typing? __ TypUn __ "->" __ TypNobin
+  __ FuncSortOpt (__ Typing)? __ TypUn __ "->" __ TypNobin
   TypPre
 
 Typ
@@ -140,18 +139,18 @@ Typ
   # NOTE: Eliminated left recursion
 
 TypRest
-  __ "and":op __ Typ:type -> [op, type]
-  __  "or":op __ Typ:type -> [op, type]
+  __ "and" __ Typ
+  __ "or"  __ Typ
 
 TypItem
   Id TypeSuffix
   Typ
 
 TypArgs
-  "<" TypArgField*:binds ">" -> { type: "typebind", binds }
+  "<" TypArgField* ">"
 
 TypArgField
-  __ Typ:typ ( ("," __) / (","? __ &">") ) -> typ
+  __ Typ ( ("," __) / (","? __ &">") )
 
 TypTag
   $("#" Id __):id TypeSuffix?:suffix -> { type: "typetag", id, suffix }
@@ -662,10 +661,8 @@ DecVar
     return { type: "var", id, exp, typeSuffix}
 
 DecNonvar
-  # TODO: Manage internal comment and whitespace tokens
-  "let"  __ Pat:pat  __ "=" __ Exp:exp -> { type: "let", pat, exp}
-  # TODO: Manage internal comment and whitespace tokens
-  "type" ($__ Id):id ($__ Typing)?:typing $__:beforeEq "=" (_? Typ):exp -> { type: "typedec", id, typing, exp, beforeEq }
+  "let"  __ Pat __ "=" __ Exp
+  "type" __ Id  (__ Typing)? __ "=" Typ
 
   ObjSort:type $(__ Id)?:id (__ "=")? ObjBody:body ->
     return { id, type, body }
@@ -679,11 +676,10 @@ TypeSuffix
   $__ ":" $__ Typ:typ
 
 Typing
-  "<" TypingField*:binds ">" -> { type: "typebind", binds }
+  "<" TypingField* ">"
 
 TypingField
-  # TODO: Manage internal comment and whitespace tokens
-  TypBind:typBind __ ( ("," __) / &">" ) -> typBind
+  TypBind __ ( ("," __) / &">" )
 
 Dec
   DecVar

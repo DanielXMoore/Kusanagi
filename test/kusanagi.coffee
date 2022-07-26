@@ -201,6 +201,13 @@ describe "Kusanagi", ->
         )
       """
 
+    it "binding", ->
+      compare """
+        type X<A,B> = Y<B,A>
+      """, """
+        type X<A,B> = Y<B,A>
+      """
+
     it "tuple", ->
       compare """
         type X = (a, b, c)
@@ -272,17 +279,73 @@ describe "Kusanagi", ->
         /* */)
       """
 
-    it "funcs", ->
-      # Func sort
-      compare """
-        type X = shared query () -> ()
-      """, """
-        type X = shared query () -> ()
-      """
+    describe "and / or", ->
+      it "basic", ->
+        compare """
+          type A = X and Y or Z
+        """, """
+          type A = X and Y or Z
+        """
 
-      # With comments
+      it "keeps comments and whitespace", ->
+        compare """
+          type X = Y   /**/or /**/Z
+        """, """
+          type X = Y   /**/or /**/Z
+        """
+
+      it "should keep newlines", ->
+        compare """
+          type X =
+           Y
+            or
+          Z
+        """, """
+          type X =
+           Y
+            or
+          Z
+        """
+
+    describe "funcs", ->
+      it "Func sort", ->
+        compare """
+          type X = shared query () -> ()
+        """, """
+          type X = shared query () -> ()
+        """
+
+        # With comments
+        compare """
+          type X = shared /* heyyy */ query () -> ()
+        """, """
+          type X = shared /* heyyy */ query () -> ()
+        """
+
+      it "newlines after arrow", ->
+        # With newlines after func arrow
+        compare """
+          type X = () ->
+            ()
+        """, """
+          type X = () ->
+            ()
+        """
+
+      it "newlines before arrow", ->
+        # With newlines after func arrow
+        compare """
+          type X = ()
+           ->()
+        """, """
+          type X = ()
+           ->()
+        """
+
+  describe "let", ->
+    it "should keep whitespace and comments", ->
       compare """
-        type X = shared /* heyyy */ query () -> ()
-      """, """
-        type X = shared /* heyyy */ query () -> ()
-      """
+          let   /**/  x  /* */ = /**/ x
+        """, """
+          let   /**/  x  /* */ = /**/ x
+        """
