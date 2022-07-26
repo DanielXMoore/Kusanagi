@@ -2,4 +2,6 @@
 bin/
 coverage/
 dist/
+integration/
 node_modules/
+pkg/

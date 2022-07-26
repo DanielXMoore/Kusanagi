@@ -118,3 +118,18 @@ Convert Markdown Table to CSV
 ```bash
 sed 's/^|//;s/|/,/g;/--/d'
 ```
+
+Adding Package to Motoko Compiler CLI
+---
+
+If importing a package in a motoko file like:
+
+```motoko
+import Debug "mo:base/Debug";
+
+// ...
+```
+
+Then the `moc` cli will need to know about it. Assuming the repo here https://github.com/dfinity/motoko-base has been cloned into pkg/ this will point the `moc` cli to the correct package
+
+`moc --package base pkg/motoko-base/src ...`
