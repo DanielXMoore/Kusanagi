@@ -14,3 +14,4 @@
 |2022-07-23| 1.0   | Whitespace and comments for imports and top level declarations
 |2022-07-24| 4.75  | Indentation, comment and whitespace handling for blocks
 |2022-07-25| 2.0   | Continued whitespace and comment handling, fixed paren-less function application unary operator/interaction, simplified some code generation, more test cases
+|2022-07-26| 2.0   | Integration test, more unit tests for type decs, simplifying parser and code generation
