@@ -145,7 +145,7 @@ describe "generate", ->
             var a = [ var
               1,
               2,
-              3
+              3,
             ]
           }
         }

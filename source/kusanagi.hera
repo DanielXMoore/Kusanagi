@@ -1,7 +1,7 @@
 ## Currently adapting from Grammar.txt
 
 Prog
-  Init Imp*:imps Declaration*:decs $__:post ->
+  Init Imp*:imps Declaration*:decs __:post ->
     return {
       type: "program",
       decs: imps.concat(decs),
@@ -13,10 +13,10 @@ StatementDelimiter
   &EOS
 
 Imp
-  $__:pre "import" PatNullary:pat __ "="? __ Text:source StatementDelimiter -> {type: "import", source, pat, pre}
+  __:pre "import" PatNullary:pat __ "="? __ Text:source StatementDelimiter -> {type: "import", source, pat, pre}
 
 Declaration
-  $__:pre Dec:dec StatementDelimiter -> [pre, dec]
+  __:pre Dec:dec StatementDelimiter -> [pre, dec]
 
 ObjSort
   "object"
@@ -27,7 +27,7 @@ SharedPatOpt
   ("shared" _)? ("query" _)? (PatPlain _)?
 
 TypObj
-  __:pre "{" $__:afterOpen DelimitedTypField*:decs $__:beforeClose "}" -> { type: "block", decs, pre, afterOpen, beforeClose }
+  __:pre "{" __:afterOpen DelimitedTypField*:decs __:beforeClose "}" -> { type: "block", decs, pre, afterOpen, beforeClose }
   __ "{" __ "}"
   # NOTE: Using "block" for code generation to handle semi-colon delimited object fields
   $RestOfLine:pre $EOS?:afterOpen NestedTypFields:nested ->
@@ -42,7 +42,7 @@ TypObj
     }
 
 DelimitedTypField
-  $__:pre TypField:field $__:post BlockFieldDelimiter -> [pre, field, post]
+  __:pre TypField:field __:post BlockFieldDelimiter -> [pre, field, post]
 
 TypField
   $"var"?:prefix $(__ Id):id TypeSuffix:suffix -> { type: "typefield", prefix, id, suffix }
@@ -65,7 +65,7 @@ NestedTypField
 TypVariant
   $(__ "{" __ "#" __ "}")
   # NOTE: Using block node for code generation since it wraps with braces and delimits with semi-colons
-  $__:pre "{" TypVariantField*:tags $__:beforeClose "}" -> { type: "block", decs: tags, pre, beforeClose }
+  __:pre "{" TypVariantField*:tags __:beforeClose "}" -> { type: "block", decs: tags, pre, beforeClose }
   # NOTE: Using block node for code generation since it wraps with braces and delimits with semi-colons
   $RestOfLine:pre $EOS?:afterOpen NestedTypTags:nested ->
     const [indent, tags] = nested
@@ -324,7 +324,7 @@ ExpObj
   # This different from PatNullary because exp fields can optionally start with "var"
   $( __ "{" __ ExpObjField* "}")
   # NOTE: Added indentation based object syntax
-  $__:pre "{" NestedObjectFields:fields $__:beforeClose "}" ->
+  __:pre "{" NestedObjectFields:fields __:beforeClose "}" ->
     return {
       type: "block",
       decs: fields,
@@ -362,33 +362,22 @@ ExpNullary
   Id
 
 ExpPost
-  ExpNullary:exp ExpPostRest*:rest ->
-    if (rest.length) {
-      return {
-        // TODO better naming
-        type: "exppost",
-        base: exp,
-        rest: rest,
-      }
-    } else {
-      return exp
-    }
+  ExpNullary ExpPostRest*
   # Array
   # https://github.com/dfinity/motoko/blob/master/doc/modules/language-guide/pages/language-manual.adoc#arrays
   # NOTE: Added indentation based array syntax
-  "[" $((_? "var")?):prefix EOS NestedArrayParts:exps $__:beforeClose "]" -> { type: "array", prefix, exps, beforeClose }
-  "[" __ $(( "var" __ )?):prefix ArrayPart*:exps "]" -> { type: "array", prefix, exps }
+  "[" (__ "var")? EOS NestedArrayParts __ "]"
+  "[" __ ( "var" __ )? ArrayPart* "]"
   # NOTE: Eliminated left recursion
 
 ArrayPart
-  # TODO: Internal whitespace / comments
-  ExpNonvar:exp ( "," / (__ &"]") ) __ -> exp
+  ExpNonvar ( "," / (__ &"]") ) __
 
 NestedArrayParts
   PushIndent NestedArrayPart*:exps PopIndent -> exps
 
 NestedArrayPart
-  $Nested:pre ExpNonvar:exp &EOS -> [pre, exp]
+  $Nested ExpNonvar &EOS -> [$1, $2, ","]
 
 ExpPostRest
   # Array Indexing
@@ -461,14 +450,14 @@ ExpNondec
   "async"    ExpNest:exp -> { type: "async",  exp }
   "await"    ExpNest:exp -> { type: "await",  exp }
   "assert"   ExpNest:exp -> { type: "assert", exp }
-  "label"    ($__ Id):id TypeSuffix?:typeSuffix ExpNest:exp -> { type: "label", id, typeSuffix, exp }
-  "break"    ($__ Id):id ExpNullary?:exp -> { type: "break", id, exp }
-  "continue" ($__ Id):id -> { type: "continue", id }
+  "label"    (__ Id):id TypeSuffix?:typeSuffix ExpNest:exp -> { type: "label", id, typeSuffix, exp }
+  "break"    (__ Id):id ExpNullary?:exp -> { type: "break", id, exp }
+  "continue" (__ Id):id -> { type: "continue", id }
   "debug"    ExpNest:exp -> { type: "debug", exp }
   "if"       ExpNullary:condition ExpNest:exp ElseBlock?:elseBlock -> { type: "if", condition, exp, elseBlock }
-  "try"      ExpNest:exp $__:pre Catch:c -> { type: "try", exp, catch: c, pre }
+  "try"      ExpNest:exp __:pre Catch:c -> { type: "try", exp, catch: c, pre }
   "throw"    ExpNest:exp -> { type: "throw", exp }
-  "switch"   ExpNullary:condition $__:pre "{" $__:afterOpen Case*:cases $__:beforeClose "}" ->
+  "switch"   ExpNullary:condition __:pre "{" __:afterOpen Case*:cases __:beforeClose "}" ->
     return {
       type: "switch",
       condition,
@@ -508,10 +497,10 @@ ExpNondec
   ExpBin
 
 ElseBlock
-  $__ "else" ExpNest
+  __ "else" ExpNest
 
 WhileBlock
-  $__ "while" ExpNest
+  __ "while" ExpNest
 
 ExpNonvar
   ExpNondec
@@ -523,10 +512,10 @@ Exp
 
 ExpNest
   Block
-  $__ Exp
+  __ Exp
 
 Block
-  $__:pre "{" __ BlockDeclaration*:decs "}" -> { type: "block", decs, pre }
+  __:pre "{" __ BlockDeclaration*:decs "}" -> { type: "block", decs, pre }
   $RestOfLine:pre $EOS?:afterOpen NestedBlockDeclarations:nested $TrailingComments:beforeClose ->
     const [indent, decs] = nested
 
@@ -552,7 +541,7 @@ BlockDeclaration
   Dec:dec __ ( ";" / (__ &"}") ) __ -> dec
 
 Case
-  $__:pre "case" PatNullary:pat ExpNest:exp BlockFieldDelimiter ->
+  __:pre "case" PatNullary:pat ExpNest:exp BlockFieldDelimiter ->
     return {
       type: "case",
       pat,
@@ -644,8 +633,8 @@ PatBin
   # NOTE: Eliminated left recursion
 
 PatBinRest
-  $__ "or" $__ PatBin
-  $__ ":"  $__ Typ
+  __ "or" __ PatBin
+  __ ":"  __ Typ
 
 Pat
   PatBin
@@ -664,9 +653,9 @@ DecNonvar
   ObjSort:type $(__ Id)?:id (__ "=")? ObjBody:body ->
     return { id, type, body }
 
-  $(SharedPatOpt):shared "func" $(__ Id?):id ($__ Typing)?:typing ($__ PatPlain):pat $(TypeSuffix?):typeSuffix FuncBody:body ->
+  $(SharedPatOpt):shared "func" $(__ Id?):id (__ Typing)?:typing (__ PatPlain):pat $(TypeSuffix?):typeSuffix FuncBody:body ->
     return { type: "func", shared, id, typing, pat, typeSuffix, body}
-  $(SharedPatOpt):shared $(ObjSort?):sort $__ "class" ($__ Id)?:id ($__ Typing)?:typing ($__ PatPlain):pat $(TypeSuffix?):typeSuffix ClassBody:body ->
+  $(SharedPatOpt):shared $(ObjSort?):sort __ "class" (__ Id)?:id (__ Typing)?:typing (__ PatPlain):pat $(TypeSuffix?):typeSuffix ClassBody:body ->
     return { type: "class", sort, shared, id, typing, pat, typeSuffix, body}
 
 TypeSuffix
@@ -685,7 +674,7 @@ Dec
 
 FuncBody
   Block
-  $__:pre "=" $__:preExp Exp:exp ->
+  __:pre "=" __:preExp Exp:exp ->
     return [pre, {
       type: "=",
       exp: [preExp, exp]
@@ -693,7 +682,7 @@ FuncBody
 
 ObjBody
   # TODO: internal whitespace and comment handling
-  $__:pre "{" __ ObjBodyField*:decs "}" __ ->
+  __:pre "{" __ ObjBodyField*:decs "}" __ ->
     return {
       type: "block",
       decs: decs,
@@ -747,7 +736,7 @@ SingleLineComment
 
 # Any or no whitespace including newlines and comments
 __
-  ([\s]+ / Comment)*
+  $([\s]+ / Comment)*
 
 # Non-newline whitespace
 _

@@ -31,16 +31,6 @@ generate = (node, indent="") ->
 
       [type, id, body].map(gen).join("")
 
-    when "array"
-      {exps, prefix, beforeClose} = node
-
-      if exps.length
-        code = exps.map(genNested)
-
-        "[#{prefix}\n" + code.join(",") + "#{gen(beforeClose)}]"
-      else
-        "[#{prefix}]"
-
     when "block"
       {decs, pre, afterOpen, beforeClose} = node
 
@@ -65,11 +55,6 @@ generate = (node, indent="") ->
       {id, suffix} = node
 
       "#{gen(id)}#{gen(suffix)}"
-
-    when "exppost"
-      {base, rest} = node
-
-      gen([base, rest])
 
     when "projection"
       ".#{node.id}"

@@ -357,3 +357,125 @@ describe "Kusanagi", ->
         """, """
           var   /**/  x  /* */ = /**/ b
         """
+
+  describe "nested array", ->
+    it "should add commas", ->
+      compare """
+        let x = [
+          1
+          2
+          3
+        ]
+        """, """
+        let x = [
+          1,
+          2,
+          3,
+        ]
+      """
+
+    # TODO: nice to have
+    it.skip "should allow optional commas", ->
+      compare """
+        let x = [
+          1
+          2, 3
+        ]
+        """, """
+        let x = [
+          1,
+          2, 3,
+        ]
+      """
+
+    it "should keep inline comments", ->
+      compare """
+        let x = [
+          /// A
+          1 // hi
+          /// B
+          2 /* */
+          /// C
+          3
+        ]
+      """, """
+        let x = [
+          /// A
+          1, // hi
+          /// B
+          2, /* */
+          /// C
+          3,
+        ]
+      """
+
+    it "should maintain whitespace and comments before and after var", ->
+      compare """
+        let x = [ //
+
+             /**/ var /* */
+
+             // A
+          1
+          2
+          3
+        ]
+        """, """
+        let x = [ //
+
+             /**/ var /* */
+
+             // A
+          1,
+          2,
+          3,
+        ]
+      """
+
+  describe "comma separated array", ->
+    it "should be lenient with indentation", ->
+      compare """
+        let x = [ 1,
+          2,
+        3, 4
+        ]
+        """, """
+        let x = [ 1,
+          2,
+        3, 4
+        ]
+      """
+
+    it "should maintain comments", ->
+      compare """
+        let x = [ /**/1, // a
+          /** */2,
+        /// E
+        3, 4
+        ]
+        """, """
+        let x = [ /**/1, // a
+          /** */2,
+        /// E
+        3, 4
+        ]
+      """
+
+    it "should maintain comments around var", ->
+      compare """
+        let x = [
+          // B
+          var/**/1, // a
+          /** */2,
+        /// E
+        3, 4
+        ]
+        """, """
+        let x = [
+          // B
+          var/**/1, // a
+          /** */2,
+        /// E
+        3, 4
+        ]
+      """
