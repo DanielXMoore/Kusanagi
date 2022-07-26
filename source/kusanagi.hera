@@ -18,26 +18,17 @@ Imp
 Declaration
   $__:pre Dec:dec StatementDelimiter -> [pre, dec]
 
-Empty
-  __ ->
-    return ""
-
 ObjSort
   "object"
   "actor"
   "module"
-
-FuncSortOpt
-  "shared" __ "query"?
-  "query"
-  Empty
 
 SharedPatOpt
   ("shared" _)? ("query" _)? (PatPlain _)?
 
 TypObj
   "{" $__:afterOpen DelimitedTypField*:decs $__:beforeClose "}" -> { type: "block", decs, afterOpen, beforeClose }
-  $("{" Empty "}")
+  "{" __ "}"
   # NOTE: Using "block" for code generation to handle semi-colon delimited object fields
   $RestOfLine:pre $EOS?:afterOpen NestedTypFields:nested ->
     const [indent, decs] = nested
@@ -99,18 +90,14 @@ NestedTypTag
   $Nested:pre TypTag:tag &EOS -> [pre, tag]
 
 TypNullary
-  # NOTE: Overloading "parens" handler for code generation
-  "(" TypItemField*:exps ")" -> { type: "parens", exps }
-  $("(" Empty ")")
-  # NOTE: Overloading "array" handler for code generation
-  # TODO: Internal whitespace and comments
-  "[" $(__ "var")?:prefix __ Typ:typ __ "]" -> { type: "array", prefix, exps: [typ] }
+  __ "(" TypItemField* __ ")"
+  __ "[" __ "var"? __ Typ __ "]"
   TypVariant
   TypObj
   $(Id ("." Id)*):id TypArgs?:typArgs -> { type: "type", id, typArgs }
 
 TypItemField
-  __ TypItem:item __ TypItemDelimiter -> item
+  __ TypItem __ TypItemDelimiter
 
 TypItemDelimiter
   ","
@@ -133,6 +120,11 @@ TypPre
     } else {
       return exp
     }
+
+FuncSortOpt
+  "shared" __ "query"?
+  "query"
+  __
 
 TypNobin
   # TODO: AST nodes
@@ -673,7 +665,7 @@ DecNonvar
   # TODO: Manage internal comment and whitespace tokens
   "let"  __ Pat:pat  __ "=" __ Exp:exp -> { type: "let", pat, exp}
   # TODO: Manage internal comment and whitespace tokens
-  "type" ($__ Id):id ($__ Typing)?:typing $__:beforeEq "=" ($_? Typ):exp -> { type: "typedec", id, typing, exp, beforeEq }
+  "type" ($__ Id):id ($__ Typing)?:typing $__:beforeEq "=" (_? Typ):exp -> { type: "typedec", id, typing, exp, beforeEq }
 
   ObjSort:type $(__ Id)?:id (__ "=")? ObjBody:body ->
     return { id, type, body }

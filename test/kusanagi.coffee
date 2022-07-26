@@ -4,6 +4,9 @@ parser = require "../source/kusanagi"
 
 generate = require "../source/generate"
 
+compare = (src, result) ->
+  assert.equal generate(parser.parse(src)), result
+
 describe "Kusanagi", ->
   describe "Parsing Examples", ->
     [
@@ -149,4 +152,137 @@ describe "Kusanagi", ->
           x := 1 + 2
         }
         while /**/ x < 1
+      """
+
+  describe "type", ->
+    it "object", ->
+      # Empty
+      compare """
+        type X = {}
+      """, """
+        type X = {}
+      """
+
+      # With newline after equals
+      compare """
+        type X =
+          {}
+      """, """
+        type X =
+          {}
+      """
+
+      # Empty with comments
+      compare """
+        type X = { /* */
+        }
+      """, """
+        type X = { /* */
+        }
+      """
+
+    it "nullary", ->
+      compare """
+        type X = ()
+      """, """
+        type X = ()
+      """
+
+      # Keeps whitespace
+      compare """
+        type X = (
+
+
+        )
+      """, """
+        type X = (
+
+
+        )
+      """
+
+    it "tuple", ->
+      compare """
+        type X = (a, b, c)
+      """, """
+        type X = (a, b, c)
+      """
+
+      # With comments and whitespace
+      compare """
+        type X = ( /* A */ a, /* B */
+             /// D
+         b, /* C*/c)
+      """, """
+        type X = ( /* A */ a, /* B */
+             /// D
+         b, /* C*/c)
+      """
+
+    it "array", ->
+      compare """
+        type X = [A]
+      """, """
+        type X = [A]
+      """
+
+      # With comments and whitespace
+      compare """
+        type /* X */ X =  /* E */        [A]
+      """, """
+        type /* X */ X =  /* E */        [A]
+      """
+
+      # With newline after equals
+      compare """
+        type X =
+         /// BB
+           [A]
+      """, """
+        type X =
+         /// BB
+           [A]
+      """
+
+    it "newline after equals", ->
+      compare """
+        type X =
+          ()
+      """, """
+        type X =
+          ()
+      """
+
+    it "nullary with comments", ->
+      compare """
+        type X = (
+          // Yo
+        )
+      """, """
+        type X = (
+          // Yo
+        )
+      """
+
+      compare """
+        type X = ( /* */
+        /* */)
+      """, """
+        type X = ( /* */
+        /* */)
+      """
+
+    it "funcs", ->
+      # Func sort
+      compare """
+        type X = shared query () -> ()
+      """, """
+        type X = shared query () -> ()
+      """
+
+      # With comments
+      compare """
+        type X = shared /* heyyy */ query () -> ()
+      """, """
+        type X = shared /* heyyy */ query () -> ()
       """

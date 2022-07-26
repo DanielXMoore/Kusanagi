@@ -164,8 +164,15 @@ generate = (node, indent="") ->
       "[#{gen(exp)}]"
 
     when "parens"
-      {pre, exps} = node
-      [gen(pre), "(", exps.map(gen).join(", "), ")"].join("")
+      {pre, exps, beforeClose} = node
+      gen [
+        pre
+        "("
+        # TODO: handle comments and whitespace around separators
+        exps.map(gen).join(", ")
+        beforeClose
+        ")"
+      ]
 
     when "="
       {id, exp} = node
