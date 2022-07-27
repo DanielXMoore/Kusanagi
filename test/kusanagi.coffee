@@ -49,7 +49,7 @@ describe "Kusanagi", ->
         #nat: Nat;
         /// Inline comment
         #text: Text
-      }
+      };
 
     """
 
@@ -58,35 +58,35 @@ describe "Kusanagi", ->
       compare """
         let x = a(b, c)
       """, """
-        let x = a(b, c)
+        let x = a(b, c);
       """
 
     it "should apply without parens", ->
       compare """
         let x = a b, c
       """, """
-        let x = a(b, c)
+        let x = a(b, c);
       """
 
     it "type binding", ->
       assert.equal generate(parser.parse """
         let map = Map.RBTree<Key, Value>(Nat.compare)
       """), """
-        let map = Map.RBTree<Key, Value>(Nat.compare)
+        let map = Map.RBTree<Key, Value>(Nat.compare);
       """
 
     it "applying on argument with unary operator", ->
       assert.equal generate(parser.parse """
         x +b
       """), """
-        x(+b)
+        x(+b);
       """
 
     it "comment between function application", ->
       assert.equal generate(parser.parse """
         x /*A*/ b
       """), """
-        x /*A*/(b)
+        x /*A*/(b);
       """
 
   it "type declaration", ->
@@ -98,14 +98,14 @@ describe "Kusanagi", ->
       type Tree<X, Y> = {
         #node : (Color, Tree<X, Y>, (X, ?Y), Tree<X, Y>);
         #leaf
-      }
+      };
     """
 
   it "addition", ->
     assert.equal generate(parser.parse """
       let x = a + b
     """), """
-      let x = a + b
+      let x = a + b;
     """
 
   describe "func", ->
@@ -116,7 +116,7 @@ describe "Kusanagi", ->
         """), """
         func size() : Nat {
           n
-        }
+        };
       """
 
     it "with end of line comment", ->
@@ -127,7 +127,7 @@ describe "Kusanagi", ->
         func size() : Nat // End of line comment!
         {
           n
-        }
+        };
       """
 
     it "with inline comments", ->
@@ -140,7 +140,7 @@ describe "Kusanagi", ->
         {
           // C6
           n
-        }
+        };
       """
 
   describe "loop", ->
@@ -153,7 +153,7 @@ describe "Kusanagi", ->
         loop {
           x := 1 + 2
         }
-        while x < 1
+        while x < 1;
       """
 
     it "with comments", ->
@@ -166,7 +166,7 @@ describe "Kusanagi", ->
         {
           x := 1 + 2
         }
-        while /**/ x < 1
+        while /**/ x < 1;
       """
 
   describe "type", ->
@@ -175,7 +175,7 @@ describe "Kusanagi", ->
       compare """
         type X = {}
       """, """
-        type X = {}
+        type X = {};
       """
 
       # With newline after equals
@@ -184,7 +184,7 @@ describe "Kusanagi", ->
           {}
       """, """
         type X =
-          {}
+          {};
       """
 
       # Empty with comments
@@ -193,14 +193,14 @@ describe "Kusanagi", ->
         }
       """, """
         type X = { /* */
-        }
+        };
       """
 
     it "nullary", ->
       compare """
         type X = ()
       """, """
-        type X = ()
+        type X = ();
       """
 
       # Keeps whitespace
@@ -213,21 +213,21 @@ describe "Kusanagi", ->
         type X = (
 
 
-        )
+        );
       """
 
     it "binding", ->
       compare """
         type X<A,B> = Y<B,A>
       """, """
-        type X<A,B> = Y<B,A>
+        type X<A,B> = Y<B,A>;
       """
 
     it "tuple", ->
       compare """
         type X = (a, b, c)
       """, """
-        type X = (a, b, c)
+        type X = (a, b, c);
       """
 
       # With comments and whitespace
@@ -238,21 +238,21 @@ describe "Kusanagi", ->
       """, """
         type X = ( /* A */ a, /* B */
              /// D
-         b, /* C*/c)
+         b, /* C*/c);
       """
 
     it "array", ->
       compare """
         type X = [A]
       """, """
-        type X = [A]
+        type X = [A];
       """
 
       # With comments and whitespace
       compare """
         type /* X */ X =  /* E */        [A]
       """, """
-        type /* X */ X =  /* E */        [A]
+        type /* X */ X =  /* E */        [A];
       """
 
       # With newline after equals
@@ -263,7 +263,7 @@ describe "Kusanagi", ->
       """, """
         type X =
          /// BB
-           [A]
+           [A];
       """
 
     it "newline after equals", ->
@@ -272,7 +272,7 @@ describe "Kusanagi", ->
           ()
       """, """
         type X =
-          ()
+          ();
       """
 
     it "nullary with comments", ->
@@ -283,7 +283,7 @@ describe "Kusanagi", ->
       """, """
         type X = (
           // Yo
-        )
+        );
       """
 
       compare """
@@ -291,7 +291,7 @@ describe "Kusanagi", ->
         /* */)
       """, """
         type X = ( /* */
-        /* */)
+        /* */);
       """
 
     describe "and / or", ->
@@ -299,14 +299,14 @@ describe "Kusanagi", ->
         compare """
           type A = X and Y or Z
         """, """
-          type A = X and Y or Z
+          type A = X and Y or Z;
         """
 
       it "keeps comments and whitespace", ->
         compare """
           type X = Y   /**/or /**/Z
         """, """
-          type X = Y   /**/or /**/Z
+          type X = Y   /**/or /**/Z;
         """
 
       it "should keep newlines", ->
@@ -319,7 +319,7 @@ describe "Kusanagi", ->
           type X =
            Y
             or
-          Z
+          Z;
         """
 
     describe "funcs", ->
@@ -327,14 +327,14 @@ describe "Kusanagi", ->
         compare """
           type X = shared query () -> ()
         """, """
-          type X = shared query () -> ()
+          type X = shared query () -> ();
         """
 
         # With comments
         compare """
           type X = shared /* heyyy */ query () -> ()
         """, """
-          type X = shared /* heyyy */ query () -> ()
+          type X = shared /* heyyy */ query () -> ();
         """
 
       it "newlines after arrow", ->
@@ -344,7 +344,7 @@ describe "Kusanagi", ->
             ()
         """, """
           type X = () ->
-            ()
+            ();
         """
 
       it "newlines before arrow", ->
@@ -354,7 +354,7 @@ describe "Kusanagi", ->
            ->()
         """, """
           type X = ()
-           ->()
+           ->();
         """
 
   describe "let", ->
@@ -362,15 +362,22 @@ describe "Kusanagi", ->
       compare """
           let   /**/  x  /* */ = /**/ x
         """, """
-          let   /**/  x  /* */ = /**/ x
+          let   /**/  x  /* */ = /**/ x;
         """
+
+    it "basic", ->
+      compare """
+        let rand = Random.new()
+      """, """
+        let rand = Random.new();
+      """
 
   describe "var", ->
     it "should keep whitespace and comments", ->
       compare """
           var   /**/  x  /* */ = /**/ b
         """, """
-          var   /**/  x  /* */ = /**/ b
+          var   /**/  x  /* */ = /**/ b;
         """
 
   describe "nested array", ->
@@ -386,7 +393,7 @@ describe "Kusanagi", ->
           1,
           2,
           3,
-        ]
+        ];
       """
 
     # TODO: nice to have
@@ -400,7 +407,7 @@ describe "Kusanagi", ->
         let x = [
           1,
           2, 3,
-        ]
+        ];
       """
 
     it "should keep inline comments", ->
@@ -421,7 +428,7 @@ describe "Kusanagi", ->
           2, /* */
           /// C
           3,
-        ]
+        ];
       """
 
     it "should maintain whitespace and comments before and after var", ->
@@ -444,7 +451,7 @@ describe "Kusanagi", ->
           1,
           2,
           3,
-        ]
+        ];
       """
 
   describe "comma separated array", ->
@@ -458,7 +465,7 @@ describe "Kusanagi", ->
         let x = [ 1,
           2,
         3, 4
-        ]
+        ];
       """
 
     it "should maintain comments", ->
@@ -473,7 +480,7 @@ describe "Kusanagi", ->
           /** */2,
         /// E
         3, 4
-        ]
+        ];
       """
 
     it "should maintain comments around var", ->
@@ -492,7 +499,7 @@ describe "Kusanagi", ->
           /** */2,
         /// E
         3, 4
-        ]
+        ];
       """
 
   describe "index", ->
@@ -502,14 +509,14 @@ describe "Kusanagi", ->
           /**/1   /*  */]
         """, """
         let x = a[
-          /**/1   /*  */]
+          /**/1   /*  */];
       """
 
     it "should convert to function application when preceded by whitespace", ->
       compare """
         let x = a [1]
       """, """
-        let x = a([1])
+        let x = a([1]);
       """
 
   describe "projection", ->
@@ -521,14 +528,14 @@ describe "Kusanagi", ->
       """, """
         let x = a. //
           /**/   /*  */
-          b
+          b;
       """
 
     it "should allow whitespace and comments before the '.'", ->
       compare """
         let x = a /**/ .b
       """, """
-        let x = a /**/ .b
+        let x = a /**/ .b;
       """
 
   describe "comments", ->
@@ -536,7 +543,7 @@ describe "Kusanagi", ->
       compare """
         var x = 1 // The x var
       """, """
-        var x = 1 // The x var
+        var x = 1; // The x var
       """
 
   describe "tuple pattern", ->
@@ -544,21 +551,21 @@ describe "Kusanagi", ->
       compare """
         let (a, b, c) = x
       """, """
-        let (a, b, c) = x
+        let (a, b, c) = x;
       """
 
     it "should work without spaces", ->
       compare """
         let (a,b,c)=x
       """, """
-        let (a,b,c)=x
+        let (a,b,c)=x;
       """
 
     it "should keep whitespace and comments", ->
       compare """
         let /*a*/( /**/ a, /**/ b, c) = x
       """, """
-        let /*a*/( /**/ a, /**/ b, c) = x
+        let /*a*/( /**/ a, /**/ b, c) = x;
       """
 
     # TODO: Not sure about this, may be ambiguous
@@ -566,7 +573,7 @@ describe "Kusanagi", ->
       compare """
         let a, b, c = x
       """, """
-        let (a, b, c) = x
+        let (a, b, c) = x;
       """
 
   describe "tuple expression", ->
@@ -574,14 +581,14 @@ describe "Kusanagi", ->
       compare """
         let x = (a, b, c)
       """, """
-        let x = (a, b, c)
+        let x = (a, b, c);
       """
 
     it "maintains whitespace", ->
       compare """
         let x=(a,b,c)
       """, """
-        let x=(a,b,c)
+        let x=(a,b,c);
       """
 
     it "maintains comments", ->
@@ -596,7 +603,7 @@ describe "Kusanagi", ->
 
         /* */b, //
 
-        /*  */c)
+        /*  */c);
       """
 
     # TODO: Nice to have
@@ -604,5 +611,96 @@ describe "Kusanagi", ->
       compare """
         let x = a, b, c
       """, """
-        let x = (a, b, c)
+        let x = (a, b, c);
+      """
+
+  describe "try catch", ->
+    it "basic", ->
+      compare """
+        try
+          X()
+        catch e
+          Y()
+      """, """
+        try {
+          X()
+        }
+        catch e {
+          Y()
+        };
+      """
+
+    it "maintains whitespace and comments", ->
+      compare """
+        /* */ try // C
+          /// A
+          X()
+        catch /**/ e /* */
+          Y() // B
+      """, """
+        /* */ try // C
+        {
+          /// A
+          X()
+        }
+        catch /**/ e /* */
+        {
+          Y() // B
+        };
+      """
+
+  describe "switch", ->
+    it "basic", ->
+      compare """
+        switch rand.read 2
+          case #ok(bs)  bs
+          case #eof(bs) bs
+          case #err(_)
+            assert(false)
+      """, """
+        switch(rand.read 2) {
+          case #ok(bs)  bs;
+          case #eof(bs) bs;
+          case #err(_) {
+            assert(false)
+          };
+        };
+      """
+
+    it "maintains whitespace and comments", ->
+      compare """
+        switch /**/ rand.read 2 /**/ //
+          /// AA
+          case #ok(bs)  bs
+          case /**/ #eof(bs) bs
+          case #err(_)
+            assert(false)
+      """, """
+        switch /**/(rand.read 2) { /**/ //
+          /// AA
+          case #ok(bs)  bs;
+          case /**/ #eof(bs) bs;
+          case #err(_) {
+            assert(false)
+          };
+        };
+      """
+
+  describe "assert", ->
+    it "basic", ->
+      compare """
+        assert false
+      """, """
+        assert false;
+      """
+
+    it "maintains whitespace and comments", ->
+      compare """
+        assert /**/
+         /* */ // A
+        (false)
+      """, """
+        assert /**/
+         /* */ // A
+        (false);
       """

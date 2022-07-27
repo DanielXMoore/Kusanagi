@@ -15,15 +15,6 @@ generate = (node, indent="") ->
     return ""
 
   return switch node.type
-    when "program"
-      {decs, post} = node
-      decs.map(gen).join(";") + post
-
-    when "import"
-      {pre, pat, source} = node
-
-      "#{pre}import #{gen(pat)} #{gen(source)}"
-
     when "actor", "module", "object"
       {type, id, body} = node
 
@@ -54,9 +45,9 @@ generate = (node, indent="") ->
 
       "#{gen(id)}#{gen(suffix)}"
 
-    when "assert", "async", "await", "return", "break", "continue", "debug", "throw", "ignore"
+    when "async", "await", "return", "break", "continue", "debug", "throw", "ignore"
       # TODO: More accurate whitespace
-      "#{node.type} #{gen(node.exp)}"
+      "#{node.type}#{gen(node.exp)}"
 
     when "expbin"
       {exps} = node
@@ -126,26 +117,11 @@ generate = (node, indent="") ->
       else
         "= #{gen(exp)}"
 
-    when "switch"
-      {condition, cases} = node
-
-      "switch#{gen(condition)}#{gen(cases)}"
-
-    when "case", "catch"
-      {type, pat, exp, pre} = node
-      "#{gen(pre)}#{type} #{gen(pat)}#{gen(exp)}"
-
-    when "try"
-      {exp, catch:c, pre} = node
-
-      """
-        try#{gen(exp)}#{gen(pre)}#{gen(c)}
-      """
-
     when "loop"
       {exp, whileBlock} = node
 
       "loop#{gen(exp)}#{gen(whileBlock)}"
+
     else
       "<UNKNOWN #{JSON.stringify(node)} >"
 

@@ -43,7 +43,7 @@ describe "generate", ->
             }
           }
         }
-      }
+      };
 
     """
 
@@ -117,9 +117,9 @@ describe "generate", ->
                   case #ok(bs)  bs;
                   case #eof(bs) bs;
                   case #err(_) {
-                    assert (false);
+                    assert(false);
                     []
-                  }
+                  };
                 };
 
                 nat8to16(bs[0]) << 8 | nat8to16(bs[1])
@@ -127,7 +127,7 @@ describe "generate", ->
 
               case ? s {
                 s
-              }
+              };
             }
           };
 
@@ -149,7 +149,7 @@ describe "generate", ->
             ]
           }
         }
-      }
+      };
 
       /* Trailing comments */
       // Trailing comments

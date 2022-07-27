@@ -1,22 +1,20 @@
 ## Currently adapting from Grammar.txt
 
 Prog
-  Init Imp*:imps Declaration*:decs __:post ->
-    return {
-      type: "program",
-      decs: imps.concat(decs),
-      post: post
-    }
+  Init Imp* Declaration* __
 
 StatementDelimiter
   ";"
-  &EOS
+  ImpliedSemicolon
+
+ImpliedSemicolon
+  &EOS -> ";"
 
 Imp
-  __:pre "import" PatNullary:pat __ "="? __ Text:source StatementDelimiter -> {type: "import", source, pat, pre}
+  __ "import" PatNullary __ "="? __ Text StatementDelimiter
 
 Declaration
-  __:pre Dec:dec StatementDelimiter -> [pre, dec]
+  __ Dec StatementDelimiter
 
 ObjSort
   "object"
@@ -395,7 +393,7 @@ ExpUn
   # Variant Pattern
   # NOTE: Combined and added `?` to prevent shadowing
   # https://github.com/dfinity/motoko/blob/master/doc/modules/language-guide/pages/language-manual.adoc#variant-pattern
-  "#" Id __ ExpNullary?
+  __ "#" Id __ ExpNullary?
   "?" ExpUn
   Unop ![\s] ExpUn
   Unassign ExpUn
@@ -429,41 +427,20 @@ ExpNondec
     return {type: "return", exp}
   "async"    ExpNest:exp -> { type: "async",  exp }
   "await"    ExpNest:exp -> { type: "await",  exp }
-  "assert"   ExpNest:exp -> { type: "assert", exp }
+  "assert"   ExpNest
   "label"    (__ Id):id TypeSuffix?:typeSuffix ExpNest:exp -> { type: "label", id, typeSuffix, exp }
   "break"    (__ Id):id ExpNullary?:exp -> { type: "break", id, exp }
   "continue" (__ Id):id -> { type: "continue", id }
   "debug"    ExpNest:exp -> { type: "debug", exp }
   "if"       ExpNullary:condition ExpNest:exp ElseBlock?:elseBlock -> { type: "if", condition, exp, elseBlock }
-  "try"      ExpNest:exp __:pre Catch:c -> { type: "try", exp, catch: c, pre }
+  "try"      ExpNest __ Catch
   "throw"    ExpNest:exp -> { type: "throw", exp }
-  "switch"   ExpNullary:condition __:pre "{" __:afterOpen Case*:cases __:beforeClose "}" ->
-    return {
-      type: "switch",
-      condition,
-      cases: {
-        type: "block",
-        decs: cases,
-        pre,
-        afterOpen,
-        beforeClose,
-      }
-    }
+  "switch"   ExpNullary:condition __:pre "{" __:afterOpen Case*:cases __:beforeClose "}"
   # NOTE: Added brace-less switch
   "switch"   ExpNullary:condition $RestOfLine:pre $EOS?:afterOpen NestedCases:nested ->
     const [indent, cases] = nested
-
-    return {
-      type: "switch",
-      condition,
-      cases: {
-        type: "block",
-        decs: cases,
-        pre: pre.replace(/^\n$/, " "),
-        afterOpen: "\n" + afterOpen,
-        beforeClose: "\n" + "".padStart(indent * 2),
-      }
-    }
+    const indentation = "".padStart(indent * 2)
+    return ["switch", condition, " {", pre, afterOpen, cases, `\n${indentation}}`]
   "while"    ExpNullary:condition ExpNest:exp -> { type: "while", condition, exp }
   "loop"     ExpNest:exp WhileBlock?:whileBlock -> { type: "loop", exp, whileBlock }
   "for"      __ "(" __ Pat:pat __ "in" __ Exp:source __ ")" ExpNest:exp -> { type: "for", pat, source, exp }
@@ -521,35 +498,16 @@ BlockDeclaration
   Dec:dec __ ( ";" / (__ &"}") ) __ -> dec
 
 Case
-  __:pre "case" PatNullary:pat ExpNest:exp BlockFieldDelimiter ->
-    return {
-      type: "case",
-      pat,
-      exp,
-      pre,
-    }
+  __ "case" PatNullary ExpNest BlockFieldDelimiter
 
 NestedCases
-  PushIndent NestedCase*:cases PopIndent:indent ->
-    if (!cases.length) return $skip
-    return [indent, cases]
+  PushIndent NestedCase*:cases PopIndent:indent -> [indent, cases]
 
 NestedCase
-  $Nested:pre "case" PatNullary:pat ExpNest:exp &EOS ->
-    return {
-      type: "case",
-      pat,
-      exp,
-      pre,
-    }
+  $Nested "case" PatNullary ExpNest ImpliedSemicolon
 
 Catch
-  "catch" PatNullary:pat ExpNest:exp ->
-    return {
-      type: "catch",
-      pat,
-      exp,
-    }
+  "catch" PatNullary ExpNest
 
 ExpField
   "var"? __ Id TypeSuffix? (__ "=" __ Exp)?
@@ -569,22 +527,17 @@ Stab
 
 PatPlain
   __ "(" __ PatPlainPart* ")"
-  # NOTE: Added Parentheses-less tuple
-  _ PatBin:first CommaPat*:pats ->
-    if (pats.length)
-      return { type: "parens", exps: [first, ...pats] }
-    return first
-  "_"
-  Id
-  Lit
+  _  PatBin
+  __ "_"
+  __ Id
+  __ Lit
 
 # NOTE: Extracted PatPlainPart with optional trailing comma before close parenthesis
 PatPlainPart
   PatBin __ ( "," / (__ &")") ) __
 
 CommaPat
-  # TODO: Manage internal comment and whitespace tokens
-  "," __ PatBin:pat -> pat
+  __ "," PatBin
 
 PatNullary
   PatPlain
@@ -594,7 +547,7 @@ PatNullary
 
 PatUn
   PatNullary
-  "#" Id PatNullary? # NOTE: Merged in "#" Id with optional nullary to prevent shadowing
+  __ "#" Id PatNullary? # NOTE: Merged in "#" Id with optional nullary to prevent shadowing
   "?" __ PatUn
   Unop Lit
 
@@ -622,7 +575,7 @@ DecVar
   "var" __ Id:id (__ TypeSuffix)? __ "=" __ Exp
 
 DecNonvar
-  "let"  __ Pat __ "=" __ Exp
+  "let" Pat __ "=" __ Exp
   "type" __ Id  (__ Typing)? __ "=" Typ
 
   ObjSort:type $(__ Id)?:id (__ "=")? ObjBody:body ->
