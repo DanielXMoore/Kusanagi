@@ -343,15 +343,15 @@ NestedObjectField
   $Nested:pre ExpField:field &EOS -> [pre, field]
 
 ExpPlain
-  $_? Lit
+  _? Lit
   # NOTE: Extracted expression part for easier iteration
-  $_?:pre "(" __ ExpPlainPart*:exps ")" -> { type: "parens", exps, pre }
+  _? "(" __ ExpPlainPart* ")"
   # NOTE: Added Parentheses-less tuple
   $(_ TrailingComments):pre Exp:first CommaExp*:exps ->
     return { type: "parens", exps: [first, ...exps], pre: pre.replace(/ $/, "") }
 
 ExpPlainPart
-  Exp:exp __ ( "," / (__ &")") ) __ -> exp
+  Exp __ ( "," / (__ &")") ) __
 
 CommaExp
   "," __ Exp:exp -> exp
@@ -387,12 +387,7 @@ ExpPostRest
   # https://github.com/dfinity/motoko/blob/master/doc/modules/language-guide/pages/language-manual.adoc#tuples
   __ "." __ ( Nat / Id )
   # Function application
-  $((TypArgs __ )?):typArgs ExpNullary:fnArgs ->
-    return {
-      type: "application",
-      typArgs,
-      fnArgs
-    }
+  (TypArgs __ )? ExpNullary
   "!" # Null break
 
 ExpUn
@@ -573,11 +568,7 @@ Stab
   "stable"
 
 PatPlain
-  __ "(" __ PatPlainPart*:parts ")" ->
-    return {
-      type: "parens",
-      exps: parts,
-    }
+  __ "(" __ PatPlainPart* ")"
   # NOTE: Added Parentheses-less tuple
   _ PatBin:first CommaPat*:pats ->
     if (pats.length)
@@ -589,8 +580,7 @@ PatPlain
 
 # NOTE: Extracted PatPlainPart with optional trailing comma before close parenthesis
 PatPlainPart
-  # TODO: Manage internal comment and whitespace tokens
-  PatBin:pat __ ( "," / (__ &")") ) __ -> pat
+  PatBin __ ( "," / (__ &")") ) __
 
 CommaPat
   # TODO: Manage internal comment and whitespace tokens
@@ -734,7 +724,7 @@ EOS
   EOF
 
 RestOfLine
-  TrailingComments EOL
+  TrailingComments (EOL / EOF)
 
 # Trailing comments within a single logical line (newlines within a multi-line comment don't count
 TrailingComments

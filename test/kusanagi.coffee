@@ -53,12 +53,41 @@ describe "Kusanagi", ->
 
     """
 
-  it "type binding in function application", ->
-    assert.equal generate(parser.parse """
-      let map = Map.RBTree<Key, Value>(Nat.compare)
-    """), """
-      let map = Map.RBTree<Key, Value>(Nat.compare)
-    """
+  describe "function application", ->
+    it "should apply with parens", ->
+      compare """
+        let x = a(b, c)
+      """, """
+        let x = a(b, c)
+      """
+
+    it "should apply without parens", ->
+      compare """
+        let x = a b, c
+      """, """
+        let x = a(b, c)
+      """
+
+    it "type binding", ->
+      assert.equal generate(parser.parse """
+        let map = Map.RBTree<Key, Value>(Nat.compare)
+      """), """
+        let map = Map.RBTree<Key, Value>(Nat.compare)
+      """
+
+    it "applying on argument with unary operator", ->
+      assert.equal generate(parser.parse """
+        x +b
+      """), """
+        x(+b)
+      """
+
+    it "comment between function application", ->
+      assert.equal generate(parser.parse """
+        x /*A*/ b
+      """), """
+        x /*A*/(b)
+      """
 
   it "type declaration", ->
     assert.equal generate(parser.parse """
@@ -77,20 +106,6 @@ describe "Kusanagi", ->
       let x = a + b
     """), """
       let x = a + b
-    """
-
-  it "unary operator in function application", ->
-    assert.equal generate(parser.parse """
-      x +b
-    """), """
-      x(+b)
-    """
-
-  it "comment between function application", ->
-    assert.equal generate(parser.parse """
-      x /*A*/ +b
-    """), """
-      x /*A*/(+b)
     """
 
   describe "func", ->
@@ -514,4 +529,80 @@ describe "Kusanagi", ->
         let x = a /**/ .b
       """, """
         let x = a /**/ .b
+      """
+
+  describe "comments", ->
+    it "should work when a comment is trailing before EOF", ->
+      compare """
+        var x = 1 // The x var
+      """, """
+        var x = 1 // The x var
+      """
+
+  describe "tuple pattern", ->
+    it "basic", ->
+      compare """
+        let (a, b, c) = x
+      """, """
+        let (a, b, c) = x
+      """
+
+    it "should work without spaces", ->
+      compare """
+        let (a,b,c)=x
+      """, """
+        let (a,b,c)=x
+      """
+
+    it "should keep whitespace and comments", ->
+      compare """
+        let /*a*/( /**/ a, /**/ b, c) = x
+      """, """
+        let /*a*/( /**/ a, /**/ b, c) = x
+      """
+
+    # TODO: Not sure about this, may be ambiguous
+    it.skip "should work without parens", ->
+      compare """
+        let a, b, c = x
+      """, """
+        let (a, b, c) = x
+      """
+
+  describe "tuple expression", ->
+    it "basic", ->
+      compare """
+        let x = (a, b, c)
+      """, """
+        let x = (a, b, c)
+      """
+
+    it "maintains whitespace", ->
+      compare """
+        let x=(a,b,c)
+      """, """
+        let x=(a,b,c)
+      """
+
+    it "maintains comments", ->
+      compare """
+        let x=(a,
+
+        /* */b, //
+
+        /*  */c)
+      """, """
+        let x=(a,
+
+        /* */b, //
+
+        /*  */c)
+      """
+
+    # TODO: Nice to have
+    it.skip "paren-less", ->
+      compare """
+        let x = a, b, c
+      """, """
+        let x = (a, b, c)
       """

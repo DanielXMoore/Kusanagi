@@ -54,11 +54,6 @@ generate = (node, indent="") ->
 
       "#{gen(id)}#{gen(suffix)}"
 
-    when "application"
-      {fnArgs, typArgs} = node
-
-      gen([typArgs, fnArgs])
-
     when "assert", "async", "await", "return", "break", "continue", "debug", "throw", "ignore"
       # TODO: More accurate whitespace
       "#{node.type} #{gen(node.exp)}"
