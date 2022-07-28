@@ -147,6 +147,30 @@ describe "Kusanagi", ->
         };
       """
 
+    it "=", ->
+      compare """
+        func A() = B
+      """, """
+        func A() = B;
+      """
+
+    it "= preserves comments and whitespace", ->
+      compare """
+        func A()/**/=/**/B
+      """, """
+        func A()/**/=/**/B;
+      """
+
+      compare """
+        func A()/**/
+        =
+          /**/B
+      """, """
+        func A()/**/
+        =
+          /**/B;
+      """
+
   describe "loop", ->
     it "with while", ->
       assert.equal generate(parser.parse """

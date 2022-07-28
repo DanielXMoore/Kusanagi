@@ -591,11 +591,7 @@ Dec
 
 FuncBody
   Block
-  __:pre "=" __:preExp Exp:exp ->
-    return [pre, {
-      type: "=",
-      exp: [preExp, exp]
-    }]
+  __ "=" __ Exp
 
 ObjBody
   __ "{" __ ObjBodyField* "}" __
