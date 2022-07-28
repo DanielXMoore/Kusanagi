@@ -44,7 +44,6 @@ DelimitedTypField
 
 TypField
   $"var"?:prefix $(__ Id):id TypeSuffix:suffix -> { type: "typefield", prefix, id, suffix }
-  # TODO: ast nodes
   Id Typing TypNullary TypeSuffix
 
 BlockFieldDelimiter
@@ -336,7 +335,7 @@ ExpPlain
   # NOTE: Extracted expression part for easier iteration
   _? "(" __ ExpPlainPart* ")"
   # NOTE: Added Parentheses-less tuple
-  $(_ TrailingComments):pre Exp:first CommaExp*:exps ->
+  $(TrailingComment+):pre Exp:first CommaExp*:exps ->
     return { type: "parens", exps: [first, ...exps], pre: pre.replace(/ $/, "") }
 
 ExpPlainPart
@@ -423,10 +422,10 @@ ExpNondec
   "break"    (__ Id):id ExpNullary?:exp -> { type: "break", id, exp }
   "continue" (__ Id):id -> { type: "continue", id }
   "debug"    ExpNest:exp -> { type: "debug", exp }
-  "if"       ExpNullary:condition ExpNest:exp ElseBlock?:elseBlock -> { type: "if", condition, exp, elseBlock }
+  "if"       ExpNullary ExpNest ElseBlock?
   "try"      ExpNest __ Catch
   "throw"    ExpNest:exp -> { type: "throw", exp }
-  "switch"   ExpNullary:condition __:pre "{" __:afterOpen Case*:cases __:beforeClose "}"
+  "switch"   ExpNullary __ "{" __ Case* __ "}"
   # NOTE: Added brace-less switch
   "switch"   ExpNullary:condition $RestOfLine:pre $EOS?:afterOpen NestedCases:nested ->
     const [indent, cases] = nested
@@ -463,7 +462,7 @@ ExpNest
 
 Block
   __ "{" __ BlockDeclaration* "}"
-  $RestOfLine:pre $EOS?:afterOpen NestedBlockDeclarations:nested $TrailingComments:beforeClose ->
+  $RestOfLine:pre $EOS?:afterOpen NestedBlockDeclarations:nested $TrailingComment*:beforeClose ->
     const [indent, decs] = nested
 
     // Skip if there were no indented declarations found
@@ -485,7 +484,7 @@ NestedBlockDeclaration
 
 # NOTE: Extracted block declaration with optional trailing semi-colon when object closes to make field iteration easier in Block
 BlockDeclaration
-  Dec:dec __ ( ";" / (__ &"}") ) __ -> dec
+  Dec __ ( ";" / (__ &"}") ) __
 
 Case
   __ "case" PatNullary ExpNest BlockFieldDelimiter
@@ -651,11 +650,11 @@ EOS
   EOF
 
 RestOfLine
-  TrailingComments (EOL / EOF)
+  TrailingComment* (EOL / EOF)
 
-# Trailing comments within a single logical line (newlines within a multi-line comment don't count
-TrailingComments
-  (_? Comment?)*
+# Trailing comments within a single logical line (newlines within a multi-line comment don't count)
+TrailingComment
+  (_ / Comment)
 
 # End of line
 EOL

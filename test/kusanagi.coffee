@@ -912,3 +912,84 @@ describe "Kusanagi", ->
         //
              /**/};
       """
+
+  describe "if", ->
+    it "basic", ->
+      compare """
+        if x
+          y
+      """, """
+        if(x) {
+          y
+        };
+      """
+
+    it "else", ->
+      compare """
+        if x
+          y
+        else
+          z
+      """, """
+        if(x) {
+          y
+        }
+        else {
+          z
+        };
+      """
+
+    it "with braces", ->
+      compare """
+        if (x) {
+          x;
+          y;
+          z;
+        }
+      """, """
+        if (x) {
+          x;
+          y;
+          z;
+        };
+      """
+
+    it "with braces", ->
+      compare """
+        if x {
+          y=1;
+        }
+          z
+      """, """
+        if(x {
+          y=1;
+        }) {
+          z
+        };
+      """
+
+    it "maintains whitespace and comments", ->
+      compare """
+        if /**/ x //
+          y
+        else
+          z
+      """, """
+        if /**/(x) //
+        {
+          y
+        }
+        else {
+          z
+        };
+      """
+
+    it "should work with tight comment", ->
+      compare """
+        if/**/x
+          y
+      """, """
+        if/**/(x) {
+          y
+        };
+      """
