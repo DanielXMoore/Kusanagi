@@ -568,8 +568,7 @@ DecNonvar
   "let" Pat __ "=" __ Exp
   "type" __ Id  (__ Typing)? __ "=" Typ
 
-  ObjSort:type $(__ Id)?:id (__ "=")? ObjBody:body ->
-    return { id, type, body }
+  ObjSort $(__ Id)? (__ "=")? ObjBody
 
   $SharedPatOpt                "func"  $(__ Id)? (__ Typing)? (__ PatPlain) TypeSuffix? FuncBody
   $SharedPatOpt $(ObjSort __)? "class" $(__ Id)? (__ Typing)? (__ PatPlain) TypeSuffix? ClassBody

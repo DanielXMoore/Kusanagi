@@ -13,11 +13,6 @@ generate = (node, indent="") ->
     return ""
 
   return switch node.type
-    when "actor", "module", "object"
-      {type, id, body} = node
-
-      [type, id, body].map(gen).join("")
-
     when "block"
       {decs, pre, afterOpen, beforeClose} = node
 
