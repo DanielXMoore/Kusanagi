@@ -76,14 +76,6 @@ generate = (node, indent="") ->
 
       "for (#{gen(pat)} in #{gen(source)})#{gen(exp)}"
 
-    when "do"
-      {block, option} = node
-
-      if option
-        "do ? #{gen(block)}"
-      else
-        "do #{gen(block)}"
-
     when "parens"
       {pre, exps, beforeClose} = node
       gen [

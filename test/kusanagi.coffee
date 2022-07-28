@@ -792,3 +792,31 @@ describe "Kusanagi", ->
         };
 
       """
+
+  describe "do", ->
+    it "basic", ->
+      compare """
+        do {}
+      """, """
+        do {};
+      """
+
+    it "option", ->
+      compare """
+        do ? {}
+      """, """
+        do ? {};
+      """
+
+    it "option comments and whitespace", ->
+      compare """
+        /**/do /**/?/***/
+          {/**/
+        //
+             /**/}
+      """, """
+        /**/do /**/?/***/
+          {/**/
+        //
+             /**/};
+      """

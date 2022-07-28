@@ -438,8 +438,7 @@ ExpNondec
   # NOTE: Added paren-less `for`
   "for"      _ Pat:pat __ "in" __ Exp:source ExpNest:exp -> { type: "for", pat, source, exp }
   "ignore"   ExpNest:exp -> { type: "ignore", exp }
-  "do"        Block:block -> { type: "do", block }
-  "do" __ "?" Block ->       { type: "do", block, option: true }
+  "do" (__ "?")? Block
   # NOTE: Moved ":=" into Binassign
   ExpBin:base __ Binassign:op __ Exp:exp -> { type: "binassign", base, op, exp}
   ExpBin
@@ -463,7 +462,7 @@ ExpNest
   __ Exp
 
 Block
-  __:pre "{" __ BlockDeclaration*:decs "}" -> { type: "block", decs, pre }
+  __ "{" __ BlockDeclaration* "}"
   $RestOfLine:pre $EOS?:afterOpen NestedBlockDeclarations:nested $TrailingComments:beforeClose ->
     const [indent, decs] = nested
 
