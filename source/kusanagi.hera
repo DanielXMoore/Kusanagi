@@ -508,8 +508,7 @@ ExpField
   "var"? __ Id TypeSuffix? (__ "=" __ Exp)?
 
 DecField
-  $(( Vis __ )? ( Stab __ )?):prefix Dec:dec ->
-    return { type: "dec", prefix, dec }
+  ( Vis __ )? ( Stab __ )? Dec
 
 Vis
   "private"
