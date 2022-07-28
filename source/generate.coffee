@@ -1,5 +1,3 @@
-indentation = "  "
-
 generate = (node, indent="") ->
   gen = (item) ->
     generate(item, indent)
@@ -56,11 +54,6 @@ generate = (node, indent="") ->
 
     when "label"
       throw new Error "TODO: type: label"
-
-    when "func"
-      {id, pat, body, shared, typeSuffix, typing} = node
-
-      "#{shared}func#{id}#{gen(typing)}#{gen(pat)}#{gen(typeSuffix)}#{gen(body)}"
 
     when "parens"
       {pre, exps, beforeClose} = node

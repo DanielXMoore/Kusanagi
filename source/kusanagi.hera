@@ -571,8 +571,7 @@ DecNonvar
   ObjSort:type $(__ Id)?:id (__ "=")? ObjBody:body ->
     return { id, type, body }
 
-  $(SharedPatOpt):shared "func" $(__ Id?):id (__ Typing)?:typing (__ PatPlain):pat $(TypeSuffix?):typeSuffix FuncBody:body ->
-    return { type: "func", shared, id, typing, pat, typeSuffix, body}
+  $SharedPatOpt                "func"  $(__ Id)? (__ Typing)? (__ PatPlain) TypeSuffix? FuncBody
   $SharedPatOpt $(ObjSort __)? "class" $(__ Id)? (__ Typing)? (__ PatPlain) TypeSuffix? ClassBody
 
 TypeSuffix
