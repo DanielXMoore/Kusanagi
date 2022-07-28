@@ -433,7 +433,7 @@ ExpNondec
     const indentation = "".padStart(indent * 2)
     return ["switch", condition, " {", pre, afterOpen, cases, `\n${indentation}}`]
   "while"    ExpNullary:condition ExpNest:exp -> { type: "while", condition, exp }
-  "loop"     ExpNest:exp WhileBlock?:whileBlock -> { type: "loop", exp, whileBlock }
+  "loop"     ExpNest WhileBlock?
   "for"      __ "(" __ Pat:pat __ "in" __ Exp:source __ ")" ExpNest:exp -> { type: "for", pat, source, exp }
   # NOTE: Added paren-less `for`
   "for"      _ Pat:pat __ "in" __ Exp:source ExpNest:exp -> { type: "for", pat, source, exp }

@@ -103,11 +103,6 @@ generate = (node, indent="") ->
       else
         "= #{gen(exp)}"
 
-    when "loop"
-      {exp, whileBlock} = node
-
-      "loop#{gen(exp)}#{gen(whileBlock)}"
-
     else
       "<UNKNOWN #{JSON.stringify(node)} >"
 
