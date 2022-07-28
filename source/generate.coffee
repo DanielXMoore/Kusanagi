@@ -87,14 +87,6 @@ generate = (node, indent="") ->
         ")"
       ]
 
-    when "="
-      {id, exp} = node
-
-      if id
-        "= #{id} #{gen(exp)}"
-      else
-        "= #{gen(exp)}"
-
     else
       "<UNKNOWN #{JSON.stringify(node)} >"
 
