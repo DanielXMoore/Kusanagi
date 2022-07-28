@@ -59,13 +59,13 @@ describe "generate", ->
       // Nested syntax
       type Counter = {
         topic : Text;
-        value : Nat
+        value : Nat;
       };
 
       // Object syntax
       type Counter2 = {
         topic : Text;
-        value : Nat
+        value : Nat;
       };
 
       module {

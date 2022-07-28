@@ -198,31 +198,69 @@ describe "Kusanagi", ->
       """
 
   describe "type", ->
-    it "object", ->
-      # Empty
-      compare """
-        type X = {}
-      """, """
-        type X = {};
-      """
+    describe "object", ->
+      it "empty", ->
+        compare """
+          type X = {}
+        """, """
+          type X = {};
+        """
 
-      # With newline after equals
-      compare """
-        type X =
-          {}
-      """, """
-        type X =
-          {};
-      """
+      it "newline after equals", ->
+        compare """
+          type X =
+            {}
+        """, """
+          type X =
+            {};
+        """
 
-      # Empty with comments
-      compare """
-        type X = { /* */
-        }
-      """, """
-        type X = { /* */
-        };
-      """
+      it "maintains comments and newlines", ->
+        compare """
+          type X = { /* */
+          }
+        """, """
+          type X = { /* */
+          };
+        """
+
+      it "nested", ->
+        compare """
+          type Counter =
+            topic : Text
+            value : Nat
+        """, """
+          type Counter = {
+            topic : Text;
+            value : Nat;
+          };
+        """
+
+      it "with braces", ->
+        compare """
+          type Counter2 = {
+            topic : Text;
+            value : Nat;
+          };
+        """, """
+          type Counter2 = {
+            topic : Text;
+            value : Nat;
+          };
+        """
+
+      it "with braces has optional semicolons", ->
+        compare """
+          type Counter2 = {
+            topic : Text
+            value : Nat
+          };
+        """, """
+          type Counter2 = {
+            topic : Text;
+            value : Nat;
+          };
+        """
 
     it "nullary", ->
       compare """

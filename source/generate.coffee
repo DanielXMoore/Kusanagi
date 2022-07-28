@@ -43,11 +43,6 @@ generate = (node) ->
       else
         "#{gen(pre)}{#{gen(afterOpen)}#{gen(beforeClose)}}"
 
-    when "typefield"
-      {prefix, id, suffix} = node
-
-      "#{gen(prefix)}#{gen(id)}#{gen(suffix)}"
-
     when "typetag"
       {id, suffix} = node
 

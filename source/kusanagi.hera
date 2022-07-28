@@ -3,19 +3,6 @@
 Prog
   Init Imp* Declaration* __
 
-StatementDelimiter
-  ";"
-  ImpliedSemicolon
-
-ImpliedSemicolon
-  &EOS -> ";"
-
-InsertOpenParen
-  "" -> "("
-
-InsertCloseParen
-  "" -> ")"
-
 Imp
   __ "import" PatNullary __ "="? __ Text StatementDelimiter
 
@@ -31,39 +18,28 @@ SharedPatOpt
   ("shared" _)? ("query" _)? (PatPlain _)?
 
 TypObj
-  __:pre "{" __:afterOpen DelimitedTypField*:decs __:beforeClose "}" -> { type: "block", decs, pre, afterOpen, beforeClose }
-  __ "{" __ "}"
-  # NOTE: Using "block" for code generation to handle semi-colon delimited object fields
-  $RestOfLine:pre $EOS?:afterOpen NestedTypFields:nested ->
-    const [indent, decs] = nested
-
-    return {
-      type: "block",
-      decs,
-      pre: pre.replace(/^\n$/, " "),
-      afterOpen: "\n" + afterOpen,
-      beforeClose: "\n" + "".padStart(indent * 2)
-    }
+  __ "{" DelimitedTypField* __ "}"
+  InsertOpenBrace $RestOfLine $EOS? NestedTypFields InsertNewline InsertIndent InsertCloseBrace
 
 DelimitedTypField
-  __:pre TypField:field __:post BlockFieldDelimiter -> [pre, field, post]
+  __ TypField BlockFieldDelimiter
 
 TypField
-  $"var"?:prefix $(__ Id):id TypeSuffix:suffix -> { type: "typefield", prefix, id, suffix }
+  "var"? $( __ Id )    TypeSuffix
   Id Typing TypNullary TypeSuffix
 
 BlockFieldDelimiter
   # TypFields end with a semi-colon or an optional final semi-colon then the closing brace
-  ";"
-  ";"? &( __ "}" )
+  StatementDelimiter
+  &( __ "}" )
 
 NestedTypFields
-  PushIndent NestedTypField*:fields PopIndent:indent ->
+  PushIndent NestedTypField*:fields PopIndent ->
     if (!fields.length) return $skip
-    return [indent, fields]
+    return fields
 
 NestedTypField
-  $Nested:pre TypField:field &EOS -> [pre, field]
+  $Nested TypField StatementDelimiter
 
 TypVariant
   $(__ "{" __ "#" __ "}")
@@ -425,10 +401,7 @@ ExpNondec
   "throw"    ExpNest:exp -> { type: "throw", exp }
   "switch"   ExpNullary __ "{" __ Case* __ "}"
   # NOTE: Added brace-less switch
-  "switch"   ExpNullary:condition $RestOfLine:pre $EOS?:afterOpen NestedCases:nested ->
-    const [indent, cases] = nested
-    const indentation = "".padStart(indent * 2)
-    return ["switch", condition, " {", pre, afterOpen, cases, `\n${indentation}}`]
+  "switch"   ExpNullary InsertOpenBrace $RestOfLine $EOS? NestedCases InsertNewline InsertIndent InsertCloseBrace
   "while"    ExpNullary:condition ExpNest:exp -> { type: "while", condition, exp }
   "loop"     ExpNest WhileBlock?
   "for"      __ "(" __ Pat __ "in" __ Exp __ ")" ExpNest
@@ -488,7 +461,9 @@ Case
   __ "case" PatNullary ExpNest BlockFieldDelimiter
 
 NestedCases
-  PushIndent NestedCase*:cases PopIndent:indent -> [indent, cases]
+  PushIndent NestedCase*:cases PopIndent ->
+    if (!cases.length) return $skip
+    return cases
 
 NestedCase
   $Nested "case" PatNullary ExpNest ImpliedSemicolon
@@ -655,6 +630,36 @@ EOL
 # End of file
 EOF
   !/[\s\S]/
+
+# Inserting implied symbols for transpilation
+
+StatementDelimiter
+  ";"
+  ImpliedSemicolon
+
+ImpliedSemicolon
+  &EOS -> ";"
+
+InsertOpenParen
+  "" -> "("
+
+InsertCloseParen
+  "" -> ")"
+
+InsertOpenBrace
+  # NOTE: Open braces has a space before it
+  "" -> " {"
+
+InsertCloseBrace
+  "" -> "}"
+
+InsertIndent
+  "" ->
+    return "".padStart(global.currentIndent * 2)
+
+InsertNewline
+  "" ->
+    return "\n"
 
 # Indentation management
 
