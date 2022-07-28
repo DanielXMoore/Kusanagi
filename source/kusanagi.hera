@@ -440,7 +440,7 @@ ExpNondec
   "ignore"   ExpNest:exp -> { type: "ignore", exp }
   "do" (__ "?")? Block
   # NOTE: Moved ":=" into Binassign
-  ExpBin:base __ Binassign:op __ Exp:exp -> { type: "binassign", base, op, exp}
+  ExpBin __ Binassign __ Exp
   ExpBin
 
 ElseBlock

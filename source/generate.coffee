@@ -54,10 +54,6 @@ generate = (node, indent="") ->
 
       gen exps
 
-    when "binassign"
-      {base, op, exp} = node
-      "#{gen(base)} #{op} #{gen(exp)}"
-
     when "label"
       throw new Error "TODO: type: label"
 

@@ -817,6 +817,30 @@ describe "Kusanagi", ->
 
       """
 
+  describe "binassign", ->
+    it "basic", ->
+      compare """
+        x += 1
+      """, """
+        x += 1;
+      """
+
+    it "allows newlines", ->
+      compare """
+        x +=
+            1
+      """, """
+        x +=
+            1;
+      """
+
+    it "comments and whitespace", ->
+      compare """
+        x /**/+= /**/1
+      """, """
+        x /**/+= /**/1;
+      """
+
   describe "class", ->
     it "basic", ->
       compare """
