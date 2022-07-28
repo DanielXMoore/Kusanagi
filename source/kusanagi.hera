@@ -107,17 +107,8 @@ TypUn
 
 TypPre
   # NOTE: converted recursive "async" to optional
-  "async"? __ ObjSort:type __ TypObj:body ->
-    var exp = { type, body }
-    if ($1) return { type: "async", exp }
-    return exp
-
-  ("async" __)? TypUn:exp ->
-    if ($1) {
-      return {type: "async", exp}
-    } else {
-      return exp
-    }
+  "async"? __ ObjSort __ TypObj
+  ("async" __)? TypUn
 
 FuncSortOpt
   "shared" __ "query"?
@@ -425,7 +416,7 @@ ExpBinRest
 ExpNondec
   "return" __ Exp?:exp ->
     return {type: "return", exp}
-  "async"    ExpNest:exp -> { type: "async",  exp }
+  "async"    ExpNest
   "await"    ExpNest:exp -> { type: "await",  exp }
   "assert"   ExpNest
   "label"    (__ Id):id TypeSuffix?:typeSuffix ExpNest:exp -> { type: "label", id, typeSuffix, exp }
@@ -583,8 +574,7 @@ DecNonvar
 
   $(SharedPatOpt):shared "func" $(__ Id?):id (__ Typing)?:typing (__ PatPlain):pat $(TypeSuffix?):typeSuffix FuncBody:body ->
     return { type: "func", shared, id, typing, pat, typeSuffix, body}
-  $(SharedPatOpt):shared $(ObjSort?):sort __ "class" (__ Id)?:id (__ Typing)?:typing (__ PatPlain):pat $(TypeSuffix?):typeSuffix ClassBody:body ->
-    return { type: "class", sort, shared, id, typing, pat, typeSuffix, body}
+  $SharedPatOpt $(ObjSort __)? "class" $(__ Id)? (__ Typing)? (__ PatPlain) TypeSuffix? ClassBody
 
 TypeSuffix
   __ ":" __ Typ
@@ -609,15 +599,11 @@ FuncBody
     }]
 
 ObjBody
-  # TODO: internal whitespace and comment handling
-  __:pre "{" __ ObjBodyField*:decs "}" __ ->
-    return {
-      type: "block",
-      decs: decs,
-      pre,
-    }
+  __ "{" __ ObjBodyField* "}" __
+  # NOTE: Added indented object body
   $RestOfLine:pre $EOS?:afterOpen NestedObjBodyFields:nestedFields ->
     const [indent, decs] = nestedFields
+    if (!decs.length) return $skip
 
     return {
       type: "block",
@@ -629,8 +615,7 @@ ObjBody
 
 # NOTE: Extracted dec-field with optional trailing semi-colon when object closes to make field iteration easier in ObjBody
 ObjBodyField
-  # TODO: whitespace and comment handling
-  DecField:field __ ( ";" / (__ &"}") ) __ -> field
+  DecField __ ( ";" / (__ &"}") ) __
 
 NestedObjBodyFields
   PushIndent NestedObjBodyField*:fields PopIndent:indent -> [indent, fields]

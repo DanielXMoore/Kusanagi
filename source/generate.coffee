@@ -45,7 +45,7 @@ generate = (node, indent="") ->
 
       "#{gen(id)}#{gen(suffix)}"
 
-    when "async", "await", "return", "break", "continue", "debug", "throw", "ignore"
+    when "await", "return", "break", "continue", "debug", "throw", "ignore"
       # TODO: More accurate whitespace
       "#{node.type}#{gen(node.exp)}"
 
@@ -60,20 +60,6 @@ generate = (node, indent="") ->
 
     when "label"
       throw new Error "TODO: type: label"
-
-    when "class"
-      {id, sort, pat, body, shared, typeSuffix, typing} = node
-
-      gen [
-        shared
-        sort
-        "class"
-        id
-        typing
-        pat
-        typeSuffix
-        body
-      ]
 
     when "func"
       {id, pat, body, shared, typeSuffix, typing} = node

@@ -7,6 +7,10 @@ generate = require "../source/generate"
 compare = (src, result) ->
   assert.equal generate(parser.parse(src)), result
 
+throws = (src) ->
+  assert.throws ->
+    generate(parser.parse(src))
+
 describe "Kusanagi", ->
   describe "Parsing Examples", ->
     [
@@ -703,4 +707,88 @@ describe "Kusanagi", ->
         assert /**/
          /* */ // A
         (false);
+      """
+
+  describe "async", ->
+    it "basic", ->
+      compare """
+        async false
+      """, """
+        async false;
+      """
+
+    it "maintains whitespace and comments", ->
+      compare """
+        async /**/
+         /* */ // A
+        (false)
+      """, """
+        async /**/
+         /* */ // A
+        (false);
+      """
+
+    it "obj sort", ->
+      # TODO: Not sure about this example
+      compare """
+        async module {}
+      """, """
+        async module {};
+      """
+
+  describe "actor", ->
+    it "basic", ->
+      compare """
+        actor class Counter(init : Nat) {}
+      """, """
+        actor class Counter(init : Nat) {};
+      """
+
+    it "shouldn't compile without a body", ->
+      throws """
+        actor class Counter(init : Nat)
+      """
+
+    it "should maintain whitespace and comments", ->
+      compare """
+        // h
+        /**/actor/**/class/**/Counter(/**/init : Nat) {/**/}
+      """, """
+        // h
+        /**/actor/**/class/**/Counter(/**/init : Nat) {/**/};
+      """
+
+    it "full example", ->
+      compare """
+        actor class Counter(init : Nat)
+          var count = init
+
+          public func inc() : async ()
+            count += 1
+
+          public func read() : async Nat
+            count
+
+          public func bump() : async Nat
+            count += 1
+            count
+
+      """, """
+        actor class Counter(init : Nat) {
+          var count = init;
+
+          public func inc() : async () {
+            count += 1
+          };
+
+          public func read() : async Nat {
+            count
+          };
+
+          public func bump() : async Nat {
+            count += 1;
+            count
+          }
+        };
+
       """
