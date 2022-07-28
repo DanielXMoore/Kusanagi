@@ -57,11 +57,6 @@ generate = (node) ->
       # TODO: More accurate whitespace
       "#{node.type}#{gen(node.exp)}"
 
-    when "expbin"
-      {exps} = node
-
-      gen exps
-
     when "label"
       throw new Error "TODO: type: label"
 

@@ -401,15 +401,7 @@ ExpUn
 
 ExpBin
   # NOTE: Eliminated left recursion
-  ExpUn:exp ExpBinRest*:rest ->
-    if (rest.length) {
-      return {
-        type: "expbin",
-        exps: [exp].concat(...rest),
-      }
-    } else {
-      return exp
-    }
+  ExpUn ExpBinRest*
 
 ExpBinRest
   __ Binop __ ExpBin
