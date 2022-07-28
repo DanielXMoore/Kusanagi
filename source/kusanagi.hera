@@ -619,13 +619,7 @@ NestedObjBodyField
   $Nested:pre DecField:field &EOS -> [pre, field]
 
 ClassBody
-  # TODO: Whitespace and comment handling
-  __ "=" __ Id?:id __ ObjBody:exp ->
-    return {
-      type: "=",
-      id,
-      exp,
-    }
+  __ "=" __ Id? __ ObjBody
   ObjBody
 
 # https://github.com/dfinity/motoko/blob/master/doc/modules/language-guide/pages/language-manual.adoc#comments
