@@ -913,6 +913,41 @@ describe "Kusanagi", ->
              /**/};
       """
 
+  describe "for", ->
+    it "basic", ->
+      compare """
+        for i in x
+          Debug.print i
+      """, """
+        for (i in x) {
+          Debug.print(i)
+        };
+      """
+
+    it "nested", ->
+      compare """
+        for i in grid.keys()
+          for j in grid[i].keys()
+            dst.set i, j, nextCell i, j
+      """, """
+        for (i in grid.keys()) {
+          for (j in grid[i].keys()) {
+            dst.set(i, j, nextCell(i, j))
+          }
+        };
+      """
+
+    it "maintains comments and whitespace", ->
+      compare """
+        for/**/i/**/in/**/x/**/
+          Debug.print i
+      """, """
+        for/**/(i/**/in/**/x)/**/
+        {
+          Debug.print(i)
+        };
+      """
+
   describe "if", ->
     it "basic", ->
       compare """

@@ -10,6 +10,12 @@ StatementDelimiter
 ImpliedSemicolon
   &EOS -> ";"
 
+InsertOpenParen
+  "" -> "("
+
+InsertCloseParen
+  "" -> ")"
+
 Imp
   __ "import" PatNullary __ "="? __ Text StatementDelimiter
 
@@ -433,9 +439,9 @@ ExpNondec
     return ["switch", condition, " {", pre, afterOpen, cases, `\n${indentation}}`]
   "while"    ExpNullary:condition ExpNest:exp -> { type: "while", condition, exp }
   "loop"     ExpNest WhileBlock?
-  "for"      __ "(" __ Pat:pat __ "in" __ Exp:source __ ")" ExpNest:exp -> { type: "for", pat, source, exp }
+  "for"      __ "(" __ Pat __ "in" __ Exp __ ")" ExpNest
   # NOTE: Added paren-less `for`
-  "for"      _ Pat:pat __ "in" __ Exp:source ExpNest:exp -> { type: "for", pat, source, exp }
+  "for"      TrailingComment+ InsertOpenParen Pat __ "in" __ Exp InsertCloseParen ExpNest
   "ignore"   ExpNest:exp -> { type: "ignore", exp }
   "do" (__ "?")? Block
   # NOTE: Moved ":=" into Binassign

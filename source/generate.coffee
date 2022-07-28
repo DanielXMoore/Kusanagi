@@ -62,11 +62,6 @@ generate = (node, indent="") ->
 
       "#{shared}func#{id}#{gen(typing)}#{gen(pat)}#{gen(typeSuffix)}#{gen(body)}"
 
-    when "for"
-      {pat, source, exp} = node
-
-      "for (#{gen(pat)} in #{gen(source)})#{gen(exp)}"
-
     when "parens"
       {pre, exps, beforeClose} = node
       gen [
