@@ -541,12 +541,7 @@ PatUn
   Unop Lit
 
 PatBin
-  PatUn:first PatBinRest*:rest ->
-    if (!rest.length) {
-      return first
-    } else {
-      return [first].concat(...rest)
-    }
+  PatUn PatBinRest*
   # NOTE: Eliminated left recursion
 
 PatBinRest
