@@ -396,7 +396,7 @@ ExpUn
   __ "#" Id __ ExpNullary?
   "?" ExpUn
   Unop ![\s] ExpUn
-  Unassign ExpUn
+  Unassign ![\s] ExpUn
   "actor" ExpPlain
   "not" ExpUn
   "debug_show" ExpUn
