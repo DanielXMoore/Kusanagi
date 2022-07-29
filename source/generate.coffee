@@ -43,11 +43,6 @@ generate = (node) ->
       else
         "#{gen(pre)}{#{gen(afterOpen)}#{gen(beforeClose)}}"
 
-    when "typetag"
-      {id, suffix} = node
-
-      "#{gen(id)}#{gen(suffix)}"
-
     when "parens"
       {pre, exps, beforeClose} = node
       gen [

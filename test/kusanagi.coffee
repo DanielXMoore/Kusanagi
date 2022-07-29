@@ -47,16 +47,6 @@ describe "Kusanagi", ->
       it file, ->
         assert parser.parse readFileSync("./test/examples/#{file}", "utf8")
 
-  it "nested variant", ->
-    assert.equal generate(parser.parse readFileSync("./test/examples/NestedVariant.ku", "utf8")), """
-      type test = {
-        #nat: Nat;
-        /// Inline comment
-        #text: Text;
-      };
-
-    """
-
   describe "function application", ->
     it "should apply with parens", ->
       compare """
@@ -256,6 +246,61 @@ describe "Kusanagi", ->
           type Counter2 = {
             topic : Text;
             value : Nat;
+          };
+        """
+
+    describe "variant", ->
+      it "brace", ->
+        compare """
+          type test = {
+            #nat: Nat
+            #text: Text
+          }
+        """, """
+          type test = {
+            #nat: Nat;
+            #text: Text;
+          };
+        """
+
+      it "brace with optional semi-colons and inline comments", ->
+        compare """
+          type test = {
+            #nat: Nat /**/ // Yo
+            #text: Text /**/; // heyy
+          }
+        """, """
+          type test = {
+            #nat: Nat; /**/ // Yo
+            #text: Text /**/; // heyy
+          };
+        """
+
+      it "nested", ->
+        compare """
+          type test =
+            #nat: Nat
+            #text: Text
+        """, """
+          type test = {
+            #nat: Nat;
+            #text: Text;
+          };
+        """
+
+      it "maintains newlines and whitespace", ->
+        compare """
+          type test = /**/
+            #/**/nat: Nat
+            #  text: Text
+            #
+            hi: Hi
+        """, """
+          type test = { /**/
+            #/**/nat: Nat;
+            #  text: Text;
+            #
+            hi: Hi;
           };
         """
 

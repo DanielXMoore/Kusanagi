@@ -57,6 +57,9 @@ NestedTypTags
 NestedTypTag
   $Nested TypTag StatementDelimiter
 
+TypTag
+  "#" __ Id TypeSuffix?
+
 TypNullary
   __ "(" TypItemField* __ ")"
   __ "[" __ "var"? __ Typ __ "]"
@@ -110,9 +113,6 @@ TypArgs
 
 TypArgField
   __ Typ ( ("," __) / (","? __ &">") )
-
-TypTag
-  $("#" Id __):id TypeSuffix?:suffix -> { type: "typetag", id, suffix }
 
 TypBind
   Id __ "<:" __ Typ
@@ -616,7 +616,7 @@ EOF
 # Inserting implied symbols for transpilation
 
 StatementDelimiter
-  ";"
+  TrailingComment* ";"
   ImpliedSemicolon
 
 ImpliedSemicolon
