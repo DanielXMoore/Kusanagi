@@ -42,31 +42,20 @@ NestedTypField
   $Nested TypField StatementDelimiter
 
 TypVariant
-  $(__ "{" __ "#" __ "}")
-  # NOTE: Using block node for code generation since it wraps with braces and delimits with semi-colons
-  __:pre "{" TypVariantField*:tags __:beforeClose "}" -> { type: "block", decs: tags, pre, beforeClose }
-  # NOTE: Using block node for code generation since it wraps with braces and delimits with semi-colons
-  $RestOfLine:pre $EOS?:afterOpen NestedTypTags:nested ->
-    const [indent, tags] = nested
-
-    return {
-      type: "block",
-      decs: tags,
-      pre: pre.replace(/^\n$/, " "),
-      afterOpen: "\n" + afterOpen,
-      beforeClose: "\n",
-    }
+  __ "{" __ "#" __ "}"
+  __ "{" TypVariantField* __ "}"
+  InsertOpenBrace $RestOfLine $EOS? NestedTypTags InsertNewline InsertIndent InsertCloseBrace
 
 TypVariantField
-  __ TypTag:typTag BlockFieldDelimiter -> typTag
+  __ TypTag BlockFieldDelimiter
 
 NestedTypTags
-  PushIndent NestedTypTag*:tags PopIndent:indent ->
+  PushIndent NestedTypTag*:tags PopIndent ->
     if (!tags.length) return $skip
-    return [indent, tags]
+    return tags
 
 NestedTypTag
-  $Nested:pre TypTag:tag &EOS -> [pre, tag]
+  $Nested TypTag StatementDelimiter
 
 TypNullary
   __ "(" TypItemField* __ ")"
@@ -292,7 +281,7 @@ Binassign
 ExpObj
   # Object Pattern https://github.com/dfinity/motoko/blob/master/doc/modules/language-guide/pages/language-manual.adoc#object-pattern
   # This different from PatNullary because exp fields can optionally start with "var"
-  $( __ "{" __ ExpObjField* "}")
+  __ "{" __ ExpObjField* "}"
   # NOTE: Added indentation based object syntax
   __:pre "{" NestedObjectFields:fields __:beforeClose "}" ->
     return {
@@ -303,8 +292,9 @@ ExpObj
     }
 
 ExpObjField
+  # TODO: Optional trailing semi-colons
   # NOTE: Extracted field rule for easier iteration
-  ExpField:field __ ( ";" / (__ &"}") ) __ -> field
+  ExpField __ ( ";" / (__ &"}") ) __
 
 NestedObjectFields
   PushIndent NestedObjectField*:fields PopIndent -> fields
@@ -444,6 +434,7 @@ NestedBlockDeclaration
 
 # NOTE: Extracted block declaration with optional trailing semi-colon when object closes to make field iteration easier in Block
 BlockDeclaration
+  # TODO: Make semi-colon optional every line
   Dec __ ( ";" / (__ &"}") ) __
 
 Case
@@ -477,6 +468,8 @@ Stab
 
 PatPlain
   __ "(" __ PatPlainPart* ")"
+  # NOTE: This requires matching at least some whitespace to prevent infinite recursion
+  # there may be a way to improve this with assertions or refactoring some rules
   _  PatBin
   __ "_"
   __ Id

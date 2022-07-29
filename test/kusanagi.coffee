@@ -52,7 +52,7 @@ describe "Kusanagi", ->
       type test = {
         #nat: Nat;
         /// Inline comment
-        #text: Text
+        #text: Text;
       };
 
     """
@@ -101,7 +101,7 @@ describe "Kusanagi", ->
     """), """
       type Tree<X, Y> = {
         #node : (Color, Tree<X, Y>, (X, ?Y), Tree<X, Y>);
-        #leaf
+        #leaf;
       };
     """
 
