@@ -283,13 +283,7 @@ ExpObj
   # This different from PatNullary because exp fields can optionally start with "var"
   __ "{" __ ExpObjField* "}"
   # NOTE: Added indentation based object syntax
-  __:pre "{" NestedObjectFields:fields __:beforeClose "}" ->
-    return {
-      type: "block",
-      decs: fields,
-      pre,
-      beforeClose
-    }
+  __ "{" NestedObjectFields __ "}"
 
 ExpObjField
   # TODO: Optional trailing semi-colons
@@ -297,10 +291,12 @@ ExpObjField
   ExpField __ ( ";" / (__ &"}") ) __
 
 NestedObjectFields
-  PushIndent NestedObjectField*:fields PopIndent -> fields
+  PushIndent NestedObjectField*:fields PopIndent ->
+    if (!fields.length) return $skip
+    return fields
 
 NestedObjectField
-  $Nested:pre ExpField:field &EOS -> [pre, field]
+  $Nested ExpField BlockFieldDelimiter
 
 ExpPlain
   _? Lit
@@ -542,27 +538,19 @@ FuncBody
 ObjBody
   __ "{" __ ObjBodyField* "}" __
   # NOTE: Added indented object body
-  $RestOfLine:pre $EOS?:afterOpen NestedObjBodyFields:nestedFields ->
-    const [indent, decs] = nestedFields
-    if (!decs.length) return $skip
-
-    return {
-      type: "block",
-      decs: decs,
-      pre: pre.replace(/^\n$/, " "),
-      afterOpen: "\n" + afterOpen,
-      beforeClose: "\n" + "".padStart(indent * 2),
-    }
+  InsertOpenBrace $RestOfLine $EOS? NestedObjBodyFields InsertNewline InsertIndent InsertCloseBrace
 
 # NOTE: Extracted dec-field with optional trailing semi-colon when object closes to make field iteration easier in ObjBody
 ObjBodyField
   DecField __ ( ";" / (__ &"}") ) __
 
 NestedObjBodyFields
-  PushIndent NestedObjBodyField*:fields PopIndent:indent -> [indent, fields]
+  PushIndent NestedObjBodyField*:fields PopIndent ->
+    if (!fields.length) return $skip
+    return fields
 
 NestedObjBodyField
-  $Nested:pre DecField:field &EOS -> [pre, field]
+  $Nested DecField BlockFieldDelimiter
 
 ClassBody
   __ "=" __ Id? __ ObjBody

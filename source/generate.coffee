@@ -33,16 +33,6 @@ generate = (node) ->
     return ""
 
   return switch node.type
-    when "block"
-      {decs, pre, afterOpen, beforeClose} = node
-
-      if decs.length
-        code = decs.map(gen)
-
-        "#{gen(pre)}{#{gen(afterOpen)}#{code.join(";")}#{gen(beforeClose)}}"
-      else
-        "#{gen(pre)}{#{gen(afterOpen)}#{gen(beforeClose)}}"
-
     when "parens"
       {pre, exps, beforeClose} = node
       gen [

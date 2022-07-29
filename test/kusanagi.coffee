@@ -891,7 +891,7 @@ describe "Kusanagi", ->
           public func bump() : async Nat {
             count += 1;
             count;
-          }
+          };
         };
 
       """

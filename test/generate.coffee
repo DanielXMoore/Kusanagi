@@ -41,8 +41,8 @@ describe "generate", ->
                 dst.set(i, j, nextCell(i, j));
               };
             };
-          }
-        }
+          };
+        };
       };
 
     """
@@ -137,7 +137,7 @@ describe "generate", ->
               y = 3;
               z = {
                 a = 34
-              }
+              };
             };
           };
 
@@ -147,8 +147,8 @@ describe "generate", ->
               2,
               3,
             ];
-          }
-        }
+          };
+        };
       };
 
       /* Trailing comments */
