@@ -10,8 +10,9 @@ TODO
 - [x] Nested Type Variant syntax
 - [x] Nested Type Object syntax
 - [x] BUG: Indentation state is getting lost in more complex examples
-- [ ] Output comments
-- [ ] Reconcile addition and binary operations with paren-less tuples / function application
+- [x] Output comments
+- [x] Keep source whitespace and formatting
+- [x] Reconcile addition and binary operations with paren-less tuples / function application
 
 More complex
 ----

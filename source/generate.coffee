@@ -32,19 +32,6 @@ generate = (node) ->
   if node is undefined or node is null
     return ""
 
-  return switch node.type
-    when "parens"
-      {pre, exps, beforeClose} = node
-      gen [
-        pre
-        "("
-        # TODO: handle comments and whitespace around separators
-        exps.map(gen).join(", ")
-        beforeClose
-        ")"
-      ]
-
-    else
-      "<UNKNOWN #{JSON.stringify(node)} >"
+  return "<UNKNOWN #{JSON.stringify(node)} >"
 
 module.exports = generate

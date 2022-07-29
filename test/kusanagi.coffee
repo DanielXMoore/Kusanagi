@@ -62,6 +62,13 @@ describe "Kusanagi", ->
         let x = a(b, c);
       """
 
+    it "associativity", ->
+      compare """
+        let x = a b, c d, e f
+      """, """
+        let x = a(b, c(d, e(f)));
+      """
+
     it "type binding", ->
       assert.equal generate(parser.parse """
         let map = Map.RBTree<Key, Value>(Nat.compare)
@@ -80,7 +87,7 @@ describe "Kusanagi", ->
       assert.equal generate(parser.parse """
         x /*A*/ b
       """), """
-        x /*A*/(b);
+        x(/*A*/ b);
       """
 
   it "type declaration", ->
@@ -504,8 +511,22 @@ describe "Kusanagi", ->
         ];
       """
 
-    # TODO: nice to have
-    it.skip "should allow optional commas", ->
+    it "should allow optional commas", ->
+      compare """
+        let x = [
+          1
+          2,
+          3
+        ]
+        """, """
+        let x = [
+          1,
+          2,
+          3,
+        ];
+      """
+
+    it "should allow adding additional comma separated items per line", ->
       compare """
         let x = [
           1
@@ -572,7 +593,7 @@ describe "Kusanagi", ->
         """, """
         let x = [ 1,
           2,
-        3, 4
+        3, 4,
         ];
       """
 
@@ -587,7 +608,7 @@ describe "Kusanagi", ->
         let x = [ /**/1, // a
           /** */2,
         /// E
-        3, 4
+        3, 4,
         ];
       """
 
@@ -606,7 +627,7 @@ describe "Kusanagi", ->
           var/**/1, // a
           /** */2,
         /// E
-        3, 4
+        3, 4,
         ];
       """
 
@@ -714,7 +735,7 @@ describe "Kusanagi", ->
         /*  */c);
       """
 
-    # TODO: Nice to have
+    # TODO: Nice to have, but need to work through the implications
     it.skip "paren-less", ->
       compare """
         let x = a, b, c
@@ -783,7 +804,7 @@ describe "Kusanagi", ->
           case #err(_)
             assert(false)
       """, """
-        switch /**/(rand.read 2) { /**/ //
+        switch(/**/ rand.read 2) { /**/ //
           /// AA
           case #ok(bs)  bs;
           case /**/ #eof(bs) bs;
@@ -829,14 +850,6 @@ describe "Kusanagi", ->
         async /**/
          /* */ // A
         (false);
-      """
-
-    it "obj sort", ->
-      # TODO: Not sure about this example
-      compare """
-        async module {}
-      """, """
-        async module {};
       """
 
   describe "actor", ->
@@ -1088,7 +1101,7 @@ describe "Kusanagi", ->
         else
           z
       """, """
-        if /**/(x) { //
+        if(/**/ x) { //
           y;
         }
         else {
@@ -1101,7 +1114,7 @@ describe "Kusanagi", ->
         if/**/x
           y
       """, """
-        if/**/(x) {
+        if(/**/x) {
           y;
         };
       """
@@ -1225,7 +1238,7 @@ describe "Kusanagi", ->
           ///
           x -= 1 // B
       """, """
-        while/**/(x >
+        while(/**/x >
          1) { // A
           ///
           x -= 1; // B
