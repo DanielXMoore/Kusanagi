@@ -1161,3 +1161,28 @@ describe "Kusanagi", ->
           """
             #{keyword}/**/true;
           """
+
+  describe "while", ->
+    it "basic", ->
+      compare """
+        while x > 1
+          x -= 1
+      """, """
+        while(x > 1) {
+          x -= 1;
+        };
+      """
+
+    it "maintains whitespace and comments", ->
+      compare """
+        while/**/x >
+         1 // A
+          ///
+          x -= 1 // B
+      """, """
+        while/**/(x >
+         1) { // A
+          ///
+          x -= 1; // B
+        };
+      """

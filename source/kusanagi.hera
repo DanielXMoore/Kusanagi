@@ -381,9 +381,9 @@ ExpNondec
   "async"    ExpNest
   "await"    ExpNest
   "assert"   ExpNest
-  "label"    (__ Id):id TypeSuffix?:typeSuffix ExpNest:exp -> { type: "label", id, typeSuffix, exp }
-  "break"    (__ Id):id ExpNullary?:exp -> { type: "break", id, exp }
-  "continue" (__ Id):id -> { type: "continue", id }
+  "label"    (__ Id) TypeSuffix? ExpNest
+  "break"    (__ Id) ExpNullary?
+  "continue" (__ Id)
   "debug"    ExpNest
   "if"       ExpNullary ExpNest ElseBlock?
   "try"      ExpNest __ Catch
@@ -391,7 +391,7 @@ ExpNondec
   "switch"   ExpNullary __ "{" __ Case* __ "}"
   # NOTE: Added brace-less switch
   "switch"   ExpNullary InsertOpenBrace $RestOfLine $EOS? NestedCases InsertNewline InsertIndent InsertCloseBrace
-  "while"    ExpNullary:condition ExpNest:exp -> { type: "while", condition, exp }
+  "while"    ExpNullary ExpNest
   "loop"     ExpNest WhileBlock?
   "for"      __ "(" __ Pat __ "in" __ Exp __ ")" ExpNest
   # NOTE: Added paren-less `for`

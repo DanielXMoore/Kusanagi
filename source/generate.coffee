@@ -48,13 +48,6 @@ generate = (node) ->
 
       "#{gen(id)}#{gen(suffix)}"
 
-    when "break", "continue"
-      # TODO: More accurate whitespace
-      "#{node.type}#{gen(node.exp)}"
-
-    when "label"
-      throw new Error "TODO: type: label"
-
     when "parens"
       {pre, exps, beforeClose} = node
       gen [
