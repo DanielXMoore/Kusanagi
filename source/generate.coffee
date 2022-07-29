@@ -48,7 +48,7 @@ generate = (node) ->
 
       "#{gen(id)}#{gen(suffix)}"
 
-    when "await", "return", "break", "continue", "debug", "throw", "ignore"
+    when "break", "continue"
       # TODO: More accurate whitespace
       "#{node.type}#{gen(node.exp)}"
 

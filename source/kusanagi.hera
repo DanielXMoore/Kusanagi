@@ -387,18 +387,17 @@ ExpBinRest
   __ ":"   __ TypNobin
 
 ExpNondec
-  "return" __ Exp?:exp ->
-    return {type: "return", exp}
+  "return"   ( __ Exp )?
   "async"    ExpNest
-  "await"    ExpNest:exp -> { type: "await",  exp }
+  "await"    ExpNest
   "assert"   ExpNest
   "label"    (__ Id):id TypeSuffix?:typeSuffix ExpNest:exp -> { type: "label", id, typeSuffix, exp }
   "break"    (__ Id):id ExpNullary?:exp -> { type: "break", id, exp }
   "continue" (__ Id):id -> { type: "continue", id }
-  "debug"    ExpNest:exp -> { type: "debug", exp }
+  "debug"    ExpNest
   "if"       ExpNullary ExpNest ElseBlock?
   "try"      ExpNest __ Catch
-  "throw"    ExpNest:exp -> { type: "throw", exp }
+  "throw"    ExpNest
   "switch"   ExpNullary __ "{" __ Case* __ "}"
   # NOTE: Added brace-less switch
   "switch"   ExpNullary InsertOpenBrace $RestOfLine $EOS? NestedCases InsertNewline InsertIndent InsertCloseBrace
@@ -407,7 +406,7 @@ ExpNondec
   "for"      __ "(" __ Pat __ "in" __ Exp __ ")" ExpNest
   # NOTE: Added paren-less `for`
   "for"      TrailingComment+ InsertOpenParen Pat __ "in" __ Exp InsertCloseParen ExpNest
-  "ignore"   ExpNest:exp -> { type: "ignore", exp }
+  "ignore"   ExpNest
   "do" (__ "?")? Block
   # NOTE: Moved ":=" into Binassign
   ExpBin __ Binassign __ Exp
@@ -433,25 +432,15 @@ ExpNest
 
 Block
   __ "{" __ BlockDeclaration* "}"
-  $RestOfLine:pre $EOS?:afterOpen NestedBlockDeclarations:nested $TrailingComment*:beforeClose ->
-    const [indent, decs] = nested
-
-    // Skip if there were no indented declarations found
-    if (!decs.length) return $skip
-
-    return {
-      type: "block",
-      decs,
-      pre: pre.replace(/^\n$/, " "),
-      afterOpen: "\n" + afterOpen,
-      beforeClose: beforeClose + "\n" + "".padStart(indent * 2),
-    }
+  InsertOpenBrace $RestOfLine $EOS? NestedBlockDeclarations InsertNewline InsertIndent InsertCloseBrace
 
 NestedBlockDeclarations
-  PushIndent NestedBlockDeclaration*:decs PopIndent:indent -> [indent, decs]
+  PushIndent NestedBlockDeclaration*:decs PopIndent ->
+    if (!decs.length) return $skip
+    return decs
 
 NestedBlockDeclaration
-  $Nested:pre Dec:dec &EOS -> [pre, dec]
+  $Nested Dec StatementDelimiter
 
 # NOTE: Extracted block declaration with optional trailing semi-colon when object closes to make field iteration easier in Block
 BlockDeclaration
@@ -638,7 +627,7 @@ StatementDelimiter
   ImpliedSemicolon
 
 ImpliedSemicolon
-  &EOS -> ";"
+  TrailingComment* &EOS -> [";", $1]
 
 InsertOpenParen
   "" -> "("

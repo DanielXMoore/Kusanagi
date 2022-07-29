@@ -119,7 +119,7 @@ describe "Kusanagi", ->
           n
         """), """
         func size() : Nat {
-          n
+          n;
         };
       """
 
@@ -128,9 +128,8 @@ describe "Kusanagi", ->
         func size() : Nat // End of line comment!
           n
         """), """
-        func size() : Nat // End of line comment!
-        {
-          n
+        func size() : Nat { // End of line comment!
+          n;
         };
       """
 
@@ -140,10 +139,9 @@ describe "Kusanagi", ->
           // C6
           n
       """), """
-        /* C0 */ func /* C1 */ size /* C2 */ () /* C3 */ : /* C4 */ Nat /* C5 */
-        {
+        /* C0 */ func /* C1 */ size /* C2 */ () /* C3 */ : /* C4 */ Nat { /* C5 */
           // C6
-          n
+          n;
         };
       """
 
@@ -179,7 +177,7 @@ describe "Kusanagi", ->
         while x < 1
       """), """
         loop {
-          x := 1 + 2
+          x := 1 + 2;
         }
         while x < 1;
       """
@@ -190,9 +188,8 @@ describe "Kusanagi", ->
           x := 1 + 2
         while /**/ x < 1
       """), """
-        loop /**/
-        {
-          x := 1 + 2
+        loop { /**/
+          x := 1 + 2;
         }
         while /**/ x < 1;
       """
@@ -689,14 +686,15 @@ describe "Kusanagi", ->
           Y()
       """, """
         try {
-          X()
+          X();
         }
         catch e {
-          Y()
+          Y();
         };
       """
 
     it "maintains whitespace and comments", ->
+
       compare """
         /* */ try // C
           /// A
@@ -704,14 +702,12 @@ describe "Kusanagi", ->
         catch /**/ e /* */
           Y() // B
       """, """
-        /* */ try // C
-        {
+        /* */ try { // C
           /// A
-          X()
+          X();
         }
-        catch /**/ e /* */
-        {
-          Y() // B
+        catch /**/ e { /* */
+          Y(); // B
         };
       """
 
@@ -728,7 +724,7 @@ describe "Kusanagi", ->
           case #ok(bs)  bs;
           case #eof(bs) bs;
           case #err(_) {
-            assert(false)
+            assert(false);
           };
         };
       """
@@ -747,7 +743,7 @@ describe "Kusanagi", ->
           case #ok(bs)  bs;
           case /**/ #eof(bs) bs;
           case #err(_) {
-            assert(false)
+            assert(false);
           };
         };
       """
@@ -840,16 +836,16 @@ describe "Kusanagi", ->
           var count = init;
 
           public func inc() : async () {
-            count += 1
+            count += 1;
           };
 
           public func read() : async Nat {
-            count
+            count;
           };
 
           public func bump() : async Nat {
             count += 1;
-            count
+            count;
           }
         };
 
@@ -958,7 +954,7 @@ describe "Kusanagi", ->
           Debug.print i
       """, """
         for (i in x) {
-          Debug.print(i)
+          Debug.print(i);
         };
       """
 
@@ -970,8 +966,8 @@ describe "Kusanagi", ->
       """, """
         for (i in grid.keys()) {
           for (j in grid[i].keys()) {
-            dst.set(i, j, nextCell(i, j))
-          }
+            dst.set(i, j, nextCell(i, j));
+          };
         };
       """
 
@@ -980,9 +976,8 @@ describe "Kusanagi", ->
         for/**/i/**/in/**/x/**/
           Debug.print i
       """, """
-        for/**/(i/**/in/**/x)/**/
-        {
-          Debug.print(i)
+        for/**/(i/**/in/**/x) {/**/
+          Debug.print(i);
         };
       """
 
@@ -993,7 +988,7 @@ describe "Kusanagi", ->
           y
       """, """
         if(x) {
-          y
+          y;
         };
       """
 
@@ -1005,10 +1000,10 @@ describe "Kusanagi", ->
           z
       """, """
         if(x) {
-          y
+          y;
         }
         else {
-          z
+          z;
         };
       """
 
@@ -1037,7 +1032,7 @@ describe "Kusanagi", ->
         if(x {
           y=1;
         }) {
-          z
+          z;
         };
       """
 
@@ -1048,12 +1043,11 @@ describe "Kusanagi", ->
         else
           z
       """, """
-        if /**/(x) //
-        {
-          y
+        if /**/(x) { //
+          y;
         }
         else {
-          z
+          z;
         };
       """
 
@@ -1063,6 +1057,107 @@ describe "Kusanagi", ->
           y
       """, """
         if/**/(x) {
-          y
+          y;
         };
       """
+
+  describe "keyword expressions", ->
+    describe "return", ->
+      keyword = "return"
+
+      it "basic", ->
+        compare """
+          #{keyword} true
+        """,
+        """
+          #{keyword} true;
+        """
+
+      it "maintains newlines and indent", ->
+        compare """
+          #{keyword}
+                true
+        """,
+        """
+          #{keyword}
+                true;
+        """
+
+      it "doesn't nest, just one statement then another", ->
+        compare """
+          return
+            x
+            true
+        """,
+        """
+          return
+            x;
+            true;
+        """
+
+      # TODO: nice to have
+      it.skip "shouldn't return following line unless nested / indented", ->
+        compare """
+          return
+          x
+        """,
+        """
+          return;
+          x;
+        """
+
+      it "maintains comments", ->
+        compare """
+          #{keyword}/**/true
+        """,
+        """
+          #{keyword}/**/true;
+        """
+
+    """
+      assert
+      async
+      await
+      debug
+      ignore
+      throw
+    """.split("\n").forEach (keyword) ->
+      describe keyword, ->
+        it "basic", ->
+          compare """
+            #{keyword} true
+          """,
+          """
+            #{keyword} true;
+          """
+
+        it "maintains newlines and indent", ->
+          compare """
+            #{keyword}
+                  true
+          """,
+          """
+            #{keyword}
+                  true;
+          """
+
+        it "nested", ->
+          compare """
+            #{keyword}
+              x
+              true
+          """,
+          """
+            #{keyword} {
+              x;
+              true;
+            };
+          """
+
+        it "maintains comments", ->
+          compare """
+            #{keyword}/**/true
+          """,
+          """
+            #{keyword}/**/true;
+          """

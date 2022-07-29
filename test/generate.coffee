@@ -19,17 +19,17 @@ describe "generate", ->
           let n = grid.size();
 
           public func size() : Nat {
-            n
+            n;
           };
 
           func nextCell(i : Nat, j : Nat) : State.Cell {
             let l : Nat = living(i, j);
             if(get(i, j)) {
-              l == 2 or l == 3
+              l == 2 or l == 3;
             }
             else {
-              l == 3
-            }
+              l == 3;
+            };
           };
 
           func next(dst : Grid) {
@@ -38,9 +38,9 @@ describe "generate", ->
 
               for (j in grid[i].keys()) {
                 let yo = "wat";
-                dst.set(i, j, nextCell(i, j))
-              }
-            }
+                dst.set(i, j, nextCell(i, j));
+              };
+            };
           }
         }
       };
@@ -77,17 +77,17 @@ describe "generate", ->
           let n = grid.size();
 
           public func size() : Nat {
-            n
+            n;
           };
 
           func nextCell(i : Nat, j : Nat) : State.Cell {
             let l : Nat = living(i, j);
             if(get(i, j)) {
-              l == 2 or l == 3
+              l == 2 or l == 3;
             }
             else {
-              l == 3
-            }
+              l == 3;
+            };
           };
 
           func next(dst : Grid) {
@@ -96,18 +96,18 @@ describe "generate", ->
 
               for (j in grid[i].keys()) {
                 let yo = "wat"; // Comment at EOS
-                dst.set(i, j, nextCell(i, j))
-              }
-            }
+                dst.set(i, j, nextCell(i, j));
+              };
+            };
           };
 
           func tryCatch() : () {
             try {
-              Debug.print "Ring!" /* Comment at EOS */
+              Debug.print "Ring!"; /* Comment at EOS */
             }
             catch e {
-              Debug.print "!" /* /* Nested Comment at EOS */ */ // Also regular comment at EOS
-            }
+              Debug.print "!"; /* /* Nested Comment at EOS */ */ // Also regular comment at EOS
+            };
           };
 
           public func setClockSequence(seq : ?Nat16) {
@@ -118,17 +118,17 @@ describe "generate", ->
                   case #eof(bs) bs;
                   case #err(_) {
                     assert(false);
-                    []
+                    [];
                   };
                 };
 
-                nat8to16(bs[0]) << 8 | nat8to16(bs[1])
+                nat8to16(bs[0]) << 8 | nat8to16(bs[1]);
               };
 
               case ? s {
-                s
+                s;
               };
-            }
+            };
           };
 
           public func nestedObject() {
@@ -138,7 +138,7 @@ describe "generate", ->
               z = {
                 a = 34
               }
-            }
+            };
           };
 
           public func nestedArray() {
@@ -146,7 +146,7 @@ describe "generate", ->
               1,
               2,
               3,
-            ]
+            ];
           }
         }
       };
