@@ -487,6 +487,61 @@ describe "Kusanagi", ->
         let rand = Random.new();
       """
 
+    it "object syntax", ->
+      compare """
+        let { ihash; nhash; thash; phash; bhash; lhash; calcHash } = Utils;
+      """, """
+        let { ihash; nhash; thash; phash; bhash; lhash; calcHash } = Utils;
+      """
+
+    it "object syntax indented", ->
+      compare """
+        let {
+          ihash
+          nhash
+          thash
+          phash
+          bhash
+          lhash
+          calcHash
+        } = Utils
+      """, """
+        let {
+          ihash;
+          nhash;
+          thash;
+          phash;
+          bhash;
+          lhash;
+          calcHash;
+        } = Utils;
+      """
+
+    it "object syntax keeps whitespace and comments", ->
+      compare """
+        let {
+          ihash; /**/
+             nhash;
+          thash // A
+          /* */phash
+          /// Co
+          bhash
+          lhash
+          calcHash
+        } = Utils
+      """, """
+        let {
+          ihash; /**/
+             nhash;
+          thash; // A
+          /* */phash;
+          /// Co
+          bhash;
+          lhash;
+          calcHash;
+        } = Utils;
+      """
+
   describe "var", ->
     it "should keep whitespace and comments", ->
       compare """

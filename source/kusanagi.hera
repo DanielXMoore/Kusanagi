@@ -162,7 +162,7 @@ Character
 
 # https://github.com/dfinity/motoko/blob/master/doc/modules/language-guide/pages/language-manual.adoc#text
 Text
-  $("\"" $(Character*) "\"")
+  $("\"" Character* "\"")
 
 Char
   $("'" Character "'")
@@ -172,7 +172,7 @@ ReservedWord
 
 # https://github.com/dfinity/motoko/blob/master/doc/modules/language-guide/pages/language-manual.adoc#identifiers
 Id
-  !ReservedWord $(/[a-zA-Z][a-zA-Z0-9_]*/):id -> id
+  !ReservedWord /[a-zA-Z][a-zA-Z0-9_]*/:id -> id
 
 Digit
   [0-9]
@@ -494,8 +494,10 @@ CommaPat
 PatNullary
   PatPlain
   # Object Pattern https://github.com/dfinity/motoko/blob/master/doc/modules/language-guide/pages/language-manual.adoc#object-pattern
-  # TODO: Add indentation based object syntax
-  $("{" ( PatField (";" PatField )* )? "}") # Return string as written for now
+  __ "{" PatObjectField* __ "}"
+
+PatObjectField
+  __ PatField BlockFieldDelimiter
 
 PatUn
   PatNullary
