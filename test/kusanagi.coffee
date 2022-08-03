@@ -1301,16 +1301,31 @@ describe "Kusanagi", ->
       """
 
   describe "take", ->
-    it "adds switch with a default value", ->
+    it "adds switch with a default value, no parens", ->
       compare """
         take x, 0
       """, """
         switch(x){case(null){0};case(?val){val}};
       """
 
-    it "adds switch with a default value", ->
+    it "adds switch with a default value, with parens", ->
       compare """
         take(x, 0)
       """, """
         switch(x){case(null){0};case(?val){val}};
+      """
+
+  describe "match", ->
+    it "adds switch with case, no parens", ->
+      compare """
+        let x: Nat = match x, #nat(val), 0
+      """, """
+        let x: Nat = switch(x){case(#nat(val)){x};case(_){0}};
+      """
+
+    it "adds switch with case, with parens", ->
+      compare """
+        let x: Nat = match(x, #nat(val), 0)
+      """, """
+        let x: Nat = switch(x){case(#nat(val)){x};case(_){0}};
       """
