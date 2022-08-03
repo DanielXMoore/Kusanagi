@@ -1299,3 +1299,18 @@ describe "Kusanagi", ->
           x -= 1; // B
         };
       """
+
+  describe "take", ->
+    it "adds switch with a default value", ->
+      compare """
+        take x, 0
+      """, """
+        switch(x){case(null){0};case(?val){val}};
+      """
+
+    it "adds switch with a default value", ->
+      compare """
+        take(x, 0)
+      """, """
+        switch(x){case(null){0};case(?val){val}};
+      """
