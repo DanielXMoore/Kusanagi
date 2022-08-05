@@ -81,7 +81,7 @@ TypItemDelimiter
 
 TypUn
   TypNullary
-  "?" TypUn
+  __ "?" TypUn
 
 TypPre
   # NOTE: converted recursive "async" to optional

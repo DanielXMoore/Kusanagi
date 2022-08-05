@@ -256,6 +256,35 @@ describe "Kusanagi", ->
           };
         """
 
+    describe "nullable", ->
+      it "basic", ->
+        compare """
+          type nullable = ?Text
+        """, """
+          type nullable = ?Text;
+        """
+
+      it "keeps whitespace and comments", ->
+        compare """
+          type nullable =
+                ?Text
+        """, """
+          type nullable =
+                ?Text;
+        """
+
+        compare """
+          type nullable=?Text
+        """, """
+          type nullable=?Text;
+        """
+
+        compare """
+          type nullable /**/= /**/? /**/Text //
+        """, """
+          type nullable /**/= /**/? /**/Text; //
+        """
+
     describe "variant", ->
       it "brace", ->
         compare """
