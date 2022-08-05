@@ -166,6 +166,29 @@ describe "Kusanagi", ->
           /**/B;
       """
 
+    it "without id", ->
+      compare """
+        func(idx) {}
+      """, """
+        func(idx) {};
+      """
+
+    it "anonymous func as an arguments parameter", ->
+      compare """
+        x(y, func (){{x=3}})
+      """,
+      """
+        x(y, func (){{x=3}});
+      """
+
+    it "anonymous func as an arguments parameter without space after func", ->
+      compare """
+        x(y, func(){{x=3}})
+      """,
+      """
+        x(y, func(){{x=3}});
+      """
+
   describe "loop", ->
     it "with while", ->
       assert.equal generate(parser.parse """
@@ -665,6 +688,27 @@ describe "Kusanagi", ->
           2,
           3,
         ];
+      """
+
+  describe "object", ->
+    it "should have optional semi-colons with braces", ->
+      compare """
+        func () {
+          {
+            name = val[idx].name
+            value = clone(val[idx].value)
+            immutable = val[idx].immutable
+          }
+        }
+      """,
+      """
+        func () {
+          {
+            name = val[idx].name;
+            value = clone(val[idx].value);
+            immutable = val[idx].immutable;
+          };
+        };
       """
 
   describe "comma separated array", ->

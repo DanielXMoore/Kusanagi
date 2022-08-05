@@ -136,7 +136,7 @@ describe "generate", ->
               x = 7;
               y = 3;
               z = {
-                a = 34
+                a = 34;
               };
             };
           };

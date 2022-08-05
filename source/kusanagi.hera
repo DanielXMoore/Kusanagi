@@ -168,7 +168,7 @@ Char
   $("'" Character "'")
 
 ReservedWord
-  /(actor|and|assert|await|break|case|catch|class|continue|debug|debug_show|do|else|flexible|false|for|func|if|ignore|in|import|not|null|object|or|label|let|loop|match|private|public|query|return|shared|stable|system|switch|take|true|try|type|var|while)\s/
+  /(actor|and|assert|await|break|case|catch|class|continue|debug|debug_show|do|else|flexible|false|for|func|if|ignore|in|import|not|null|object|or|label|let|loop|match|private|public|query|return|shared|stable|system|switch|take|true|try|type|var|while)(?=[^a-zA-Z0-9_])/
 
 # https://github.com/dfinity/motoko/blob/master/doc/modules/language-guide/pages/language-manual.adoc#identifiers
 Id
@@ -287,9 +287,8 @@ ExpObj
   __ "{" NestedObjectFields __ "}"
 
 ExpObjField
-  # TODO: Optional trailing semi-colons
   # NOTE: Extracted field rule for easier iteration
-  ExpField __ ( ";" / (__ &"}") ) __
+  ExpField BlockFieldDelimiter __
 
 NestedObjectFields
   PushIndent NestedObjectField*:fields PopIndent ->
@@ -481,8 +480,7 @@ NestedBlockDeclaration
 
 # NOTE: Extracted block declaration with optional trailing semi-colon when object closes to make field iteration easier in Block
 BlockDeclaration
-  # TODO: Make semi-colon optional every line
-  Dec __ ( ";" / (__ &"}") ) __
+  Dec BlockFieldDelimiter __
 
 Case
   __ "case" PatNullary ExpNest BlockFieldDelimiter
@@ -524,7 +522,11 @@ PatPlain
 
 # NOTE: Extracted PatPlainPart with optional trailing comma before close parenthesis
 PatPlainPart
-  PatBin __ ( "," / (__ &")") ) __
+  PatBin PatDelimiter __
+
+PatDelimiter
+  __ "," &( __ ")" )?
+  &( __ ")" )
 
 CommaPat
   __ "," PatBin
@@ -540,7 +542,7 @@ PatObjectField
 PatUn
   PatNullary
   __ "#" Id PatNullary? # NOTE: Merged in "#" Id with optional nullary to prevent shadowing
-  "?" __ PatUn
+  __ "?" __ PatUn
   Unop Lit
 
 PatBin
@@ -589,13 +591,13 @@ FuncBody
   __ "=" __ Exp
 
 ObjBody
-  __ "{" __ ObjBodyField* "}" __
+  __ "{" ObjBodyField* __ "}" __
   # NOTE: Added indented object body
   InsertOpenBrace $RestOfLine $EOS? NestedObjBodyFields InsertNewline InsertIndent InsertCloseBrace
 
 # NOTE: Extracted dec-field with optional trailing semi-colon when object closes to make field iteration easier in ObjBody
 ObjBodyField
-  DecField __ ( ";" / (__ &"}") ) __
+  __ DecField BlockFieldDelimiter
 
 NestedObjBodyFields
   PushIndent NestedObjBodyField*:fields PopIndent ->
