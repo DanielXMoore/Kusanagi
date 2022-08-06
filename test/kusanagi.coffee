@@ -539,6 +539,21 @@ describe "Kusanagi", ->
         let rand = Random.new();
       """
 
+    it "nullable",  ->
+      compare """
+        let aStudent =
+          name = ?"John"
+          id = ?1
+          clas = ?Map.new<Text, ClassType>()
+      """,
+      """
+        let aStudent = {
+          name = ?"John";
+          id = ?1;
+          clas = ?Map.new<Text, ClassType>();
+        };
+      """
+
     it "object syntax", ->
       compare """
         let { ihash; nhash; thash; phash; bhash; lhash; calcHash } = Utils;

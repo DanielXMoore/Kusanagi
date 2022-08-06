@@ -24,7 +24,7 @@ SharedPatOpt
 
 TypObj
   __ "{" DelimitedTypField* __ "}"
-  InsertOpenBrace $RestOfLine $EOS? NestedTypFields InsertNewline InsertIndent InsertCloseBrace
+  InsertOpenBrace $EOS NestedTypFields InsertNewline InsertIndent InsertCloseBrace
 
 DelimitedTypField
   __ TypField BlockFieldDelimiter
@@ -49,7 +49,7 @@ NestedTypField
 TypVariant
   __ "{" __ "#" __ "}"
   __ "{" TypVariantField* __ "}"
-  InsertOpenBrace $RestOfLine $EOS? NestedTypTags InsertNewline InsertIndent InsertCloseBrace
+  InsertOpenBrace $EOS NestedTypTags InsertNewline InsertIndent InsertCloseBrace
 
 TypVariantField
   __ TypTag BlockFieldDelimiter
@@ -280,11 +280,13 @@ Binassign
   ":=" # NOTE: Moved here from ExpNondec
 
 ExpObj
+  # NOTE: Added brace-less indentation based syntax
+  InsertOpenBrace $EOS NestedObjectFields InsertNewline InsertIndent InsertCloseBrace
+  # NOTE: Added indentation based object syntax
+  __ "{" NestedObjectFields __ "}"
   # Object Pattern https://github.com/dfinity/motoko/blob/master/doc/modules/language-guide/pages/language-manual.adoc#object-pattern
   # This different from PatNullary because exp fields can optionally start with "var"
   __ "{" __ ExpObjField* "}"
-  # NOTE: Added indentation based object syntax
-  __ "{" NestedObjectFields __ "}"
 
 ExpObjField
   # NOTE: Extracted field rule for easier iteration
@@ -299,11 +301,12 @@ NestedObjectField
   $Nested ExpField BlockFieldDelimiter
 
 ExpPlain
-  _? Lit
+  $TrailingComment* Lit
   # NOTE: Extracted expression part for easier iteration
-  _? "(" __ ExpPlainPart* ")"
+  $TrailingComment* "(" __ ExpPlainPart* ")"
   # NOTE: Added Parentheses-less tuple
-  $(TrailingComment+):spacing Exp:exp CommaExp*:rest ->
+  # This is used in if/switch/while conditions and function application
+  $TrailingComment+:spacing !EOL Exp:exp CommaExp*:rest ->
     spacing = spacing.replace(/^ /, "")
 
     return ["(", spacing, exp, ...rest, ")"]
@@ -355,7 +358,7 @@ ExpPostRest
   # https://github.com/dfinity/motoko/blob/master/doc/modules/language-guide/pages/language-manual.adoc#tuples
   __ "." __ ( Nat / Id )
   # Function application
-  (TypArgs __ )? ExpNullary
+  TypArgs? !EOS ExpNullary
   "!" # Null break
 
 ExpUn
@@ -364,7 +367,7 @@ ExpUn
   # NOTE: Combined and added `?` to prevent shadowing
   # https://github.com/dfinity/motoko/blob/master/doc/modules/language-guide/pages/language-manual.adoc#variant-pattern
   __ "#" Id __ ExpNullary?
-  "?" ExpUn
+  __ "?" ExpUn
   Unop ![\s] ExpUn
   Unassign ![\s] ExpUn
   "actor" ExpPlain
@@ -436,7 +439,7 @@ ExpNondec
   "throw"    ExpNest
   "switch"   ExpNullary __ "{" __ Case* __ "}"
   # NOTE: Added brace-less switch
-  "switch"   ExpNullary InsertOpenBrace $RestOfLine $EOS? NestedCases InsertNewline InsertIndent InsertCloseBrace
+  "switch"   ExpNullary InsertOpenBrace $EOS NestedCases InsertNewline InsertIndent InsertCloseBrace
   "while"    ExpNullary ExpNest
   "loop"     ExpNest WhileBlock?
   "for"      __ "(" __ Pat __ "in" __ Exp __ ")" ExpNest
@@ -468,7 +471,7 @@ ExpNest
 
 Block
   __ "{" __ BlockDeclaration* "}"
-  InsertOpenBrace $RestOfLine $EOS? NestedBlockDeclarations InsertNewline InsertIndent InsertCloseBrace
+  InsertOpenBrace $EOS NestedBlockDeclarations InsertNewline InsertIndent InsertCloseBrace
 
 NestedBlockDeclarations
   PushIndent NestedBlockDeclaration*:decs PopIndent ->
@@ -515,16 +518,16 @@ PatPlain
   __ "(" __ PatPlainPart* ")"
   # NOTE: This requires matching at least some whitespace to prevent infinite recursion
   # there may be a way to improve this with assertions or refactoring some rules
-  _  PatBin
+  TrailingComment+ PatBin
   __ "_"
   __ Id
   __ Lit
 
 # NOTE: Extracted PatPlainPart with optional trailing comma before close parenthesis
 PatPlainPart
-  PatBin PatDelimiter __
+  PatBin PatPlainDelimiter __
 
-PatDelimiter
+PatPlainDelimiter
   __ "," &( __ ")" )?
   &( __ ")" )
 
@@ -564,7 +567,7 @@ DecVar
   "var" __ Id (__ TypeSuffix)? __ "=" __ Exp
 
 DecNonvar
-  "let" Pat __ "=" __ Exp
+  "let" Pat __ "=" TrailingComment* Exp
   "type" __ Id  (__ Typing)? __ "=" Typ
 
   ObjSort $(__ Id)? (__ "=")? ObjBody
@@ -593,7 +596,7 @@ FuncBody
 ObjBody
   __ "{" ObjBodyField* __ "}" __
   # NOTE: Added indented object body
-  InsertOpenBrace $RestOfLine $EOS? NestedObjBodyFields InsertNewline InsertIndent InsertCloseBrace
+  InsertOpenBrace $EOS NestedObjBodyFields InsertNewline InsertIndent InsertCloseBrace
 
 # NOTE: Extracted dec-field with optional trailing semi-colon when object closes to make field iteration easier in ObjBody
 ObjBodyField
@@ -635,8 +638,7 @@ _
 
 # End of statemnt
 EOS
-  RestOfLine+ _ EOF
-  RestOfLine+
+  RestOfLine+ (_ EOF)?
   EOF
 
 RestOfLine
