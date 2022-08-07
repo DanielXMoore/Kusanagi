@@ -323,7 +323,12 @@ ExpNullary
   Id
 
 ExpPost
-  ExpNullary ExpPostRest*
+  ExpNullary:exp ExpPostRest*:rest ->
+    // Convert null soaks to do block
+    if (rest.some((v) => v === "?")) {
+      return ["do?{", exp, rest.map((v) => v === "?" ? "!" : v), "}"]
+    }
+    return [exp, rest]
   # Array
   # https://github.com/dfinity/motoko/blob/master/doc/modules/language-guide/pages/language-manual.adoc#arrays
   # NOTE: Added indentation based array syntax
@@ -360,13 +365,14 @@ ExpPostRest
   # Function application
   TypArgs? !EOS ExpNullary
   "!" # Null break
+  "?" # Null soak
 
 ExpUn
   ExpPost
   # Variant Pattern
   # NOTE: Combined and added `?` to prevent shadowing
   # https://github.com/dfinity/motoko/blob/master/doc/modules/language-guide/pages/language-manual.adoc#variant-pattern
-  __ "#" Id __ ExpNullary?
+  __ "#" Id ExpNullary?
   __ "?" ExpUn
   Unop ![\s] ExpUn
   Unassign ![\s] ExpUn
@@ -516,6 +522,14 @@ Stab
 
 PatPlain
   __ "(" __ PatPlainPart* ")"
+  # NOTE: Added Parentheses-less PatPlain
+  $TrailingComment+:spacing !EOL PatBin:pat CommaPat*:rest ->
+    if (!rest.length) return [spacing, pat]
+
+    spacing = spacing.replace(/^ /, "")
+
+    return ["(", spacing, pat, ...rest, ")"]
+
   # NOTE: This requires matching at least some whitespace to prevent infinite recursion
   # there may be a way to improve this with assertions or refactoring some rules
   TrailingComment+ PatBin

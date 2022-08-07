@@ -1417,3 +1417,44 @@ describe "Kusanagi", ->
       """, """
         let x: Nat = switch(x){case(#nat(val)){x};case(_){0}};
       """
+
+  describe "null soak", ->
+    it "should convert to do {}", ->
+      compare """
+        student.classes?.get(classID)
+      """, """
+        do?{student.classes!.get(classID)};
+      """
+
+  describe "new features", ->
+    it "take with null soaks", ->
+      compare """
+        func findStudentClass(student: Student, classId : Nat) : Result<ClassType, Text>
+          return #ok take(student.classes?.get(classID), return #err "not found")
+      """, """
+        func findStudentClass(student: Student, classId : Nat) : Result<ClassType, Text> {
+          return #ok(switch(do?{student.classes!.get(classID)}){case(null){return #err "not found"};case(?val){val}});
+        };
+      """
+
+    # TODO: It seems like this should work
+    it.skip "take with null soaks", ->
+      compare """
+        func findStudentClass(student: Student, classId : Nat) : Result<ClassType, Text>
+          return #ok(take student.classes?.get(classID), return #err "not found")
+      """, """
+        func findStudentClass(student: Student, classId : Nat) : Result<ClassType, Text> {
+          return #ok(switch(do?{student.classes!.get(classID)}){case(null){return #err "not found"};case(?val){val}});
+        };
+      """
+
+    # TODO: Also this seems like it should work too
+    it.skip "take with null soaks", ->
+      compare """
+        func findStudentClass(student: Student, classId : Nat) : Result<ClassType, Text>
+          return #ok take student.classes?.get(classID), return #err "not found"
+      """, """
+        func findStudentClass(student: Student, classId : Nat) : Result<ClassType, Text> {
+          return #ok(switch(do?{student.classes!.get(classID)}){case(null){return #err "not found"};case(?val){val}});
+        };
+      """
