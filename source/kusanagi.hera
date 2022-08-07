@@ -361,7 +361,7 @@ ExpPostRest
   "[" __ Exp __ "]"
   # Tuple Projection, Object Projection
   # https://github.com/dfinity/motoko/blob/master/doc/modules/language-guide/pages/language-manual.adoc#tuples
-  __ "." __ ( Nat / Id )
+  $(__ "." __ ( Nat / Id ))
   # Function application
   TypArgs? !EOS ExpNullary
   "!" # Null break
@@ -400,8 +400,8 @@ ExpNondec
     var exp, def;
     if (Array.isArray(exps)) {
       if (exps[0] === "(") {
-        exp = exps[2][0][0];
-        def = exps[3][2][0];
+        exp = exps[2][0];
+        def = exps[3][2];
       } else if (exps[1] === "(") {
         exp = exps[3][0][0];
         def = exps[3][1][0];

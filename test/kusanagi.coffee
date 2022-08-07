@@ -1437,8 +1437,7 @@ describe "Kusanagi", ->
         };
       """
 
-    # TODO: It seems like this should work
-    it.skip "take with null soaks", ->
+    it "take with null soaks", ->
       compare """
         func findStudentClass(student: Student, classId : Nat) : Result<ClassType, Text>
           return #ok(take student.classes?.get(classID), return #err "not found")
@@ -1448,8 +1447,7 @@ describe "Kusanagi", ->
         };
       """
 
-    # TODO: Also this seems like it should work too
-    it.skip "take with null soaks", ->
+    it "take with null soaks", ->
       compare """
         func findStudentClass(student: Student, classId : Nat) : Result<ClassType, Text>
           return #ok take student.classes?.get(classID), return #err "not found"
