@@ -306,8 +306,8 @@ ExpPlain
   TrailingComment* "(" __ ExpPlainPart* ")"
   # NOTE: Added Parentheses-less tuple
   # This is used in if/switch/while conditions and function application
-  $TrailingComment+:spacing !EOL Exp:exp CommaExp*:rest ->
-    spacing = spacing.replace(/^ /, "")
+  TrailingComment+:spacing !EOL Exp:exp CommaExp*:rest ->
+    spacing = replaceStr(spacing, /^ /, "")
 
     return ["(", spacing, exp, ...rest, ")"]
 
@@ -455,8 +455,8 @@ ExpNondec
   "do" (__ "?")? Block
 
   # NOTE: Added arrow func expression shorthand
-  (__ Typing)?:typing (__ PatPlain):pat TypeSuffix?:suffix $__:spacing "=>" FuncBody:body ->
-    return ["func ", typing, pat, suffix, spacing.replace(/^ /, ""), body]
+  (__ Typing)?:typing (__ PatPlain):pat TypeSuffix?:suffix __:spacing "=>" FuncBody:body ->
+    return ["func ", typing, pat, suffix, replaceStr(spacing, /^ /, ""), body]
 
   # NOTE: Moved ":=" into Binassign
   ExpBin __ Binassign __ Exp
@@ -528,10 +528,10 @@ Stab
 PatPlain
   __ "(" __ PatPlainPart* ")"
   # NOTE: Added Parentheses-less PatPlain
-  $TrailingComment+:spacing !EOL PatBin:pat CommaPat*:rest ->
+  TrailingComment+:spacing !EOL PatBin:pat CommaPat*:rest ->
     if (!rest.length) return [spacing, pat]
 
-    spacing = spacing.replace(/^ /, "")
+    spacing = replaceStr(spacing, /^ /, "")
 
     return ["(", spacing, pat, ...rest, ")"]
 
@@ -735,6 +735,16 @@ Init
     global.currentIndent = 0
     global.indentLevels = [0]
     global.verbose = false
+
+    global.replaceStr = function (str, pat, v) {
+      if(typeof str === "string") {
+        return str.replace(pat, v)
+      } else if(Array.isArray(str)) {
+        return [replaceStr(str[0], pat, v), ...str.slice(1)]
+      } else {
+        return str
+      }
+    }
 
 PushIndent
   "" ->

@@ -1479,13 +1479,39 @@ describe "Kusanagi", ->
         +++b;
       """
 
-    it "func", ->
+    it "func after id", ->
       compare """
         func f`*`()
           1
       """, """
         func f*() {
           1;
+        };
+      """
+
+    it "func before id", ->
+      compare """
+        func `*`f()
+          1
+      """, """
+        func *f() {
+          1;
+        };
+      """
+
+    it "indented", ->
+      compare """
+        func f()
+          `//
+            let x = 1
+          //`
+          y
+      """, """
+        func f() {
+          //
+            let x = 1
+          //
+          y;
         };
       """
 
