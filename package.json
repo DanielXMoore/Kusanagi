@@ -16,7 +16,6 @@
   "author": "ORIGYN ENTERPRISE SA",
   "license": "MIT",
   "devDependencies": {
-    "@danielx/coffeecoverage": "^4.0.0-pre.3",
     "@danielx/hera": "0.7.10",
     "esbuild": "^0.14.49",
     "esbuild-coffeescript": "^2.1.0",
