@@ -3,6 +3,8 @@ Kusanagi
 
 [![Build](https://github.com/DanielXMoore/kusanagi/actions/workflows/build.yml/badge.svg)](https://github.com/DanielXMoore/kusanagi/actions/workflows/build.yml)
 
+The initial work on this project was funded by the [Origyn Foundation](https://origyn.ch).
+
 CoffeeScript style syntax for the Motoko language.
 
 ```
