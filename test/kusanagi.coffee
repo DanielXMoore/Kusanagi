@@ -1457,6 +1457,31 @@ describe "Kusanagi", ->
         };
       """
 
+  describe "backtick escapes", ->
+    it "basic", ->
+      compare """
+        `literal text !!{}`
+      """, """
+        literal text !!{}
+      """
+
+    it "prefix", ->
+      compare """
+        `+++`b
+      """, """
+        +++b;
+      """
+
+    it "func", ->
+      compare """
+        func f`*`()
+          1
+      """, """
+        func f*() {
+          1;
+        };
+      """
+
   describe "new features", ->
     it "take with null soaks", ->
       compare """

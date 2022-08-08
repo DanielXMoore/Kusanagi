@@ -633,10 +633,14 @@ ClassBody
   __ "=" __ Id? __ ObjBody
   ObjBody
 
+MotokoLiteral
+  /`((?:[^`\\]|\\.)*)`/ -> $1
+
 # https://github.com/dfinity/motoko/blob/master/doc/modules/language-guide/pages/language-manual.adoc#comments
 Comment
   $MultilineComment
   $SingleLineComment
+  MotokoLiteral
 
 # https://github.com/dfinity/motoko/blob/master/doc/modules/language-guide/pages/language-manual.adoc#comments
 MultilineComment
@@ -649,7 +653,8 @@ SingleLineComment
 
 # Any or no whitespace including newlines and comments
 __
-  $([\s]+ / Comment)*
+  ([\s]+ / Comment)* ->
+    return $0.join('')
 
 # Non-newline whitespace
 _
