@@ -418,9 +418,9 @@ ExpNondec
     var exp, pred, def;
     if (Array.isArray(exps)) {
       if (exps[0] === "(") {
-        exp  = exps[2][0][0];
-        pred = exps[3][2][0];
-        def  = exps[4][2][0];
+        exp  = exps[2][0];
+        pred = exps[3][2];
+        def  = exps[4][2];
       } else if (exps[1] === "(") {
         exp  = exps[3][0][0];
         pred = exps[3][1][0];

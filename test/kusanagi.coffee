@@ -1418,6 +1418,13 @@ describe "Kusanagi", ->
         let x: Nat = switch(x){case(#nat(val)){x};case(_){0}};
       """
 
+    it "works with expressions", ->
+      compare """
+        let x = match aResult, #ok(aResult), return #err(debug_show(aResult))
+      """, """
+        let x = switch(aResult){case(#ok(aResult)){aResult};case(_){return #err(debug_show(aResult))}};
+      """
+
   describe "null soak", ->
     it "should convert to do {}", ->
       compare """
