@@ -61,11 +61,9 @@ Directory Structure
   build.yml        # GitHub.com continuous integration testing
 source/
   cli.coffee       # Basic command line wrapper
-  experiments.hera # Stripped down toy language to test out grammar constructs
   generate.coffee  # Code generation
   kusanagi.hera    # Parsing expression grammar for Kusanagi of an extension of the Motoko language that provides indentation and whitespace based syntax
   motoko.hera      # Parsing expression grammar for the Motoko language based off of grammar.txt for testing and verifing the correct parsing of Motoko syntax
-  parser.hera      # Hacky indentation based proof of concept with no knowledge of Motoko language structure.
 test/
   examples/        # Example .mo and .ku files for testing parsing and transpilation.
   *.coffee         # Test cases
