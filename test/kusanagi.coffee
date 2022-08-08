@@ -1432,18 +1432,27 @@ describe "Kusanagi", ->
         (x: Nat) =>
           x + 1
       """, """
-        func(x: Nat) {
+        func (x: Nat) {
           x + 1;
         };
       """
 
-    # TODO
-    it.skip "in let", ->
+    it "in let", ->
       compare """
         let addOne : (Nat) -> Nat = (x: Nat) =>
           x + 1
       """, """
         let addOne : (Nat) -> Nat = func (x: Nat) {
+          x + 1;
+        };
+      """
+
+    it "with types", ->
+      compare """
+        let addOne : (Nat) -> Nat = <X>(x: Nat) : Nat =>
+          x + 1
+      """, """
+        let addOne : (Nat) -> Nat = func <X>(x: Nat) : Nat {
           x + 1;
         };
       """

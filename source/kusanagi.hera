@@ -453,6 +453,11 @@ ExpNondec
   "for"      TrailingComment+ InsertOpenParen Pat __ "in" __ Exp InsertCloseParen ExpNest
   "ignore"   ExpNest
   "do" (__ "?")? Block
+
+  # NOTE: Added arrow func expression shorthand
+  (__ Typing)?:typing (__ PatPlain):pat TypeSuffix?:suffix __:spacing "=>" FuncBody:body ->
+    return ["func ", typing, pat, suffix, spacing.replace(/^ /, ""), body]
+
   # NOTE: Moved ":=" into Binassign
   ExpBin __ Binassign __ Exp
   ExpBin
@@ -586,10 +591,6 @@ DecNonvar
 
   ObjSort $(__ Id)? (__ "=")? ObjBody
 
-  # NOTE: Added arrow func shorthand
-  # TODO: SharedPatOpt, Id?, Typing?, TypeSuffix?
-  (__ PatPlain):pat __:spacing "=>" FuncBody:body ->
-    return ["func", pat, spacing.replace(/^ /, ""), body]
   $SharedPatOpt                "func"  $(__ Id)? (__ Typing)? (__ PatPlain) TypeSuffix? FuncBody
   $SharedPatOpt $(ObjSort __)? "class" $(__ Id)? (__ Typing)? (__ PatPlain) TypeSuffix? ClassBody
 
@@ -654,13 +655,12 @@ __
 _
   /[ \t]+/
 
-# End of statemnt
+# End of statement
 EOS
-  RestOfLine+ (_ EOF)?
-  EOF
+  RestOfLine+
 
 RestOfLine
-  TrailingComment* (EOL / EOF)
+  TrailingComment* EOL
 
 # Trailing comments within a single logical line (newlines within a multi-line comment don't count)
 TrailingComment
@@ -668,13 +668,11 @@ TrailingComment
 
 # End of line
 EOL
-  "\r\n"
-  "\n"
-  "\r"
+  /\r\n|\n|\r|$/
 
 # End of file
 EOF
-  !/[\s\S]/
+  /$/
 
 # Inserting implied symbols for transpilation
 
