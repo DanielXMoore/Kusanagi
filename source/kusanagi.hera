@@ -586,6 +586,10 @@ DecNonvar
 
   ObjSort $(__ Id)? (__ "=")? ObjBody
 
+  # NOTE: Added arrow func shorthand
+  # TODO: SharedPatOpt, Id?, Typing?, TypeSuffix?
+  (__ PatPlain):pat __:spacing "=>" FuncBody:body ->
+    return ["func", pat, spacing.replace(/^ /, ""), body]
   $SharedPatOpt                "func"  $(__ Id)? (__ Typing)? (__ PatPlain) TypeSuffix? FuncBody
   $SharedPatOpt $(ObjSort __)? "class" $(__ Id)? (__ Typing)? (__ PatPlain) TypeSuffix? ClassBody
 

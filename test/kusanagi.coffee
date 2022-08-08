@@ -1426,6 +1426,28 @@ describe "Kusanagi", ->
         do?{student.classes!.get(classID)};
       """
 
+  describe "arrow functions", ->
+    it "basic", ->
+      compare """
+        (x: Nat) =>
+          x + 1
+      """, """
+        func(x: Nat) {
+          x + 1;
+        };
+      """
+
+    # TODO
+    it.skip "in let", ->
+      compare """
+        let addOne : (Nat) -> Nat = (x: Nat) =>
+          x + 1
+      """, """
+        let addOne : (Nat) -> Nat = func (x: Nat) {
+          x + 1;
+        };
+      """
+
   describe "new features", ->
     it "take with null soaks", ->
       compare """
