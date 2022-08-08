@@ -584,6 +584,49 @@ describe "Kusanagi", ->
         } = Utils;
       """
 
+    it "nested object syntax", ->
+      compare """
+        import AccountIdentifier "mo:principalmo/AccountIdentifier"
+
+        module
+
+          let debug_channel =
+            verify_escrow = true
+            verify_sale = false
+            ensure = false
+            invoice = false
+            end_sale = false
+            market = false
+            royalties = false
+            offers = false
+            escrow = false
+            withdraw_escrow = false
+            withdraw_sale = false
+            withdraw_reject = false
+            bid = false
+      """, """
+        import AccountIdentifier "mo:principalmo/AccountIdentifier";
+
+        module {
+
+          let debug_channel = {
+            verify_escrow = true;
+            verify_sale = false;
+            ensure = false;
+            invoice = false;
+            end_sale = false;
+            market = false;
+            royalties = false;
+            offers = false;
+            escrow = false;
+            withdraw_escrow = false;
+            withdraw_sale = false;
+            withdraw_reject = false;
+            bid = false;
+          };
+        };
+      """
+
     it "object syntax keeps whitespace and comments", ->
       compare """
         let {
@@ -1512,6 +1555,34 @@ describe "Kusanagi", ->
             let x = 1
           //
           y;
+        };
+      """
+
+    it "in between nested statements", ->
+      compare """
+        module
+
+          let item = x
+
+
+        `
+          let item3 = x;
+        `
+
+
+          let item4 = x
+      """, """
+        module {
+
+          let item = x;
+
+
+
+          let item3 = x;
+
+
+
+          let item4 = x;
         };
       """
 

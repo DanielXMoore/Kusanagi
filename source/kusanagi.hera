@@ -44,7 +44,7 @@ NestedTypFields
     return fields
 
 NestedTypField
-  $Nested TypField StatementDelimiter
+  Nested TypField StatementDelimiter
 
 TypVariant
   __ "{" __ "#" __ "}"
@@ -60,7 +60,7 @@ NestedTypTags
     return tags
 
 NestedTypTag
-  $Nested TypTag StatementDelimiter
+  Nested TypTag StatementDelimiter
 
 TypTag
   "#" __ Id TypeSuffix?
@@ -298,7 +298,7 @@ NestedObjectFields
     return fields
 
 NestedObjectField
-  $Nested ExpField BlockFieldDelimiter
+  Nested ExpField BlockFieldDelimiter
 
 ExpPlain
   TrailingComment* Lit
@@ -353,7 +353,7 @@ NestedArrayParts
     return exps
 
 NestedArrayPart
-  $Nested ExpNonvar ArrayItemDelimiter
+  Nested ExpNonvar ArrayItemDelimiter
 
 ExpPostRest
   # Array Indexing
@@ -490,7 +490,7 @@ NestedBlockDeclarations
     return decs
 
 NestedBlockDeclaration
-  $Nested Dec StatementDelimiter
+  Nested Dec StatementDelimiter
 
 # NOTE: Extracted block declaration with optional trailing semi-colon when object closes to make field iteration easier in Block
 BlockDeclaration
@@ -505,7 +505,7 @@ NestedCases
     return cases
 
 NestedCase
-  $Nested "case" PatNullary ExpNest ImpliedSemicolon
+  Nested "case" PatNullary ExpNest ImpliedSemicolon
 
 Catch
   "catch" PatNullary ExpNest
@@ -627,7 +627,7 @@ NestedObjBodyFields
     return fields
 
 NestedObjBodyField
-  $Nested DecField BlockFieldDelimiter
+  Nested DecField BlockFieldDelimiter
 
 ClassBody
   __ "=" __ Id? __ ObjBody
@@ -716,7 +716,7 @@ Indent
     return $1.length
 
 Nested
-  EOS? Indent:indent ->
+  EOS?:eos Indent:indent ->
     const currentIndent = global.indentLevels[global.indentLevels.length-1]
     if (global.verbose) {
       console.log("global indent", global.currentIndent)
@@ -728,7 +728,8 @@ Nested
       }
       return $skip
     }
-    return indent
+
+    return [eos, "".padStart(indent * 2)]
 
 Init
   "" ->
