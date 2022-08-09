@@ -278,6 +278,8 @@ Binassign
   "@="
   "#=" # NOTE: Added
   ":=" # NOTE: Moved here from ExpNondec
+  # NOTE: Added = -> := convenience shorthand for assignment
+  "=" -> ":="
 
 ExpObj
   # NOTE: Added brace-less indentation based syntax

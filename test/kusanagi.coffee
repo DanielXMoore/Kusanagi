@@ -1483,6 +1483,16 @@ describe "Kusanagi", ->
         do?{student.classes!.get(classID)};
       """
 
+  describe "= -> :=", ->
+    it "should convert = to := in non-let situations", ->
+      compare """
+        var x = 2
+        x = 3
+      """, """
+        var x = 2;
+        x := 3;
+      """
+
   describe "arrow functions", ->
     it "basic", ->
       compare """
