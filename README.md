@@ -5,7 +5,7 @@ Kusanagi
 
 The initial work on this project was funded by the [Origyn Foundation](https://origyn.ch).
 
-CoffeeScript style syntax for the Motoko language.
+CoffeeScript style syntax for the Motoko language. [Try Kusanagi](https://danielx.net/kusanagi/)
 
 ```motoko
 import State "State"
