@@ -173,6 +173,13 @@ describe "Kusanagi", ->
         func(idx) {};
       """
 
+    it "with parenless pattern", ->
+      compare """
+        func i { xs[i] }
+      """, """
+        func i { xs[i] };
+      """
+
     it "anonymous func as an arguments parameter", ->
       compare """
         x(y, func (){{x=3}})

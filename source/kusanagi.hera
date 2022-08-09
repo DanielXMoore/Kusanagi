@@ -591,6 +591,7 @@ DecNonvar
 
   ObjSort (__ Id)? (__ "=")? ObjBody
 
+  SharedPatOpt               "func"  (__ Typing)? (__ PatPlain) TypeSuffix? FuncBody
   SharedPatOpt               "func"  (__ Id)? (__ Typing)? (__ PatPlain) TypeSuffix? FuncBody
   SharedPatOpt (ObjSort __)? "class" (__ Id)? (__ Typing)? (__ PatPlain) TypeSuffix? ClassBody
 
