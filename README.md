@@ -7,7 +7,7 @@ The initial work on this project was funded by the [Origyn Foundation](https://o
 
 CoffeeScript style syntax for the Motoko language.
 
-```
+```motoko
 import State "State"
 
 module
@@ -40,7 +40,7 @@ Getting Started
 ---------------
 
 Repo setup:
-```
+```bash
 git clone git@github.com:DanielXMoore/kusanagi.git
 cd kusanagi
 yarn
