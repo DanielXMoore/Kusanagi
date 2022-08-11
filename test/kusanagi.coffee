@@ -546,6 +546,20 @@ describe "Kusanagi", ->
         let rand = Random.new();
       """
 
+    it "should allow ids that begin with underscores", ->
+      compare """
+        let __a = 3
+      """, """
+        let __a = 3;
+      """
+
+    it "should allow underscore pat", ->
+      compare """
+        let _ = 3
+      """, """
+        let _ = 3;
+      """
+
     it "nullable",  ->
       compare """
         let aStudent =

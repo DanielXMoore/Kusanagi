@@ -540,7 +540,6 @@ PatPlain
   # NOTE: This requires matching at least some whitespace to prevent infinite recursion
   # there may be a way to improve this with assertions or refactoring some rules
   TrailingComment+ PatBin
-  __ "_"
   __ Id
   __ Lit
 
