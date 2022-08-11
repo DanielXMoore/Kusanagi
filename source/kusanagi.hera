@@ -20,7 +20,7 @@ ObjSort
   "module"
 
 SharedPatOpt
-  ("shared" _)? ("query" _)? (PatPlain _)?
+  ("shared" ("(" Id ")")? _)? ("query" ("(" Id ")")? _)? (PatPlain _)?
 
 TypObj
   __ "{" DelimitedTypField* __ "}"

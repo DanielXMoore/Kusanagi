@@ -521,6 +521,26 @@ describe "Kusanagi", ->
             ();
         """
 
+      it "keeps shared context", ->
+        compare """
+          shared(msg) func x()
+            return msg
+        """, """
+          shared(msg) func x() {
+            return msg;
+          };
+        """
+
+      it "keeps query context", ->
+        compare """
+          query(msg) func x()
+            return msg
+        """, """
+          query(msg) func x() {
+            return msg;
+          };
+        """
+
       it "newlines before arrow", ->
         # With newlines after func arrow
         compare """
