@@ -1,6 +1,6 @@
 import State "State"
 
-module {
+module
   public class Grid(state : State.State)
     let grid = state
 
@@ -51,4 +51,3 @@ module {
       };
       t
     }
-}
