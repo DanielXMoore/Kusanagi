@@ -860,6 +860,13 @@ describe "Kusanagi", ->
         let x = a /**/ .b;
       """
 
+    it "should work on names with underscores", ->
+      compare """
+        let x = a.__b
+      """, """
+        let x = a.__b;
+      """
+
   describe "comments", ->
     it "should work when a comment is trailing before EOF", ->
       compare """
