@@ -428,7 +428,7 @@ ExpNondec
       }
 
       if (exp != undefined && def != undefined) {
-        return ["switch(", exp, "){case(", pred, "){", exp, "};case(_){", def, "}}"]
+        return ["switch(", exp, "){case(", pred, "){val};case(_){", def, "}}"]
       }
     }
     return $skip

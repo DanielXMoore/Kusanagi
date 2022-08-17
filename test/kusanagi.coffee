@@ -1499,21 +1499,21 @@ describe "Kusanagi", ->
       compare """
         let x: Nat = match x, #nat(val), 0
       """, """
-        let x: Nat = switch(x){case(#nat(val)){x};case(_){0}};
+        let x: Nat = switch(x){case(#nat(val)){val};case(_){0}};
       """
 
     it "adds switch with case, with parens", ->
       compare """
         let x: Nat = match(x, #nat(val), 0)
       """, """
-        let x: Nat = switch(x){case(#nat(val)){x};case(_){0}};
+        let x: Nat = switch(x){case(#nat(val)){val};case(_){0}};
       """
 
     it "works with expressions", ->
       compare """
-        let x = match aResult, #ok(aResult), return #err(debug_show(aResult))
+        let x = match aResult, #ok(val), return #err(debug_show(aResult))
       """, """
-        let x = switch(aResult){case(#ok(aResult)){aResult};case(_){return #err(debug_show(aResult))}};
+        let x = switch(aResult){case(#ok(val)){val};case(_){return #err(debug_show(aResult))}};
       """
 
   describe "null soak", ->
