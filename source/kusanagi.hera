@@ -168,7 +168,7 @@ Char
   $("'" Character "'")
 
 ReservedWord
-  /(actor|and|assert|await|break|case|catch|class|continue|debug|debug_show|do|else|flexible|false|for|func|if|ignore|in|import|not|null|object|or|label|let|loop|match|private|public|query|return|shared|stable|system|switch|take|true|try|type|var|while)(?=[^a-zA-Z0-9_])/
+  /(actor|and|assert|await|break|case|catch|class|continue|debug|debug_show|do|else|flexible|false|for|func|if|ignore|in|import|not|null|object|or|label|let|loop|match|matchr|private|public|query|return|shared|stable|system|switch|take|true|try|type|var|while)(?=[^a-zA-Z0-9_])/
 
 # https://github.com/dfinity/motoko/blob/master/doc/modules/language-guide/pages/language-manual.adoc#identifiers
 Id
@@ -429,6 +429,26 @@ ExpNondec
 
       if (exp != undefined && def != undefined) {
         return ["switch(", exp, "){case(", pred, "){val};case(_){", def, "}}"]
+      }
+    }
+    return $skip
+    
+  # TODO: A little hacky and brittle, here is where keeping the AST nodes for array args would really help out
+  "matchr" ExpNullary:exps ->
+    var exp, pred, def;
+    if (Array.isArray(exps)) {
+      if (exps[0] === "(") {
+        exp  = exps[2][0];
+        pred = exps[3][2];
+        def  = exps[4][2];
+      } else if (exps[1] === "(") {
+        exp  = exps[3][0][0];
+        pred = exps[3][1][0];
+        def  = exps[3][2][0];
+      }
+
+      if (exp != undefined && def != undefined) {
+        return ["switch(", exp, "){case(#ok(val)){", pred , "};case(#err(err)){", def, "}}"]
       }
     }
     return $skip
