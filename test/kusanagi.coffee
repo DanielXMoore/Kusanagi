@@ -1515,6 +1515,28 @@ describe "Kusanagi", ->
       """, """
         let x = switch(aResult){case(#ok(val)){val};case(_){return #err(debug_show(aResult))}};
       """
+      
+  describe "matchr", ->
+    it "adds switch with case, no parens", ->
+      compare """
+        let x: Nat = matchr x, #nat(val), 0
+      """, """
+        let x: Nat = switch(x){case(#ok(val)){#nat(val)};case(#err(err)){0}};
+      """
+
+    it "adds switch with case, with parens", ->
+      compare """
+        let x: Nat = matchr(x, #nat(val), 0)
+      """, """
+        let x: Nat = switch(x){case(#ok(val)){#nat(val)};case(#err(err)){0}};
+      """
+
+    it "works with expressions", ->
+      compare """
+        let x = matchr aResult, #nat(val), return #err(debug_show(aResult))
+      """, """
+        let x = switch(aResult){case(#ok(val)){#nat(val)};case(#err(err)){return #err(debug_show(aResult))}};
+      """
 
   describe "null soak", ->
     it "should convert to do {}", ->
