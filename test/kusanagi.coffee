@@ -1686,3 +1686,114 @@ describe "Kusanagi", ->
           return #ok(switch(do?{student.classes!.get(classID)}){case(null){return #err "not found"};case(?val){val}});
         };
       """
+
+  describe "real world examples", ->
+    it "switch shouldn't require parens", ->
+      compare """
+        module
+          public func getNFTOwner(metadata: CandyTypes.CandyValue) : Result.Result<Types.Account, Types.OrigynError>
+            let val = take Properties.getClassProperty(metadata, Types.metadata.owner), return #err(Types.errors(#owner_not_found, "getNFTOwner - cannot find owner id in metadata", null))
+
+            return #ok(
+              switch val.value {
+                case(#Principal(val)){#principal(val)}
+                case(#Text(val)){#account_id(val)}
+                case(#Class(val)){#extensible(#Class(val))}
+                case(#Array(ary))
+                  switch ary {
+                    case(#frozen(items))
+                      if(items.size() > 0)
+                        #account(
+                          {
+                              owner = switch items[0] {
+                                case(#Principal(val)){val }
+                                case(_)
+                                  return #err(Types.errors(#improper_interface, "getNFTOwner -  improper interface, not a principal at 0 ", null))
+                              }
+
+                              sub_account = if(items.size() > 1)
+                                  switch items[1] {
+                                    case(#Blob(val)){?val  }
+                                    case(_)
+                                      return #err(Types.errors(#improper_interface, "getNFTOwner -  improper interface, blob at 1 ", null))
+                                  }
+
+                                else
+                                  null
+                          })
+                      else
+                        return #err(Types.errors(#improper_interface, "ledger_interface -  improper interface, not enough items " # debug_show(ary), null))
+
+
+
+                    case(_){return #err(Types.errors(#improper_interface, "ledger_interface - send payment - improper interface, not frozen " # debug_show(ary), null))  }
+                  }
+                case(_){return #err(Types.errors(#improper_interface, "ledger_interface - send payment - improper interface, not an array " , null))  }
+              }
+
+            )
+      """, """
+        module {
+          public func getNFTOwner(metadata: CandyTypes.CandyValue) : Result.Result<Types.Account, Types.OrigynError> {
+            let val = switch(Properties.getClassProperty(metadata, Types.metadata.owner)){case(null){return #err(Types.errors(#owner_not_found, "getNFTOwner - cannot find owner id in metadata", null))};case(?val){val}};
+
+            return #ok(
+              switch(val.value) {
+                case(#Principal(val)){#principal(val)};
+                case(#Text(val)){#account_id(val)};
+                case(#Class(val)){#extensible(#Class(val))};
+                case(#Array(ary))
+                  switch(ary) {
+                    case(#frozen(items))
+                      if(items.size() > 0)
+                        #account(
+                          {
+                              owner = switch(items[0]) {
+                                case(#Principal(val)){val };
+                                case(_)
+                                  return #err(Types.errors(#improper_interface, "getNFTOwner -  improper interface, not a principal at 0 ", null));
+                              };
+
+                              sub_account = if(items.size() > 1)
+                                  switch(items[1]) {
+                                    case(#Blob(val)){?val  };
+                                    case(_)
+                                      return #err(Types.errors(#improper_interface, "getNFTOwner -  improper interface, blob at 1 ", null));
+                                  }
+
+                                else
+                                  null;
+                          })
+                      else
+                        return #err(Types.errors(#improper_interface, "ledger_interface -  improper interface, not enough items " # debug_show(ary), null));
+
+
+
+                    case(_){return #err(Types.errors(#improper_interface, "ledger_interface - send payment - improper interface, not frozen " # debug_show(ary), null))  };
+                  };
+                case(_){return #err(Types.errors(#improper_interface, "ledger_interface - send payment - improper interface, not an array " , null))  };
+              }
+
+            );
+          };
+        };
+      """
+
+    it "nested indented expression after variant gets parens", ->
+      compare """
+        module
+          public func test(r: t): z.y
+
+            return #a
+              #b
+                c
+      """, """
+        module {
+          public func test(r: t): z.y {
+
+            return #a(
+              #b(
+                c));
+          };
+        };
+      """

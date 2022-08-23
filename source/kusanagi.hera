@@ -311,6 +311,14 @@ ExpPlain
 
     return ["(", spacing, exp, ...rest, ")"]
 
+SingleNestedExpression
+  PushIndent NestedExpression?:exp PopIndent ->
+    if (exp) return exp
+    return $skip
+
+NestedExpression
+  Nested Exp &EOS
+
 ExpPlainPart
   Exp __ ( "," / (__ &")") ) __
 
@@ -372,7 +380,7 @@ ExpUn
   # Variant Pattern
   # NOTE: Combined and added `?` to prevent shadowing
   # https://github.com/dfinity/motoko/blob/master/doc/modules/language-guide/pages/language-manual.adoc#variant-pattern
-  __ "#" Id ExpNullary?
+  __ "#" Id ( NestedVariantExpression / ExpNullary )?
   __ "?" ExpUn
   Unop ![\s] ExpUn
   Unassign ![\s] ExpUn
@@ -381,6 +389,9 @@ ExpUn
   "debug_show" ExpUn
   "to_candid" "(" ( Exp ( "," Exp )* )? ")"
   "from_candid" ExpUn
+
+NestedVariantExpression
+  EOS SingleNestedExpression -> ["(", $1, $2, ")"]
 
 ExpBin
   # NOTE: Eliminated left recursion
