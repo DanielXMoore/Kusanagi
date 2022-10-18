@@ -1515,7 +1515,7 @@ describe "Kusanagi", ->
       """, """
         let x = switch(aResult){case(#ok(val)){val};case(_){return #err(debug_show(aResult))}};
       """
-      
+
   describe "matchr", ->
     it "adds switch with case, no parens", ->
       compare """
@@ -1688,6 +1688,21 @@ describe "Kusanagi", ->
       """
 
   describe "real world examples", ->
+    it "class body identifier", ->
+      compare """
+        shared (deployer) actor class test_runner(dfx_ledger: Principal, dfx_ledger2: Principal) = this
+
+          let debug_channel =
+            throws = true
+      """, """
+        shared (deployer) actor class test_runner(dfx_ledger: Principal, dfx_ledger2: Principal) = this {
+
+          let debug_channel = {
+            throws = true;
+          }
+        };
+      """
+
     it "switch shouldn't require parens", ->
       compare """
         module

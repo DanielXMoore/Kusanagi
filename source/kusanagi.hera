@@ -443,7 +443,7 @@ ExpNondec
       }
     }
     return $skip
-    
+
   # TODO: A little hacky and brittle, here is where keeping the AST nodes for array args would really help out
   "matchr" ExpNullary:exps ->
     var exp, pred, def;
@@ -661,7 +661,7 @@ NestedObjBodyField
   Nested DecField BlockFieldDelimiter
 
 ClassBody
-  __ "=" __ Id? __ ObjBody
+  __ "=" __ Id? ObjBody
   ObjBody
 
 MotokoLiteral
