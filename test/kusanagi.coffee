@@ -1699,7 +1699,7 @@ describe "Kusanagi", ->
 
           let debug_channel = {
             throws = true;
-          }
+          };
         };
       """
 
