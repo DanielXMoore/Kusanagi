@@ -279,7 +279,7 @@ Binassign
 
 ExpObj
   # NOTE: Added brace-less indentation based syntax
-  InsertOpenBrace EOS NestedObjectFields InsertNewline InsertIndent InsertCloseBrace
+  InsertOpenBrace NestedObjectFields InsertNewline InsertIndent InsertCloseBrace
   # NOTE: Added indentation based object syntax
   __ "{" NestedObjectFields __ "}"
   # Object Pattern https://github.com/dfinity/motoko/blob/master/doc/md/language-manual.md#object-pattern
@@ -296,7 +296,7 @@ NestedObjectFields
     return fields
 
 NestedObjectField
-  Nested ExpField BlockFieldDelimiter
+  EOS Nested ExpField BlockFieldDelimiter
 
 ExpPlain
   TrailingComment* Lit
@@ -510,6 +510,7 @@ ExpNest
   __ Exp
 
 Block
+  TrailingComment* "{" NestedBlockDeclarations __ "}"
   __ "{" __ BlockDeclaration* "}"
   InsertOpenBrace EOS NestedBlockDeclarations InsertNewline InsertIndent InsertCloseBrace
 
@@ -540,7 +541,7 @@ Catch
   "catch" PatNullary ExpNest
 
 ExpField
-  "var"? __ Id TypeSuffix? (__ "=" __ Exp)?
+  "var"? __ Id TypeSuffix? (__ "=" TrailingComment* Exp)?
 
 DecField
   ( Vis __ )? ( Stab __ )? Dec

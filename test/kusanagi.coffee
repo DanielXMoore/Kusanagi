@@ -4,12 +4,7 @@ parser = require "../source/kusanagi"
 
 generate = require "../source/generate"
 
-compare = (src, result) ->
-  assert.equal generate(parser.parse(src)), result
-
-throws = (src) ->
-  assert.throws ->
-    generate(parser.parse(src))
+{ compare, throws } = require "./helper"
 
 describe "Kusanagi", ->
   describe "Parsing Examples", ->
@@ -787,27 +782,6 @@ describe "Kusanagi", ->
           2,
           3,
         ];
-      """
-
-  describe "object", ->
-    it "should have optional semi-colons with braces", ->
-      compare """
-        func () {
-          {
-            name = val[idx].name
-            value = clone(val[idx].value)
-            immutable = val[idx].immutable
-          }
-        }
-      """,
-      """
-        func () {
-          {
-            name = val[idx].name;
-            value = clone(val[idx].value);
-            immutable = val[idx].immutable;
-          };
-        };
       """
 
   describe "comma separated array", ->
