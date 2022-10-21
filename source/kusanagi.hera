@@ -152,7 +152,7 @@ Utf8NoNL
 Escape
   [nrt\\'"]
 
-# https://github.com/dfinity/motoko/blob/master/doc/modules/language-guide/pages/language-manual.adoc#characters
+# https://github.com/dfinity/motoko/blob/master/doc/md/language-manual.md#characters
 Character
   [^"\\\x00-\x1f\x7f-\xff]
   Utf8Enc
@@ -160,7 +160,7 @@ Character
   "\\" HexDigit HexDigit
   "\\u{" HexNumber "}"
 
-# https://github.com/dfinity/motoko/blob/master/doc/modules/language-guide/pages/language-manual.adoc#text
+# https://github.com/dfinity/motoko/blob/master/doc/md/language-manual.md#text
 Text
   $("\"" Character* "\"")
 
@@ -170,7 +170,7 @@ Char
 ReservedWord
   /(actor|and|assert|await|break|case|catch|class|continue|debug|debug_show|do|else|flexible|false|for|func|if|ignore|in|import|not|null|object|or|label|let|loop|match|matchr|private|public|query|return|shared|stable|system|switch|take|true|try|type|var|while)(?=[^a-zA-Z0-9_])/
 
-# https://github.com/dfinity/motoko/blob/master/doc/modules/language-guide/pages/language-manual.adoc#identifiers
+# https://github.com/dfinity/motoko/blob/master/doc/md/language-manual.md#identifiers
 Id
   !ReservedWord /[a-zA-Z_][a-zA-Z0-9_]*/:id -> id
 
@@ -188,19 +188,19 @@ HexNumber
   # NOTE: Keeping numbers as a text string exactly as written
   $(HexDigit ( "_"? HexDigit )*)
 
-# https://github.com/dfinity/motoko/blob/master/doc/modules/language-guide/pages/language-manual.adoc#integers
+# https://github.com/dfinity/motoko/blob/master/doc/md/language-manual.md#integers
 Nat
   "0x" HexNumber
   Number
 
-# https://github.com/dfinity/motoko/blob/master/doc/modules/language-guide/pages/language-manual.adoc#floats
+# https://github.com/dfinity/motoko/blob/master/doc/md/language-manual.md#floats
 Float
   "0x" HexNumber "." HexNumber?
   "0x" HexNumber ( "." HexNumber? )? [pP] [-+]? Number
   Number "." Number?
   Number ( "." Number? )? [eE] [-+]? Number
 
-# https://github.com/dfinity/motoko/blob/master/doc/modules/language-guide/pages/language-manual.adoc#literals
+# https://github.com/dfinity/motoko/blob/master/doc/md/language-manual.md#literals
 Lit
   "null"
   Bool
@@ -209,14 +209,14 @@ Lit
   Char
   Text
 
-# https://github.com/dfinity/motoko/blob/master/doc/modules/language-guide/pages/language-manual.adoc#unary-operators
+# https://github.com/dfinity/motoko/blob/master/doc/md/language-manual.md#unary-operators
 Unop
   "+"
   "-"
   "^"
 
-# https://github.com/dfinity/motoko/blob/master/doc/modules/language-guide/pages/language-manual.adoc#numeric-binary-operators
-# https://github.com/dfinity/motoko/blob/master/doc/modules/language-guide/pages/language-manual.adoc#bitwise-and-wrapping-binary-operators
+# https://github.com/dfinity/motoko/blob/master/doc/md/language-manual.md#numeric-binary-operators
+# https://github.com/dfinity/motoko/blob/master/doc/md/language-manual.md#bitwise-and-wrapping-binary-operators
 Binop
   "**"
   "+%"
@@ -227,7 +227,7 @@ Binop
   "<>>"
   "<<"
   ">>" # NOTE: removed leading whitespace
-  # https://github.com/dfinity/motoko/blob/master/doc/modules/language-guide/pages/language-manual.adoc#text-operators
+  # https://github.com/dfinity/motoko/blob/master/doc/md/language-manual.md#text-operators
   "#"
   "+"
   "-"
@@ -238,7 +238,7 @@ Binop
   "|"
   "^"
 
-# https://github.com/dfinity/motoko/blob/master/doc/modules/language-guide/pages/language-manual.adoc#relational-operators
+# https://github.com/dfinity/motoko/blob/master/doc/md/language-manual.md#relational-operators
 # NOTE: removed surrounding whitespace from angle brackets since PEG doesn't have a separate tokenization phase and has more
 # context for the operator. May need to add it back later to be strictly match the spec. Can likely use a RegExp lookahead
 # assertion for the whitespace matching in ExpBinRest if necessary.
@@ -250,13 +250,13 @@ Relop
   "<" # NOTE: removed surrounding whitespace
   ">" # NOTE: removed surrounding whitespace
 
-# https://github.com/dfinity/motoko/blob/master/doc/modules/language-guide/pages/language-manual.adoc#assignment-operators
+# https://github.com/dfinity/motoko/blob/master/doc/md/language-manual.md#assignment-operators
 Unassign
   "+="
   "-="
   "^="
 
-# https://github.com/dfinity/motoko/blob/master/doc/modules/language-guide/pages/language-manual.adoc#assignment-operators
+# https://github.com/dfinity/motoko/blob/master/doc/md/language-manual.md#assignment-operators
 Binassign
   "+="
   "-="
@@ -284,7 +284,7 @@ ExpObj
   InsertOpenBrace EOS NestedObjectFields InsertNewline InsertIndent InsertCloseBrace
   # NOTE: Added indentation based object syntax
   __ "{" NestedObjectFields __ "}"
-  # Object Pattern https://github.com/dfinity/motoko/blob/master/doc/modules/language-guide/pages/language-manual.adoc#object-pattern
+  # Object Pattern https://github.com/dfinity/motoko/blob/master/doc/md/language-manual.md#object-pattern
   # This different from PatNullary because exp fields can optionally start with "var"
   __ "{" __ ExpObjField* "}"
 
@@ -338,7 +338,7 @@ ExpPost
     }
     return [exp, rest]
   # Array
-  # https://github.com/dfinity/motoko/blob/master/doc/modules/language-guide/pages/language-manual.adoc#arrays
+  # https://github.com/dfinity/motoko/blob/master/doc/md/language-manual.md#arrays
   # NOTE: Added indentation based array syntax
   "[" (__ "var")? EOS NestedArrayParts __ "]"
   "[" __ ( "var" __ )? ArrayPart* __ "]"
@@ -365,10 +365,10 @@ NestedArrayPart
 
 ExpPostRest
   # Array Indexing
-  # https://github.com/dfinity/motoko/blob/master/doc/modules/language-guide/pages/language-manual.adoc#array-indexing
+  # https://github.com/dfinity/motoko/blob/master/doc/md/language-manual.md#array-indexing
   "[" __ Exp __ "]"
   # Tuple Projection, Object Projection
-  # https://github.com/dfinity/motoko/blob/master/doc/modules/language-guide/pages/language-manual.adoc#tuples
+  # https://github.com/dfinity/motoko/blob/master/doc/md/language-manual.md#tuples
   (__ "." __ ( Nat / Id ))
   # Function application
   TypArgs? !EOS ExpNullary
@@ -379,7 +379,7 @@ ExpUn
   ExpPost
   # Variant Pattern
   # NOTE: Combined and added `?` to prevent shadowing
-  # https://github.com/dfinity/motoko/blob/master/doc/modules/language-guide/pages/language-manual.adoc#variant-pattern
+  # https://github.com/dfinity/motoko/blob/master/doc/md/language-manual.md#variant-pattern
   __ "#" Id ( NestedVariantExpression / ExpNullary )?
   __ "?" ExpUn
   Unop ![\s] ExpUn
@@ -585,7 +585,7 @@ CommaPat
 
 PatNullary
   PatPlain
-  # Object Pattern https://github.com/dfinity/motoko/blob/master/doc/modules/language-guide/pages/language-manual.adoc#object-pattern
+  # Object Pattern https://github.com/dfinity/motoko/blob/master/doc/md/language-manual.md#object-pattern
   __ "{" PatObjectField* __ "}"
 
 PatObjectField
@@ -667,18 +667,18 @@ ClassBody
 MotokoLiteral
   /`((?:[^`\\]|\\.)*)`/ -> $1
 
-# https://github.com/dfinity/motoko/blob/master/doc/modules/language-guide/pages/language-manual.adoc#comments
+# https://github.com/dfinity/motoko/blob/master/doc/md/language-manual.md#comments
 Comment
   $MultilineComment
   $SingleLineComment
   MotokoLiteral
 
-# https://github.com/dfinity/motoko/blob/master/doc/modules/language-guide/pages/language-manual.adoc#comments
+# https://github.com/dfinity/motoko/blob/master/doc/md/language-manual.md#comments
 MultilineComment
   # Note: Allows for nested Comments
   "/*" ( (!("/*" / "*/") . ) / MultilineComment )* "*/"
 
-# https://github.com/dfinity/motoko/blob/master/doc/modules/language-guide/pages/language-manual.adoc#comments
+# https://github.com/dfinity/motoko/blob/master/doc/md/language-manual.md#comments
 SingleLineComment
   /\/\/[^\r\n]*/
 
