@@ -174,15 +174,13 @@ ReservedWord
 Id
   !ReservedWord /[a-zA-Z_][a-zA-Z0-9_]*/:id -> id
 
-Digit
-  [0-9]
-
 HexDigit
   [0-9a-fA-F]
 
 Number
   # NOTE: Keeping numbers as a text string exactly as written
-  $(Digit ( "_"? Digit )*)
+  # NOTE: Condensed to a single regexp
+  $(/[0-9](?:_?[0-9])*/)
 
 HexNumber
   # NOTE: Keeping numbers as a text string exactly as written
@@ -195,17 +193,17 @@ Nat
 
 # https://github.com/dfinity/motoko/blob/master/doc/md/language-manual.md#floats
 Float
-  "0x" HexNumber "." HexNumber?
   "0x" HexNumber ( "." HexNumber? )? [pP] [-+]? Number
-  Number "." Number?
+  "0x" HexNumber "." HexNumber?
   Number ( "." Number? )? [eE] [-+]? Number
+  Number "." Number?
 
 # https://github.com/dfinity/motoko/blob/master/doc/md/language-manual.md#literals
 Lit
   "null"
   Bool
-  $(Nat)
   $(Float)
+  $(Nat)
   Char
   Text
 
