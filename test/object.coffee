@@ -47,3 +47,47 @@ describe "object", ->
         };
       };
     """
+
+  describe "spreads", ->
+    it "no fields", ->
+      compare """
+        let x = {
+          ...a
+          ...b
+        }
+      """, """
+        let x = {
+          a and
+          b
+        };
+      """
+
+    it "with", ->
+      compare """
+        let x = {
+          ...a
+          b = 1
+        }
+      """, """
+        let x = {
+          a with
+          b = 1;
+        };
+      """
+
+    it "multiple with", ->
+      compare """
+        let x = {
+          ...a
+          ...b
+          c = 1
+          d = 2
+        }
+      """, """
+        let x = {
+          a and
+          b with
+          c = 1;
+          d = 2;
+        };
+      """

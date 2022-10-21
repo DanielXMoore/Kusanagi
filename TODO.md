@@ -1,6 +1,7 @@
 TODO
 ====
 
+- [ ] with/spread
 - [x] Indentation based switch/case
 - [x] Indentation based object syntax
 - [x] Indentation based array syntax
