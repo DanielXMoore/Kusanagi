@@ -36,6 +36,26 @@ module
 
 ```
 
+Features
+---
+
+- Indentation based blocks
+- Let shorthand `x = 5` -> `let x = 5`
+- Alternative with syntax
+```
+let x = {
+  ...a
+  ...b
+}
+```
+becomes
+```
+let x = {
+  a and
+  b
+}
+```
+
 Getting Started
 ---------------
 

@@ -642,6 +642,8 @@ DecVar
 
 DecNonvar
   "let" Pat __ "=" TrailingComment* Exp
+  # NOTE: Added let shorthand
+  LetShorthand
   "type" __ Id  (__ Typing)? __ "=" Typ
 
   ObjSort (__ Id)? (__ "=")? ObjBody
@@ -649,6 +651,10 @@ DecNonvar
   SharedPatOpt               "func"  (__ Typing)? (__ PatPlain) TypeSuffix? FuncBody
   SharedPatOpt               "func"  (__ Id)? (__ Typing)? (__ PatPlain) TypeSuffix? FuncBody
   SharedPatOpt (ObjSort __)? "class" (__ Id)? (__ Typing)? (__ PatPlain) TypeSuffix? ClassBody
+
+LetShorthand
+  Pat __ "=" TrailingComment* Exp ->
+    return ["let ", $0]
 
 TypeSuffix
   __ ":" __ Typ

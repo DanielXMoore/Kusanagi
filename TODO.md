@@ -2,6 +2,8 @@ TODO
 ====
 
 - [ ] with/spread
+- [ ] chained conditionals
+- [x] let shorthand
 - [x] Indentation based switch/case
 - [x] Indentation based object syntax
 - [x] Indentation based array syntax
