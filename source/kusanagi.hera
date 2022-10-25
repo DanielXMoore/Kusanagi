@@ -209,6 +209,10 @@ Lit
 
 # https://github.com/dfinity/motoko/blob/master/doc/md/language-manual.md#unary-operators
 Unop
+  UnopSymbol ->
+    return { $loc, token: $1 }
+
+UnopSymbol
   "+"
   "-"
   "^"
@@ -216,6 +220,10 @@ Unop
 # https://github.com/dfinity/motoko/blob/master/doc/md/language-manual.md#numeric-binary-operators
 # https://github.com/dfinity/motoko/blob/master/doc/md/language-manual.md#bitwise-and-wrapping-binary-operators
 Binop
+  BinopSymbol ->
+    return { $loc, token: $1 }
+
+BinopSymbol
   "**"
   "+%"
   "-%"
@@ -241,6 +249,10 @@ Binop
 # context for the operator. May need to add it back later to be strictly match the spec. Can likely use a RegExp lookahead
 # assertion for the whitespace matching in ExpBinRest if necessary.
 Relop
+  RelopSymbol ->
+    return { $loc, token: $1 }
+
+RelopSymbol
   "=="
   "!="
   "<="
@@ -422,11 +434,11 @@ ExpBin
   ExpUn ExpBinRest*
 
 ExpBinRest
-  __ Binop __ ExpBin
-  __ Relop __ ExpBin
-  __ "and" __ ExpBin
-  __ "or"  __ ExpBin
-  __ ":"   __ TypNobin
+  __ Binop __ ExpUn
+  __ Relop __ ExpUn
+  __ And   __ ExpUn
+  __ Or    __ ExpUn
+  __ Colon __ TypNobin
 
 ExpNondec
   "return"   ( __ Exp )?
@@ -737,9 +749,19 @@ TrailingComment
 EOL
   /\r\n|\n|\r|$/
 
-# End of file
-EOF
-  /$/
+# Tokens
+
+And
+  "and" ->
+    return { $loc, token: $1 }
+
+Colon
+  ":" ->
+    return { $loc, token: $1 }
+
+Or
+  "or" ->
+    return { $loc, token: $1 }
 
 # Inserting implied symbols for transpilation
 

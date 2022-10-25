@@ -32,6 +32,12 @@ generate = (node) ->
   if node is undefined or node is null
     return ""
 
+  if typeof node is "object"
+    if node.$loc?
+      {token, $loc} = node
+      # options?.updateSourceMap?(token, $loc.pos)
+      return token
+
   return "<UNKNOWN #{JSON.stringify(node)} >"
 
 module.exports = generate
