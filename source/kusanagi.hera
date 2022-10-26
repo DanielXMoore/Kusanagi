@@ -102,8 +102,8 @@ Typ
   # NOTE: Eliminated left recursion
 
 TypRest
-  __ "and" __ Typ
-  __ "or"  __ Typ
+  __ And __ Typ
+  __ Or  __ Typ
 
 TypItem
   Id TypeSuffix
@@ -343,7 +343,7 @@ ExpPlain
   # NOTE: Added Parentheses-less tuple
   # This is used in if/switch/while conditions and function application
   TrailingComment+:spacing !EOL Exp:exp CommaExp*:rest ->
-    spacing = replaceStr(spacing, /^ /, "")
+    spacing = module.replaceStr(spacing, /^ /, "")
 
     return ["(", spacing, exp, ...rest, ")"]
 
@@ -523,7 +523,7 @@ ExpNondec
 
   # NOTE: Added arrow func expression shorthand
   (__ Typing)?:typing (__ PatPlain):pat TypeSuffix?:suffix __:spacing "=>" FuncBody:body ->
-    return ["func ", typing, pat, suffix, replaceStr(spacing, /^ /, ""), body]
+    return ["func ", typing, pat, suffix, module.replaceStr(spacing, /^ /, ""), body]
 
   # NOTE: Moved ":=" into Binassign
   ExpBin __ Binassign __ Exp
@@ -599,7 +599,7 @@ PatPlain
   TrailingComment+:spacing !EOL PatBin:pat CommaPat*:rest ->
     if (!rest.length) return [spacing, pat]
 
-    spacing = replaceStr(spacing, /^ /, "")
+    spacing = module.replaceStr(spacing, /^ /, "")
 
     return ["(", spacing, pat, ...rest, ")"]
 
@@ -639,8 +639,8 @@ PatBin
   # NOTE: Eliminated left recursion
 
 PatBinRest
-  __ "or" __ PatBin
-  __ ":"  __ Typ
+  __ Or __ PatBin
+  __ Colon  __ Typ
 
 Pat
   PatBin
@@ -669,7 +669,7 @@ LetShorthand
     return ["let ", $0]
 
 TypeSuffix
-  __ ":" __ Typ
+  __ Colon __ Typ
 
 Typing
   "<" TypingField* ">"
@@ -787,7 +787,7 @@ InsertCloseBrace
 
 InsertIndent
   "" ->
-    return "".padStart(global.currentIndent * 2)
+    return "".padStart(module.currentIndent * 2)
 
 InsertNewline
   "" ->
@@ -801,13 +801,13 @@ Indent
 
 Nested
   EOS?:eos Indent:indent ->
-    const currentIndent = global.indentLevels[global.indentLevels.length-1]
-    if (global.verbose) {
-      console.log("global indent", global.currentIndent)
+    const currentIndent = module.indentLevels[module.indentLevels.length-1]
+    if (module.verbose) {
+      console.log("global indent", module.currentIndent)
       console.log("Indented", indent, currentIndent)
     }
     if (indent !== currentIndent) {
-      if (global.verbose) {
+      if (module.verbose) {
         console.log("skipped nested")
       }
       return $skip
@@ -817,15 +817,15 @@ Nested
 
 Init
   "" ->
-    global.currentIndent = 0
-    global.indentLevels = [0]
-    global.verbose = false
+    module.currentIndent = 0
+    module.indentLevels = [0]
+    module.verbose = false
 
-    global.replaceStr = function (str, pat, v) {
+    module.replaceStr = function (str, pat, v) {
       if(typeof str === "string") {
         return str.replace(pat, v)
       } else if(Array.isArray(str)) {
-        return [replaceStr(str[0], pat, v), ...str.slice(1)]
+        return [module.replaceStr(str[0], pat, v), ...str.slice(1)]
       } else {
         return str
       }
@@ -833,20 +833,20 @@ Init
 
 PushIndent
   "" ->
-    global.currentIndent++
-    if (global.verbose) {
-      console.log("pushing indent", global.currentIndent)
+    module.currentIndent++
+    if (module.verbose) {
+      console.log("pushing indent", module.currentIndent)
     }
-    global.indentLevels.push(global.currentIndent)
+    module.indentLevels.push(module.currentIndent)
 
-    return global.currentIndent
+    return module.currentIndent
 
 PopIndent
   "" ->
-    if (global.verbose) {
-      console.log("popping indent", global.indentLevels[global.indentLevels.length-1], "->", global.indentLevels[global.indentLevels.length-2])
+    if (module.verbose) {
+      console.log("popping indent", module.indentLevels[module.indentLevels.length-1], "->", module.indentLevels[module.indentLevels.length-2])
     }
-    global.indentLevels.pop()
-    global.currentIndent = global.indentLevels[global.indentLevels.length-1]
+    module.indentLevels.pop()
+    module.currentIndent = module.indentLevels[module.indentLevels.length-1]
 
-    return global.currentIndent
+    return module.currentIndent
