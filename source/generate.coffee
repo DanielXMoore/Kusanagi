@@ -19,14 +19,11 @@ as well, but since this is trying to be a very 1 to 1 transpiler most things sho
 with minor insertions or adjustments from the parser.
 ###
 generate = (node) ->
-  gen = (item) ->
-    generate(item)
-
   if typeof node is "string"
     return node
 
   if Array.isArray node
-    return node.map gen
+    return node.map generate
     .join("")
 
   if node is undefined or node is null
@@ -37,6 +34,9 @@ generate = (node) ->
       {token, $loc} = node
       # options?.updateSourceMap?(token, $loc.pos)
       return token
+
+    if node.children
+      return generate node.children
 
   return "<UNKNOWN #{JSON.stringify(node)} >"
 

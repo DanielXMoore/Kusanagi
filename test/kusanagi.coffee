@@ -1311,65 +1311,6 @@ describe "Kusanagi", ->
         };
       """
 
-  describe "take", ->
-    it "adds switch with a default value, no parens", ->
-      compare """
-        take x, 0
-      """, """
-        switch(x){case(null){0};case(?val){val}};
-      """
-
-    it "adds switch with a default value, with parens", ->
-      compare """
-        take(x, 0)
-      """, """
-        switch(x){case(null){0};case(?val){val}};
-      """
-
-  describe "match", ->
-    it "adds switch with case, no parens", ->
-      compare """
-        let x: Nat = match x, #nat(val), 0
-      """, """
-        let x: Nat = switch(x){case(#nat(val)){val};case(_){0}};
-      """
-
-    it "adds switch with case, with parens", ->
-      compare """
-        let x: Nat = match(x, #nat(val), 0)
-      """, """
-        let x: Nat = switch(x){case(#nat(val)){val};case(_){0}};
-      """
-
-    it "works with expressions", ->
-      compare """
-        let x = match aResult, #ok(val), return #err(debug_show(aResult))
-      """, """
-        let x = switch(aResult){case(#ok(val)){val};case(_){return #err(debug_show(aResult))}};
-      """
-
-  describe "matchr", ->
-    it "adds switch with case, no parens", ->
-      compare """
-        let x: Nat = matchr x, #nat(val), 0
-      """, """
-        let x: Nat = switch(x){case(#ok(val)){#nat(val)};case(#err(err)){0}};
-      """
-
-    it "adds switch with case, with parens", ->
-      compare """
-        let x: Nat = matchr(x, #nat(val), 0)
-      """, """
-        let x: Nat = switch(x){case(#ok(val)){#nat(val)};case(#err(err)){0}};
-      """
-
-    it "works with expressions", ->
-      compare """
-        let x = matchr aResult, #nat(val), return #err(debug_show(aResult))
-      """, """
-        let x = switch(aResult){case(#ok(val)){#nat(val)};case(#err(err)){return #err(debug_show(aResult))}};
-      """
-
   describe "null soak", ->
     it "should convert to do {}", ->
       compare """
@@ -1485,37 +1426,6 @@ describe "Kusanagi", ->
 
 
           let item4 = x;
-        };
-      """
-
-  describe "new features", ->
-    it "take with null soaks", ->
-      compare """
-        func findStudentClass(student: Student, classId : Nat) : Result<ClassType, Text>
-          return #ok take(student.classes?.get(classID), return #err "not found")
-      """, """
-        func findStudentClass(student: Student, classId : Nat) : Result<ClassType, Text> {
-          return #ok(switch(do?{student.classes!.get(classID)}){case(null){return #err "not found"};case(?val){val}});
-        };
-      """
-
-    it "take with null soaks", ->
-      compare """
-        func findStudentClass(student: Student, classId : Nat) : Result<ClassType, Text>
-          return #ok(take student.classes?.get(classID), return #err "not found")
-      """, """
-        func findStudentClass(student: Student, classId : Nat) : Result<ClassType, Text> {
-          return #ok(switch(do?{student.classes!.get(classID)}){case(null){return #err "not found"};case(?val){val}});
-        };
-      """
-
-    it "take with null soaks", ->
-      compare """
-        func findStudentClass(student: Student, classId : Nat) : Result<ClassType, Text>
-          return #ok take student.classes?.get(classID), return #err "not found"
-      """, """
-        func findStudentClass(student: Student, classId : Nat) : Result<ClassType, Text> {
-          return #ok(switch(do?{student.classes!.get(classID)}){case(null){return #err "not found"};case(?val){val}});
         };
       """
 

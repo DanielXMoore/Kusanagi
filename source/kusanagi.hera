@@ -431,7 +431,9 @@ NestedVariantExpression
 
 ExpBin
   # NOTE: Eliminated left recursion
-  ExpUn ExpBinRest*
+  ExpUn ExpBinRest* ->
+    if ($2.length) return module.expandChainedComparisons($0)
+    return $1
 
 ExpBinRest
   __ Binop __ ExpUn
@@ -447,8 +449,8 @@ ExpNondec
     var exp, def;
     if (Array.isArray(exps)) {
       if (exps[0] === "(") {
-        exp = exps[2][0];
-        def = exps[3][2];
+        exp = exps[2]
+        def = exps[3][2]
       } else if (exps[1] === "(") {
         exp = exps[3][0][0];
         def = exps[3][1][0];
@@ -465,7 +467,7 @@ ExpNondec
     var exp, pred, def;
     if (Array.isArray(exps)) {
       if (exps[0] === "(") {
-        exp  = exps[2][0];
+        exp  = exps[2]
         pred = exps[3][2];
         def  = exps[4][2];
       } else if (exps[1] === "(") {
@@ -485,7 +487,7 @@ ExpNondec
     var exp, pred, def;
     if (Array.isArray(exps)) {
       if (exps[0] === "(") {
-        exp  = exps[2][0];
+        exp  = exps[2]
         pred = exps[3][2];
         def  = exps[4][2];
       } else if (exps[1] === "(") {
@@ -526,8 +528,13 @@ ExpNondec
     return ["func ", typing, pat, suffix, module.replaceStr(spacing, /^ /, ""), body]
 
   # NOTE: Moved ":=" into Binassign
-  ExpBin __ Binassign __ Exp
-  ExpBin
+  ExpBin ( __ Binassign __ Exp )? ->
+    if ($2)
+      return {
+        type: "ExpAssign",
+        children: $0
+      }
+    return $1
 
 ElseBlock
   __ "else" ExpNest
@@ -747,7 +754,8 @@ TrailingComment
 
 # End of line
 EOL
-  /\r\n|\n|\r|$/
+  /\r\n|\n|\r|$/ ->
+    return { $loc, token: $0 }
 
 # Tokens
 
@@ -828,6 +836,77 @@ Init
         return [module.replaceStr(str[0], pat, v), ...str.slice(1)]
       } else {
         return str
+      }
+    }
+
+    module.expandChainedComparisons = function ([first, binops]) {
+      /**
+      * binops is an array of [__, op, __, exp] tuples
+      * first is an expression
+      */
+      // TODO: add refs to ensure middle expressions are evaluated only once
+
+      // all relational operators can be chained `3 == x < y <= z != w`
+      const relationalOps = ["==", "!=", "<", "<=", ">", ">="]
+
+      // short circuit/bitwise ops have lower precedence than comparison ops
+      // so we only need to look for chains in the sections between them
+      const lowerPrecedenceOps = [":", "and", "or"]
+
+      // shift/arithmetic ops have higher precedence, they will bind to expressions inside the chains
+
+      let results = []
+
+      let i = 0
+      let l = binops.length
+
+      let start = 0
+      // indexes of chainable ops
+      let chains = []
+      while (i < l) {
+        const [, op] = binops[i]
+
+        if (relationalOps.includes(op.token)) {
+          chains.push(i)
+        } else if (lowerPrecedenceOps.includes(op.token)) {
+          // end of the chain
+          processChains()
+          first = []
+        }
+
+        i++
+      }
+
+      processChains()
+
+      return results
+
+      function processChains() {
+        if (chains.length > 1) {
+          chains.forEach((index, k) => {
+            if (k > 0) {
+              results.push(" and ")
+            }
+            const [pre, op, post, exp] = binops[index]
+
+            let endIndex
+            if (k < chains.length - 1) {
+              endIndex = chains[k + 1]
+            } else {
+              endIndex = i + 1
+            }
+
+            results = results.concat(first, ...binops.slice(start, endIndex))
+            first = [exp].concat(binops.slice(index + 1, endIndex))
+            start = endIndex
+          })
+        } else {
+          // Advance start if there was no chain
+          results = results.concat(first, ...binops.slice(start, i + 1))
+          start = i + 1
+        }
+
+        chains.length = 0
       }
     }
 
