@@ -1,6 +1,6 @@
 {
   "name": "kusanagi",
-  "version": "0.8.9",
+  "version": "0.8.10",
   "description": "CoffeeScript style syntax for Motoko language",
   "main": "dist/main.js",
   "bin": {

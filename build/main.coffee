@@ -53,7 +53,7 @@ esbuild.build({
 
 esbuild.build({
   entryPoints: ['source/main.coffee']
-  watch
+  bundle: true
   platform: 'node'
   outfile: 'dist/main.js'
   plugins: [
