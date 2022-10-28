@@ -52,18 +52,21 @@ esbuild.build({
 }).catch -> process.exit 1
 
 esbuild.build({
-  entryPoints: ['source/kusanagi.hera']
+  entryPoints: ['source/main.coffee']
   watch
   platform: 'node'
   outfile: 'dist/main.js'
   plugins: [
     resolveExtensions
+    coffeeScriptPlugin
+      bare: true
+      inlineMap: sourcemap
     heraPlugin
   ]
 }).catch -> process.exit 1
 
 esbuild.build({
-  entryPoints: ['source/kusanagi.hera']
+  entryPoints: ['source/main.coffee']
   globalName: "Kusanagi"
   bundle: true
   sourcemap
@@ -72,6 +75,9 @@ esbuild.build({
   outfile: 'dist/browser.js'
   plugins: [
     resolveExtensions
+    coffeeScriptPlugin
+      bare: true
+      inlineMap: sourcemap
     heraPlugin
   ]
 }).catch -> process.exit 1
