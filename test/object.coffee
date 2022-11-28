@@ -91,3 +91,54 @@ describe "object", ->
           d = 2;
         };
       """
+
+    it "nested syntax", ->
+      compare """
+        let x =
+          ...a
+          b =
+            c = 2
+      """, """
+        let x = {
+          a with
+          b = {
+            c = 2;
+          };
+        };
+      """
+
+    it "nested syntax inside braces", ->
+      compare """
+        let x = {
+          ...a
+          b =
+            c = 2
+        }
+      """, """
+        let x = {
+          a with
+          b = {
+            c = 2;
+          };
+        };
+      """
+
+    it "multiple nesting", ->
+      compare """
+        let x =
+          ...a
+          b =
+            ...c
+            d =
+              e = 2
+      """, """
+        let x = {
+          a with
+          b = {
+            c with
+            d = {
+              e = 2;
+            };
+          };
+        };
+      """
