@@ -50,46 +50,48 @@ Features
 - Indentation based blocks
 - Let shorthand `x = 5` -> `let x = 5`
 - Alternative with syntax
-```
-let x = {
-  ...a
-  ...b
-}
-```
-becomes
-```
-let x = {
-  a and
-  b
-}
+  ```
+  let x = {
+    ...a
+    ...b
+  }
+  ```
+  becomes
+  ```
+  let x = {
+    a and
+    b
+  }
 ```
 - Chained comparisons
-```
-x < y <= z
----
-x < y and y <= z
-```
+  ```motoke
+  x < y <= z
+  ```
+  Becomes
+  ```motoko
+  x < y and y <= z
+  ```
 - `match`
-```
-match x, #nat(val), 0
----
-switch(x) {
-  case(#nat(val)) { val };
-  case(_){ 0 }
-};
-```
+  ```
+  match x, #nat(val), 0
+  ---
+  switch(x) {
+    case(#nat(val)) { val };
+    case(_){ 0 }
+  };
+  ```
 - `take`
-```
-take x, 0
----
-switch(x) {
-  case(null) { 0 };
-  case(?val) { val }
-};
-```
+  ```
+  take x, 0
+  ---
+  switch(x) {
+    case(null) { 0 };
+    case(?val) { val }
+  };
+  ```
 - Null soaks
-```
-student.classes?.get(classID)
----
-do?{student.classes!.get(classID)};
-```
+  ```
+  student.classes?.get(classID)
+  ---
+  do?{student.classes!.get(classID)};
+  ```
