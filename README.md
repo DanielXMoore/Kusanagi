@@ -62,7 +62,7 @@ Features
     a and
     b
   }
-```
+  ```
 - Chained comparisons
   ```motoke
   x < y <= z
