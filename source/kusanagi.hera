@@ -160,12 +160,18 @@ Character
   "\\" HexDigit HexDigit
   "\\u{" HexNumber "}"
 
+MultilineCharacter
+  Character
+  "\r" -> "\\r"
+  "\n" -> "\\n"
+
 # https://github.com/dfinity/motoko/blob/master/doc/md/language-manual.md#text
 Text
-  $("\"" Character* "\"")
+  "\"" MultilineCharacter*:chars "\"" ->
+    return `"${chars.join("")}"`
 
 Char
-  $("'" Character "'")
+  "'" Character "'"
 
 ReservedWord
   /(actor|and|assert|await|break|case|catch|class|continue|debug|debug_show|do|else|flexible|false|for|func|if|ignore|in|import|not|null|object|or|label|let|loop|match|matchr|private|public|query|return|shared|stable|system|switch|take|true|try|type|var|while)(?=[^a-zA-Z0-9_])/
