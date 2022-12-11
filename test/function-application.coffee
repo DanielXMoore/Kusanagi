@@ -2,9 +2,9 @@
 
 describe "function application", ->
   testCase """
-    named not
+    name starts with not
     ---
-    M.not()
+    M.not_()
     ---
-    M.not();
+    M.not_();
   """
