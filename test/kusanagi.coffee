@@ -999,50 +999,6 @@ describe "Kusanagi", ->
         x /**/+= /**/1;
       """
 
-  describe "class", ->
-    it "basic", ->
-      compare """
-        class X() {}
-      """, """
-        class X() {};
-      """
-
-    it "=", ->
-      compare """
-        class X() = Y {}
-      """, """
-        class X() = Y {};
-      """
-
-    it "= maintains whitespace and comments", ->
-      compare """
-        class X()/**/ = /**/Y/**/ {}
-      """, """
-        class X()/**/ = /**/Y/**/ {};
-      """
-
-      compare """
-        class X()
-
-        /**/ = /**/
-
-            Y/**/
-
-              {
-                  //
-              }
-      """, """
-        class X()
-
-        /**/ = /**/
-
-            Y/**/
-
-              {
-                  //
-              };
-      """
-
   describe "do", ->
     it "basic", ->
       compare """
