@@ -24,7 +24,7 @@ SharedPatOpt
 
 TypObj
   __ "{" DelimitedTypField* __ "}"
-  InsertOpenBrace EOS NestedTypFields InsertNewline InsertIndent InsertCloseBrace
+  InsertOpenBrace NestedTypFields InsertNewline InsertIndent InsertCloseBrace
 
 DelimitedTypField
   __ TypField BlockFieldDelimiter
@@ -49,7 +49,7 @@ NestedTypField
 TypVariant
   __ "{" __ "#" __ "}"
   __ "{" TypVariantField* __ "}"
-  InsertOpenBrace EOS NestedTypTags InsertNewline InsertIndent InsertCloseBrace
+  InsertOpenBrace NestedTypTags InsertNewline InsertIndent InsertCloseBrace
 
 TypVariantField
   __ TypTag BlockFieldDelimiter
@@ -323,7 +323,7 @@ NestedObjectFields
     return fields
 
 NestedObjectField
-  EOS Nested ExpField BlockFieldDelimiter
+  Nested ExpField BlockFieldDelimiter
 
 NestedSpreads
   PushIndent NestedSpread*:spreads PopIndent ->
@@ -336,7 +336,7 @@ NestedSpreads
     return spreads
 
 NestedSpread
-  EOS Nested Spread BlockFieldDelimiter -> [$1, $2, $3]
+  Nested Spread BlockFieldDelimiter -> [$1, $2, $3]
 
 Spread
   "..." Id:exp ->
@@ -382,7 +382,7 @@ ExpPost
   # Array
   # https://github.com/dfinity/motoko/blob/master/doc/md/language-manual.md#arrays
   # NOTE: Added indentation based array syntax
-  "[" (__ "var")? EOS NestedArrayParts __ "]"
+  "[" (__ "var")? NestedArrayParts __ "]"
   "[" __ ( "var" __ )? ArrayPart* __ "]"
   # NOTE: Eliminated left recursion
 
@@ -433,7 +433,7 @@ ExpUn
   "from_candid" ExpUn
 
 NestedVariantExpression
-  EOS SingleNestedExpression -> ["(", $1, $2, ")"]
+  SingleNestedExpression -> ["(", $1, $2, ")"]
 
 ExpBin
   # NOTE: Eliminated left recursion
@@ -520,7 +520,7 @@ ExpNondec
   "throw"    ExpNest
   "switch"   ExpNullary __ "{" __ Case* __ "}"
   # NOTE: Added brace-less switch
-  "switch"   ExpNullary InsertOpenBrace EOS NestedCases InsertNewline InsertIndent InsertCloseBrace
+  "switch"   ExpNullary InsertOpenBrace NestedCases InsertNewline InsertIndent InsertCloseBrace
   "while"    ExpNullary ExpNest
   "loop"     ExpNest WhileBlock?
   "for"      __ "(" __ Pat __ "in" __ Exp __ ")" ExpNest
@@ -563,7 +563,7 @@ ExpNest
 Block
   TrailingComment* "{" NestedBlockDeclarations __ "}"
   __ "{" __ BlockDeclaration* "}"
-  InsertOpenBrace EOS NestedBlockDeclarations InsertNewline InsertIndent InsertCloseBrace
+  InsertOpenBrace NestedBlockDeclarations InsertNewline InsertIndent InsertCloseBrace
 
 NestedBlockDeclarations
   PushIndent NestedBlockDeclaration*:decs PopIndent ->
@@ -702,7 +702,7 @@ FuncBody
 ObjBody
   __ "{" ObjBodyField* __ "}" __
   # NOTE: Added indented object body
-  InsertOpenBrace EOS NestedObjBodyFields InsertNewline InsertIndent InsertCloseBrace
+  InsertOpenBrace NestedObjBodyFields InsertNewline InsertIndent InsertCloseBrace
 
 # NOTE: Extracted dec-field with optional trailing semi-colon when object closes to make field iteration easier in ObjBody
 ObjBodyField
@@ -807,33 +807,29 @@ InsertNewline
   "" ->
     return "\n"
 
-# Indentation management
-
-Indent
-  ( "  " / "\t" )* ->
-    return $1.length
-
-Nested
-  EOS?:eos Indent:indent ->
-    const currentIndent = module.indentLevels[module.indentLevels.length-1]
-    if (module.verbose) {
-      console.log("global indent", module.currentIndent)
-      console.log("Indented", indent, currentIndent)
-    }
-    if (indent !== currentIndent) {
-      if (module.verbose) {
-        console.log("skipped nested")
-      }
-      return $skip
-    }
-
-    return [eos, "".padStart(indent * 2)]
-
 Init
   "" ->
-    module.currentIndent = 0
-    module.indentLevels = [0]
-    module.verbose = false
+    // Storage for PushIndent/PopIndent
+    module.indentLevels = [{
+      level: 0,
+      token: "",
+    }]
+
+    if (!module._init) {
+      module._init = true
+      Object.defineProperties(module, {
+        currentIndent: {
+          get() {
+            return module.indentLevels[module.indentLevels.length-1]
+          },
+        }
+      })
+    }
+
+    module.config = {
+      tab: 2,
+      verbose: false,
+    }
 
     module.replaceStr = function (str, pat, v) {
       if(typeof str === "string") {
@@ -916,22 +912,86 @@ Init
       }
     }
 
-PushIndent
-  "" ->
-    module.currentIndent++
-    if (module.verbose) {
-      console.log("pushing indent", module.currentIndent)
-    }
-    module.indentLevels.push(module.currentIndent)
+# Indentation
 
-    return module.currentIndent
+# Holds the last indent level in `module.lastIndent`
+# Can get weird with backtracking but should work out as long as
+# EOS/Nested rules are used carefully and if we only compare to the
+# pushed value.
+Indent
+  /[ \t]*/ ->
+    let level
+    if (module.config.tab) {
+      const tabs = $0.match(/\t/g)
+      const numTabs = tabs ? tabs.length : 0
+      level = numTabs * module.config.tab + /*spaces*/ ($0.length - numTabs)
+    } else {
+      level = $0.length
+    }
+
+    return {
+      $loc,
+      token: $0,
+      level
+    }
+
+# Used in PushIndent to keep track of the last indent level for nesting
+TrackIndented
+  Indent:indent ->
+    const {level} = indent
+
+    if (level <= module.currentIndent.level) {
+      return $skip
+    }
+    if (module.config.verbose) {
+      console.log("pushing indent", indent)
+    }
+
+    module.indentLevels.push(indent)
+
+Samedent
+  EOS Indent:indent ->
+    const { level } = indent
+    const currentIndentLevel = module.currentIndent.level
+    if (level === currentIndentLevel) {
+      return $0
+    }
+    return $skip
+
+IndentedFurther
+  EOS Indent:indent ->
+    const { level } = indent
+    const currentIndentLevel = module.currentIndent.level
+    if (level > currentIndentLevel) {
+      return $0
+    }
+    return $skip
+
+# Adds an indentation scope by looking ahead to the next line and seeing if it is indented further
+# Must be matched with PopIndent
+PushIndent
+  # TrackIndented pushes the indent level if it is deeper than the current level
+  # it will skip if it is not deeper
+  &( EOS TrackIndented )
 
 PopIndent
   "" ->
-    if (module.verbose) {
+    if (module.config.verbose) {
       console.log("popping indent", module.indentLevels[module.indentLevels.length-1], "->", module.indentLevels[module.indentLevels.length-2])
     }
-    module.indentLevels.pop()
-    module.currentIndent = module.indentLevels[module.indentLevels.length-1]
+    module.indentLevels./**/pop()
 
-    return module.currentIndent
+Nested
+  EOS:eos Indent:indent ->
+    const { level } = indent
+    const currentIndent = module.currentIndent
+    if (module.config.verbose) {
+      console.log("Indented", level, currentIndent)
+    }
+    if (level !== currentIndent.level) {
+      if (module.config.verbose) {
+        console.log("skipped nested")
+      }
+      return $skip
+    }
+    return $0
