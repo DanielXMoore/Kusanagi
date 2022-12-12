@@ -328,12 +328,16 @@ NestedObjectField
 NestedSpreads
   PushIndent NestedSpread*:spreads PopIndent ->
     if (!spreads.length) return $skip
-    let i = 0, l = spreads.length - 1
-    while(i < l) {
-      spreads[i].push(" and")
-      i++
-    }
-    return spreads
+
+    const lastIndex = spreads.length - 1
+    return spreads.map((spread, i) => {
+      if (i === lastIndex) {
+        return spread.slice(0, -1)
+      } else {
+        // Replace block field delimiter with " and"
+        return spread.slice(0, -1).concat(" and")
+      }
+    })
 
 NestedSpread
   Nested Spread BlockFieldDelimiter -> [$1, $2, $3]
@@ -431,6 +435,7 @@ ExpUn
   "debug_show" ExpUn
   "to_candid" "(" ( Exp ( "," Exp )* )? ")"
   "from_candid" ExpUn
+  # TODO: match/take should go here
 
 NestedVariantExpression
   SingleNestedExpression -> ["(", $1, $2, ")"]
@@ -801,7 +806,7 @@ InsertCloseBrace
 
 InsertIndent
   "" ->
-    return "".padStart(module.currentIndent * 2)
+    return module.currentIndent.token
 
 InsertNewline
   "" ->
