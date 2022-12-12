@@ -297,9 +297,9 @@ Binassign
 
 ExpObj
   # NOTE: Added brace-less indentation based syntax
-  InsertOpenBrace NestedObjectFields InsertNewline InsertIndent InsertCloseBrace
+  InsertOpenBrace ObjectContent InsertNewline InsertIndent InsertCloseBrace
   # NOTE: Added indentation based object syntax
-  __ "{" NestedObjectFields __ "}"
+  __ "{" ObjectContent __ "}"
   # Object Pattern https://github.com/dfinity/motoko/blob/master/doc/md/language-manual.md#object-pattern
   # This different from PatNullary because exp fields can optionally start with "var"
   __ "{" __ ExpObjField* "}"
@@ -308,19 +308,21 @@ ExpObjField
   # NOTE: Extracted field rule for easier iteration
   ExpField BlockFieldDelimiter __
 
-NestedObjectFields
-  NestedSpreads?:spreads PushIndent NestedObjectField*:fields PopIndent ->
-    if (!fields.length && !spreads) return $skip
+ObjectContent
+  NestedSpreads?:spreads NestedObjectFields?:fields ->
+    if (!fields?.length && !spreads) return $skip
     if (spreads) {
-      if (fields.length) {
+      if (fields?.length) {
         return [spreads, " with", fields]
 
       }
       return spreads
     }
 
-
     return fields
+
+NestedObjectFields
+  PushIndent NestedObjectField*:fields PopIndent -> fields
 
 NestedObjectField
   Nested ExpField BlockFieldDelimiter
@@ -435,7 +437,77 @@ ExpUn
   "debug_show" ExpUn
   "to_candid" "(" ( Exp ( "," Exp )* )? ")"
   "from_candid" ExpUn
-  # TODO: match/take should go here
+
+  # TODO: A little hacky and brittle, here is where keeping the AST nodes for array args would really help out
+  "take" ExpPost:post ->
+    var [exps, rest] = post
+    var exp, def;
+    if (Array.isArray(exps)) {
+      if (exps[0] === "(") {
+        exp = exps[2]
+        def = exps[3][2]
+      } else if (exps[1] === "(") {
+        exp = exps[3][0][0];
+        def = exps[3][1][0];
+      }
+
+      if (exp != undefined && def != undefined) {
+        if (rest.length) {
+          return ["(switch(", exp, "){case(null){", def, "};case(?val){val}})", rest]
+        }
+        return ["switch(", exp, "){case(null){", def, "};case(?val){val}}"]
+      }
+    }
+    return $skip
+
+  # TODO: A little hacky and brittle, here is where keeping the AST nodes for array args would really help out
+  "match" ExpPost:post ->
+    var [exps, rest] = post
+    var exp, pred, def;
+    if (Array.isArray(exps)) {
+      if (exps[0] === "(") {
+        exp  = exps[2]
+        pred = exps[3][2];
+        def  = exps[4][2];
+      } else if (exps[1] === "(") {
+        exp  = exps[3][0][0];
+        pred = exps[3][1][0];
+        def  = exps[3][2][0];
+      }
+
+      if (exp != undefined && def != undefined) {
+        if (rest.length) {
+          return ["(switch(", exp, "){case(", pred, "){val};case(_){", def, "}})", rest]
+        }
+        return ["switch(", exp, "){case(", pred, "){val};case(_){", def, "}}"]
+      }
+    }
+    return $skip
+
+  # TODO: A little hacky and brittle, here is where keeping the AST nodes for array args would really help out
+  "matchr" ExpPost:post ->
+    var [exps, rest] = post
+
+    var exp, pred, def;
+    if (Array.isArray(exps)) {
+      if (exps[0] === "(") {
+        exp  = exps[2]
+        pred = exps[3][2];
+        def  = exps[4][2];
+      } else if (exps[1] === "(") {
+        exp  = exps[3][0][0];
+        pred = exps[3][1][0];
+        def  = exps[3][2][0];
+      }
+
+      if (exp != undefined && def != undefined) {
+        if (rest.length) {
+          return ["(switch(", exp, "){case(#ok(val)){", pred , "};case(#err(err)){", def, "}})", rest]
+        }
+        return ["switch(", exp, "){case(#ok(val)){", pred , "};case(#err(err)){", def, "}}"]
+      }
+    }
+    return $skip
 
 NestedVariantExpression
   SingleNestedExpression -> ["(", $1, $2, ")"]
@@ -455,64 +527,6 @@ ExpBinRest
 
 ExpNondec
   "return"   ( __ Exp )?
-  # TODO: A little hacky and brittle, here is where keeping the AST nodes for array args would really help out
-  "take" ExpNullary:exps ->
-    var exp, def;
-    if (Array.isArray(exps)) {
-      if (exps[0] === "(") {
-        exp = exps[2]
-        def = exps[3][2]
-      } else if (exps[1] === "(") {
-        exp = exps[3][0][0];
-        def = exps[3][1][0];
-      }
-
-      if (exp != undefined && def != undefined) {
-        return ["switch(", exp, "){case(null){", def, "};case(?val){val}}"]
-      }
-    }
-    return $skip
-
-  # TODO: A little hacky and brittle, here is where keeping the AST nodes for array args would really help out
-  "match" ExpNullary:exps ->
-    var exp, pred, def;
-    if (Array.isArray(exps)) {
-      if (exps[0] === "(") {
-        exp  = exps[2]
-        pred = exps[3][2];
-        def  = exps[4][2];
-      } else if (exps[1] === "(") {
-        exp  = exps[3][0][0];
-        pred = exps[3][1][0];
-        def  = exps[3][2][0];
-      }
-
-      if (exp != undefined && def != undefined) {
-        return ["switch(", exp, "){case(", pred, "){val};case(_){", def, "}}"]
-      }
-    }
-    return $skip
-
-  # TODO: A little hacky and brittle, here is where keeping the AST nodes for array args would really help out
-  "matchr" ExpNullary:exps ->
-    var exp, pred, def;
-    if (Array.isArray(exps)) {
-      if (exps[0] === "(") {
-        exp  = exps[2]
-        pred = exps[3][2];
-        def  = exps[4][2];
-      } else if (exps[1] === "(") {
-        exp  = exps[3][0][0];
-        pred = exps[3][1][0];
-        def  = exps[3][2][0];
-      }
-
-      if (exp != undefined && def != undefined) {
-        return ["switch(", exp, "){case(#ok(val)){", pred , "};case(#err(err)){", def, "}}"]
-      }
-    }
-    return $skip
-
   "async"    ExpNest
   "await"    ExpNest
   "assert"   ExpNest
@@ -811,6 +825,10 @@ InsertIndent
 InsertNewline
   "" ->
     return "\n"
+
+Debugger
+  "" ->
+    debugger
 
 Init
   "" ->
